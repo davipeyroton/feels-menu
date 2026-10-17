@@ -217,6 +217,20 @@ body {
   touch-action: pan-y pinch-zoom;
   background: var(--app-bg);
   transition: background 0.32s var(--motion-ease-out);
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.menu-pager--interacting {
+  touch-action: none;
+}
+
+.menu-pager button,
+.menu-pager a,
+.menu-pager input,
+.menu-pager textarea {
+  -webkit-user-select: auto;
+  user-select: auto;
 }
 
 .menu-pager:not(.menu-pager--interacting) .menu-pager__panel:not(.menu-pager__panel--current) {
@@ -243,7 +257,10 @@ body {
 }
 
 .menu-pager__track--snap {
+  -webkit-transition: -webkit-transform var(--motion-duration-pager)
+    var(--motion-ease-pager);
   transition: transform var(--motion-duration-pager) var(--motion-ease-pager);
+  -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
 }
 
@@ -270,7 +287,6 @@ body {
 
 .discover--pager-chrome--hidden {
   opacity: 0;
-  visibility: hidden;
   pointer-events: none;
 }
 
