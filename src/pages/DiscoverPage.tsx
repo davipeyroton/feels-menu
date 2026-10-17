@@ -26,8 +26,9 @@ import { ptBR } from "../i18n/pt-BR";
 import { CategoryEmoji } from "../openmoji/categoryEmoji";
 import ThemeToggle from "../components/ThemeToggle";
 import {
-  menuLocationSearch,
   menuPanelFromViewParam,
+  normalizeViewParam,
+  viewParamFromMenuPanel,
 } from "../menuRouting";
 
 type DiscoverView = "reels" | "feed";
@@ -549,6 +550,7 @@ function visibleSlideIndex(scroller: HTMLElement): number {
 export default function DiscoverPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const viewParam = normalizeViewParam(searchParams.get("view"));
 
   const reelsRef = useRef<HTMLDivElement>(null);
   const immersiveReelsRef = useRef<HTMLDivElement>(null);
@@ -655,7 +657,7 @@ export default function DiscoverPage() {
 
   const menuPager = useHorizontalPager(
     3,
-    menuPanelFromViewParam(searchParams.get("view")),
+    menuPanelFromViewParam(viewParam),
     true,
     onMenuPagerCommitRef,
     onMenuPagerDragRef,
@@ -992,19 +994,25 @@ export default function DiscoverPage() {
     return () => el.removeEventListener("scroll", onScroll);
   }, [feedImmersiveOpen, syncImmersiveFromVertical]);
 
+  // URL → panel: only when the view query changes (back/forward, deep link).
+  // Do not depend on menuIndex — avoids mobile races where the pager moves before ?view= updates.
   useEffect(() => {
     if (menuPager.draggingRef.current) return;
-    menuPager.goTo(menuPanelFromViewParam(searchParams.get("view")));
-  }, [searchParams, menuPager.goTo]);
+    menuPager.goTo(menuPanelFromViewParam(viewParam));
+  }, [viewParam, menuPager.goTo]);
 
+  // Panel → URL: one-way sync after swipes / toolbar; never re-run when searchParams object changes alone.
   useEffect(() => {
     if (menuPager.draggingRef.current) return;
-    const nextSearch = menuLocationSearch(menuIndex, searchParams);
-    const currentSearch = searchParams.toString();
-    const normalizedCurrent = currentSearch ? `?${currentSearch}` : "";
-    if (nextSearch === normalizedCurrent) return;
-    navigate({ pathname: "/", search: nextSearch }, { replace: true });
-  }, [menuIndex, navigate, searchParams]);
+    const targetView = viewParamFromMenuPanel(menuIndex);
+    if (targetView === viewParam) return;
+
+    const params = new URLSearchParams(window.location.search);
+    if (targetView) params.set("view", targetView);
+    else params.delete("view");
+    const q = params.toString();
+    navigate({ pathname: "/", search: q ? `?${q}` : "" }, { replace: true });
+  }, [menuIndex, navigate, viewParam]);
 
   useEffect(() => {
     if (searchParams.get("from") !== "hub" || menuIndex !== 1) return;

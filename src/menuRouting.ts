@@ -13,15 +13,7 @@ export function viewParamFromMenuPanel(panel: number): "reels" | "feed" | null {
   return null;
 }
 
-/** Build `/?view=…` while preserving unrelated query keys (e.g. `from=hub`). */
-export function menuLocationSearch(
-  panel: number,
-  current: URLSearchParams,
-): string {
-  const next = new URLSearchParams(current);
-  const view = viewParamFromMenuPanel(panel);
-  if (view) next.set("view", view);
-  else next.delete("view");
-  const serialized = next.toString();
-  return serialized ? `?${serialized}` : "";
+export function normalizeViewParam(view: string | null): "reels" | "feed" | null {
+  if (view === "feed" || view === "reels") return view;
+  return null;
 }
