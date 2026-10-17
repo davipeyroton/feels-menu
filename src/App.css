@@ -221,10 +221,9 @@ body {
 
 .menu-pager:not(.menu-pager--interacting) .menu-pager__panel:not(.menu-pager__panel--current) {
   pointer-events: none;
-  content-visibility: hidden;
-  contain-intrinsic-size: 100% 100dvh;
 }
 
+.menu-pager--interacting .menu-pager__panel--near,
 .menu-pager__panel--current {
   pointer-events: auto;
 }
