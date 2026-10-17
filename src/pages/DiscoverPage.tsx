@@ -852,7 +852,7 @@ export default function DiscoverPage() {
       const scroller = feedRef.current;
       if (!scroller) return;
       const target = scroller.querySelector<HTMLElement>(
-        `[data-product-id="${productId}"]`,
+        `.feed-surface__layer--timeline .feed-post[data-product-id="${productId}"]`,
       );
       if (!target) return;
       const pager = scroller.closest(".menu-pager");
@@ -925,7 +925,10 @@ export default function DiscoverPage() {
 
   useLayoutEffect(() => {
     if (feedSurface !== "timeline" || !feedScrollToId) return;
-    scrollFeedToProduct(feedScrollToId, "auto");
+    const productId = feedScrollToId;
+    const scroll = () => scrollFeedToProduct(productId, "auto");
+    scroll();
+    requestAnimationFrame(scroll);
     setFeedScrollToId(null);
   }, [feedSurface, feedScrollToId, scrollFeedToProduct]);
 
