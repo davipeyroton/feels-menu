@@ -212,6 +212,7 @@ body {
   margin: 0 auto;
   overflow: hidden;
   overscroll-behavior: none;
+  touch-action: pan-y pinch-zoom;
   background: var(--app-bg);
   transition: background 0.25s ease;
 }
@@ -668,6 +669,10 @@ button {
   text-shadow: var(--brand-shadow);
   width: fit-content;
   max-width: 100%;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
 }
 
 .theme-toggle {

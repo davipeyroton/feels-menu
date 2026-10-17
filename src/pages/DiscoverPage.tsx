@@ -1,4 +1,4 @@
-import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import HubPanel from "../panels/HubPanel";
 import {
   type PagerCommitHandler,
@@ -25,6 +25,10 @@ import {
 import { ptBR } from "../i18n/pt-BR";
 import { CategoryEmoji } from "../openmoji/categoryEmoji";
 import ThemeToggle from "../components/ThemeToggle";
+import {
+  menuLocationSearch,
+  menuPanelFromViewParam,
+} from "../menuRouting";
 
 type DiscoverView = "reels" | "feed";
 
@@ -332,9 +336,9 @@ function ReelsChrome({
     >
       <header className="discover__header">
         <div className="discover__header-row">
-          <Link to="/" className="discover__brand-link" onClick={onHub}>
+          <button type="button" className="discover__brand-link" onClick={onHub}>
             Francisco
-          </Link>
+          </button>
         </div>
         <DiscoverToolbar
           view={view}
@@ -542,16 +546,9 @@ function visibleSlideIndex(scroller: HTMLElement): number {
   return 0;
 }
 
-function initialMenuPanel(pathname: string, viewFeed: boolean) {
-  if (pathname.startsWith("/discover")) return viewFeed ? 2 : 1;
-  return 0;
-}
-
 export default function DiscoverPage() {
   const navigate = useNavigate();
-  const location = useLocation();
   const [searchParams] = useSearchParams();
-  const viewFeed = searchParams.get("view") === "feed";
 
   const reelsRef = useRef<HTMLDivElement>(null);
   const immersiveReelsRef = useRef<HTMLDivElement>(null);
@@ -658,7 +655,7 @@ export default function DiscoverPage() {
 
   const menuPager = useHorizontalPager(
     3,
-    initialMenuPanel(window.location.pathname, viewFeed),
+    menuPanelFromViewParam(searchParams.get("view")),
     true,
     onMenuPagerCommitRef,
     onMenuPagerDragRef,
@@ -997,16 +994,17 @@ export default function DiscoverPage() {
 
   useEffect(() => {
     if (menuPager.draggingRef.current) return;
-    const target = initialMenuPanel(location.pathname, viewFeed);
-    menuPager.goTo(target);
-  }, [location.pathname, viewFeed, menuPager.goTo]);
+    menuPager.goTo(menuPanelFromViewParam(searchParams.get("view")));
+  }, [searchParams, menuPager.goTo]);
 
   useEffect(() => {
     if (menuPager.draggingRef.current) return;
-    if (menuIndex === 0) navigate("/", { replace: true });
-    else if (menuIndex === 2) navigate("/discover?view=feed", { replace: true });
-    else if (menuIndex === 1) navigate("/discover", { replace: true });
-  }, [menuIndex, navigate]);
+    const nextSearch = menuLocationSearch(menuIndex, searchParams);
+    const currentSearch = searchParams.toString();
+    const normalizedCurrent = currentSearch ? `?${currentSearch}` : "";
+    if (nextSearch === normalizedCurrent) return;
+    navigate({ pathname: "/", search: nextSearch }, { replace: true });
+  }, [menuIndex, navigate, searchParams]);
 
   useEffect(() => {
     if (searchParams.get("from") !== "hub" || menuIndex !== 1) return;
@@ -1176,13 +1174,13 @@ export default function DiscoverPage() {
                     {ptBR.discover.backToProfileGrid}
                   </button>
                 ) : (
-                  <Link
-                    to="/"
+                  <button
+                    type="button"
                     className="discover__brand-link"
                     onClick={() => goToMenuPanel(0)}
                   >
                     Francisco
-                  </Link>
+                  </button>
                 )}
                 <ThemeToggle />
               </div>
