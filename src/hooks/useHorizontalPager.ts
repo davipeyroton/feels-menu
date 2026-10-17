@@ -64,9 +64,29 @@ export function useHorizontalPager(
   const [animating, setAnimating] = useState(false);
   const indexRef = useRef(index);
   const draggingRef = useRef(false);
+  const snapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   indexRef.current = index;
   draggingRef.current = dragging;
+
+  const scheduleAnimatingEnd = useCallback(() => {
+    if (snapTimerRef.current) clearTimeout(snapTimerRef.current);
+    const root = containerRef.current;
+    const raw = root?.style.getPropertyValue("--motion-duration-pager");
+    const seconds = raw ? Number.parseFloat(raw) : pagerSnapDurationSeconds(0);
+    const ms = Math.max(280, Math.min(560, seconds * 1000 + 120));
+    snapTimerRef.current = setTimeout(() => {
+      snapTimerRef.current = null;
+      setAnimating(false);
+    }, ms);
+  }, []);
+
+  const clearAnimatingEnd = useCallback(() => {
+    if (snapTimerRef.current) {
+      clearTimeout(snapTimerRef.current);
+      snapTimerRef.current = null;
+    }
+  }, []);
 
   const isEnabled = () => enabledRef?.current !== false;
 
@@ -90,8 +110,9 @@ export function useHorizontalPager(
         );
         root.style.setProperty("--motion-ease-pager", PAGER_SNAP_EASE_OUT);
       }
+      scheduleAnimatingEnd();
     },
-    [panelCount],
+    [panelCount, scheduleAnimatingEnd],
   );
 
   useEffect(() => {
@@ -266,8 +287,10 @@ export function useHorizontalPager(
 
       const finishCommit = (direction: PagerCommitDirection) => {
         requestAnimationFrame(() => {
-          applyCommit(at, direction);
-          el.style.setProperty("--pager-drag-fraction", "0");
+          requestAnimationFrame(() => {
+            applyCommit(at, direction);
+            el.style.setProperty("--pager-drag-fraction", "0");
+          });
         });
       };
 
@@ -303,6 +326,7 @@ export function useHorizontalPager(
     const track = el.querySelector<HTMLElement>(".menu-pager__track");
     const onTransitionEnd = (event: TransitionEvent) => {
       if (event.target !== track || event.propertyName !== "transform") return;
+      clearAnimatingEnd();
       setAnimating(false);
     };
     track?.addEventListener("transitionend", onTransitionEnd);
@@ -313,10 +337,20 @@ export function useHorizontalPager(
       el.removeEventListener("touchend", onTouchEnd);
       el.removeEventListener("touchcancel", onTouchCancel);
       track?.removeEventListener("transitionend", onTransitionEnd);
+      clearAnimatingEnd();
       activeGesture = null;
       clearDrag();
     };
-  }, [panelCount, onCommitRef, onDragRef, preferVerticalRef, enabledRef, goTo]);
+  }, [
+    panelCount,
+    onCommitRef,
+    onDragRef,
+    preferVerticalRef,
+    enabledRef,
+    goTo,
+    scheduleAnimatingEnd,
+    clearAnimatingEnd,
+  ]);
 
   return {
     containerRef,

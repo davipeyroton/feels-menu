@@ -1004,6 +1004,9 @@ export default function DiscoverPage() {
           reelsRef.current?.scrollTo({ top: 0, behavior: "auto" }),
         );
       }
+      if (!menuPager.draggingRef.current) {
+        setChromePanel(panel);
+      }
       menuPager.goTo(panel);
     },
     [menuPager.goTo],
