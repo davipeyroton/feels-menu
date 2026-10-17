@@ -1,30 +1,33 @@
 # Feels Menu
 
-Cardápio digital (hub, reels e feed) — protótipo Vite + React no monorepo REA.
+**Cardápio digital para o restaurante usar no salão** — o cliente abre no celular (QR na mesa ou link) e navega pelo menu com uma experiência pensada para mobile: boas-vindas, destaques em vídeo, categorias e produtos com fotos e preços.
 
-Dados e fluxo inspirados em [francisco.sipfloweb.com](https://francisco.sipfloweb.com), após análise com REA.
+Stack: Vite + React.
 
-## Evidência
+## O que o cliente vê
 
-`../francisco-analysis/REA-FINDINGS.md` · `capture-hub.json` · `capture-discover.json`
+- **Hub** — vídeo de capa, acesso ao cardápio, avaliação no Google e Wi‑Fi do estabelecimento
+- **Reels** — produtos em tela cheia, por categoria
+- **Feed** — grade e timeline; modo imersivo para explorar itens
 
-## Rodar
+Tema claro/escuro no feed.
+
+## Rodar localmente
 
 ```bash
-cd feels-menu
 npm install
 npm run dev
 ```
 
-- `/` — hub (vídeo, Explore Menu, Google Review, Wi-Fi)
-- `/discover` — pager: hub → reels → feed (grade / timeline / imersivo)
+- `/` — hub
+- `/discover` — cardápio (hub → reels → feed)
 
-Atualizar cardápio do site público:
+## Atualizar o cardápio
+
+Os dados ficam em `data/menu-snapshot.json`. Para regenerar a partir de uma fonte pública configurada no script:
 
 ```bash
 npm run snapshot
 ```
 
-## Nota
-
-Mídia (vídeo, fotos) ainda referencia o CDN do site original; troque quando tiver assets próprios.
+Substitua imagens e vídeos pelos assets do seu restaurante quando estiver em produção.
