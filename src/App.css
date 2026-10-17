@@ -1015,8 +1015,14 @@ button {
   color: #fff;
   touch-action: pan-y;
   overscroll-behavior: contain;
+  will-change: transform, opacity;
   animation: discover-immersive-in var(--motion-duration-medium) var(--motion-ease-out)
     both;
+}
+
+.discover__immersive--dragging,
+.discover__immersive--dismissing {
+  animation: none;
 }
 
 .discover__reels-scroller--immersive {

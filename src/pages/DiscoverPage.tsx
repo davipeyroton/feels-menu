@@ -3,8 +3,10 @@ import HubPanel from "../panels/HubPanel";
 import {
   type PagerCommitHandler,
   type PagerDragHandler,
+  type PagerPreferVerticalHandler,
   useHorizontalPager,
 } from "../hooks/useHorizontalPager";
+import { useImmersiveDismiss } from "../hooks/useImmersiveDismiss";
 import {
   forwardRef,
   useCallback,
@@ -563,8 +565,6 @@ function FeedPost({
   );
 }
 
-const SWIPE_MIN_PX = 52;
-
 function visibleSlideIndex(scroller: HTMLElement): number {
   const mid = scroller.scrollTop + scroller.clientHeight * 0.45;
   const slides = scroller.querySelectorAll<HTMLElement>(".discover__slide");
@@ -584,6 +584,7 @@ export default function DiscoverPage() {
 
   const reelsRef = useRef<HTMLDivElement>(null);
   const immersiveReelsRef = useRef<HTMLDivElement>(null);
+  const immersiveRootRef = useRef<HTMLDivElement>(null);
   const feedRef = useRef<HTMLDivElement>(null);
   const pagerChromeRef = useRef<HTMLDivElement>(null);
   const immersiveChromeRef = useRef<HTMLDivElement>(null);
@@ -591,10 +592,6 @@ export default function DiscoverPage() {
   const feedBrandRef = useRef<HTMLDivElement>(null);
   const [feedToolbarPinned, setFeedToolbarPinned] = useState(false);
   const [pagerChromeHeight, setPagerChromeHeight] = useState(0);
-  const discoverSwipeRef = useRef<{ x: number; y: number; t: number } | null>(
-    null,
-  );
-  const feedSwipeRef = useRef<{ x: number; y: number; t: number } | null>(null);
   const [immersiveProduct, setImmersiveProduct] = useState<ProductSlide | null>(
     null,
   );
@@ -603,6 +600,7 @@ export default function DiscoverPage() {
   const [feedSurface, setFeedSurface] = useState<"grid" | "timeline">("grid");
   const [feedScrollToId, setFeedScrollToId] = useState<string | null>(null);
   const prevMenuIndexRef = useRef(0);
+  const menuIndexRef = useRef(0);
   const feedSurfaceRef = useRef(feedSurface);
   feedSurfaceRef.current = feedSurface;
   const immersiveOpenRef = useRef(false);
@@ -614,6 +612,10 @@ export default function DiscoverPage() {
   const reelsWelcomeVideoRef = useRef<HTMLVideoElement>(null);
   const onMenuPagerCommitRef = useRef<PagerCommitHandler | undefined>(undefined);
   const onMenuPagerDragRef = useRef<PagerDragHandler | undefined>(undefined);
+  const onPagerPreferVerticalRef = useRef<PagerPreferVerticalHandler | undefined>(
+    undefined,
+  );
+  const pagerEnabledRef = useRef(true);
   const productSlides = useMemo(() => allProducts, []);
   const feedImmersiveOpen = immersiveProduct !== null;
 
@@ -666,10 +668,7 @@ export default function DiscoverPage() {
   };
 
   onMenuPagerDragRef.current = (dx, at) => {
-    if (immersiveOpenRef.current) {
-      if (dx > 0) return dx * 0.45;
-      return dx * 0.2;
-    }
+    if (immersiveOpenRef.current) return 0;
     if (at !== 2) return undefined;
     const surface = feedSurfaceRef.current;
     if (surface === "timeline" && dx > 0) return dx * 0.42;
@@ -678,59 +677,50 @@ export default function DiscoverPage() {
     return undefined;
   };
 
+  onPagerPreferVerticalRef.current = ({ target, dx, dy }) => {
+    if (immersiveOpenRef.current) return true;
+    if (!(target instanceof Element)) return false;
+
+    const absDx = Math.abs(dx);
+    const absDy = Math.abs(dy);
+    const horizontalIntent = absDx > 10 && absDx > absDy * 1.02;
+
+    const reels = reelsRef.current;
+    if (reels?.contains(target) && menuIndexRef.current === 1) {
+      const atTop = reels.scrollTop <= 6;
+      if (atTop && dx > 0 && horizontalIntent) return false;
+      return true;
+    }
+
+    const feed = feedRef.current;
+    if (feed?.contains(target) && menuIndexRef.current === 2) {
+      const surface = feedSurfaceRef.current;
+      if (surface === "timeline" && dx > 0 && horizontalIntent) return false;
+      if (surface === "grid" && dx < 0 && horizontalIntent) return false;
+      const atTop = feed.scrollTop <= 6;
+      if (atTop && horizontalIntent) return false;
+      return true;
+    }
+
+    return Boolean(
+      target.closest(
+        ".discover__reels-scroller, .discover__feed, .discover__v-scroller",
+      ),
+    );
+  };
+
+  pagerEnabledRef.current = !feedImmersiveOpen;
+
   const menuPager = useHorizontalPager(
     3,
     menuPanelFromViewParam(viewParam),
-    !feedImmersiveOpen,
+    pagerEnabledRef,
     onMenuPagerCommitRef,
     onMenuPagerDragRef,
+    onPagerPreferVerticalRef,
   );
   const menuIndex = menuPager.index;
-
-  const runMenuPagerCommit = useCallback(
-    (at: number, direction: "next" | "prev") => {
-      const custom = onMenuPagerCommitRef.current?.(at, direction);
-      if (custom === "handled") return;
-      const fallback =
-        direction === "next"
-          ? at < 2
-            ? at + 1
-            : null
-          : at > 0
-            ? at - 1
-            : null;
-      const target = typeof custom === "number" ? custom : fallback;
-      if (target !== null && target !== at) {
-        menuPager.goTo(target);
-      }
-    },
-    [menuPager.goTo],
-  );
-
-  const onFeedTouchStart = (event: React.TouchEvent) => {
-    const touch = event.touches[0];
-    feedSwipeRef.current = {
-      x: touch.clientX,
-      y: touch.clientY,
-      t: Date.now(),
-    };
-  };
-
-  const onFeedTouchEnd = (event: React.TouchEvent) => {
-    if (menuIndex !== 2 || feedSurfaceRef.current !== "timeline") return;
-    const start = feedSwipeRef.current;
-    feedSwipeRef.current = null;
-    if (!start) return;
-    const touch = event.changedTouches[0];
-    const dx = touch.clientX - start.x;
-    const dy = touch.clientY - start.y;
-    if (Date.now() - start.t > 650) return;
-    const horizontalDominant =
-      Math.abs(dx) >= SWIPE_MIN_PX && Math.abs(dx) > Math.abs(dy) * 1.25;
-    if (!horizontalDominant) return;
-    event.stopPropagation();
-    runMenuPagerCommit(2, dx < 0 ? "next" : "prev");
-  };
+  menuIndexRef.current = menuIndex;
 
   const view: DiscoverView = menuIndex === 2 ? "feed" : "reels";
 
@@ -844,6 +834,38 @@ export default function DiscoverPage() {
 
   restoreFromImmersiveRef.current = restoreFromImmersive;
 
+  const canDismissImmersiveDown = useCallback(() => {
+    const scroller = immersiveReelsRef.current;
+    return (
+      !!scroller &&
+      (scroller.scrollTop <= 12 || visibleSlideIndex(scroller) === 0)
+    );
+  }, []);
+
+  const immersiveDismiss = useImmersiveDismiss(
+    immersiveRootRef,
+    feedImmersiveOpen,
+    canDismissImmersiveDown,
+    restoreFromImmersive,
+  );
+
+  const immersiveMotionStyle = useMemo(() => {
+    const { x, y, dragging, dismissing } = immersiveDismiss;
+    const scale = dismissing
+      ? 0.94
+      : dragging
+        ? Math.max(0.9, 1 - Math.max(x, y) / 2200)
+        : 1;
+    return {
+      transform: `translate3d(${x}px, ${y}px, 0) scale(${scale})`,
+      transition:
+        dragging && !dismissing
+          ? "none"
+          : "transform var(--motion-duration-medium) var(--motion-ease-out), opacity var(--motion-duration-medium) var(--motion-ease-out)",
+      opacity: dismissing ? 0.35 : dragging ? Math.max(0.72, 1 - y / 900) : 1,
+    } as React.CSSProperties;
+  }, [immersiveDismiss]);
+
   useLayoutEffect(() => {
     if (feedSurface !== "timeline" || !feedScrollToId) return;
     scrollFeedToProduct(feedScrollToId, "auto");
@@ -891,53 +913,9 @@ export default function DiscoverPage() {
     [menuIndex, feedImmersiveOpen, feedSurface, scrollFeedToProduct],
   );
 
-  const onDiscoverTouchStart = (event: React.TouchEvent) => {
-    if (!feedImmersiveOpen) return;
-    event.stopPropagation();
-    const touch = event.touches[0];
-    discoverSwipeRef.current = {
-      x: touch.clientX,
-      y: touch.clientY,
-      t: Date.now(),
-    };
-  };
-
   const closeFeedImmersive = useCallback(() => {
-    setImmersiveProduct(null);
-  }, []);
-
-  const onDiscoverTouchEnd = (event: React.TouchEvent) => {
-    if (!feedImmersiveOpen) return;
-    event.stopPropagation();
-
-    const start = discoverSwipeRef.current;
-    discoverSwipeRef.current = null;
-    if (!start) return;
-
-    const touch = event.changedTouches[0];
-    const dx = touch.clientX - start.x;
-    const dy = touch.clientY - start.y;
-    if (Date.now() - start.t > 650) return;
-
-    const verticalDominant =
-      Math.abs(dy) >= SWIPE_MIN_PX && Math.abs(dy) > Math.abs(dx) * 1.15;
-    const horizontalDominant =
-      Math.abs(dx) >= SWIPE_MIN_PX && Math.abs(dx) > Math.abs(dy) * 1.15;
-    if (horizontalDominant && dx > 0) {
-      restoreFromImmersive();
-      return;
-    }
-    if (verticalDominant && dy > 0) {
-      const scroller = immersiveReelsRef.current;
-      const atTop =
-        scroller &&
-        (scroller.scrollTop <= 12 ||
-          visibleSlideIndex(scroller) === 0);
-      if (atTop) {
-        restoreFromImmersive();
-      }
-    }
-  };
+    restoreFromImmersive();
+  }, [restoreFromImmersive]);
 
   const goToMenuPanel = useCallback(
     (panel: number) => {
@@ -1224,8 +1202,6 @@ export default function DiscoverPage() {
               ref={feedRef}
               className="discover__feed discover__feed--timeline"
               aria-hidden={feedImmersiveOpen}
-              onTouchStart={onFeedTouchStart}
-              onTouchEnd={onFeedTouchEnd}
             >
               <div
                 ref={feedBrandRef}
@@ -1307,12 +1283,20 @@ export default function DiscoverPage() {
 
       {feedImmersiveOpen && immersiveProduct && (
         <div
-          className="discover__immersive discover discover--reels"
+          ref={immersiveRootRef}
+          className={[
+            "discover__immersive",
+            "discover",
+            "discover--reels",
+            immersiveDismiss.dragging ? "discover__immersive--dragging" : "",
+            immersiveDismiss.dismissing ? "discover__immersive--dismissing" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          style={immersiveMotionStyle}
           role="dialog"
           aria-modal="true"
           aria-label={ptBR.discover.reelDialog(immersiveProduct.name)}
-          onTouchStart={onDiscoverTouchStart}
-          onTouchEnd={onDiscoverTouchEnd}
         >
           <div
             ref={immersiveReelsRef}
