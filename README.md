@@ -1,6 +1,6 @@
 # Feels Menu
 
-**Cardápio digital para o restaurante usar no salão** — o cliente abre no celular (QR na mesa ou link) e navega pelo menu com uma experiência pensada para mobile: boas-vindas, destaques em vídeo, categorias e produtos com fotos e preços.
+**Cardápio digital para o restaurante usar no salão** — o cliente abre no celular (NFC, QR na mesa ou link) e navega pelo menu com uma experiência pensada para mobile: boas-vindas, destaques em vídeo, categorias e produtos com fotos e preços.
 
 Stack: Vite + React.
 
