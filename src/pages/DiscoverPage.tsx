@@ -191,10 +191,15 @@ function ProductMedia({
   slide: ProductSlide;
   className: string;
   playVideo?: boolean;
-  /** Load buffer without autoplay (adjacent panel / idle). */
+  /** Keep decode buffer after first view (panel switch feed ↔ reels). */
   warm?: boolean;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [buffered, setBuffered] = useState(false);
+
+  useEffect(() => {
+    if (warm || playVideo) setBuffered(true);
+  }, [warm, playVideo]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -207,7 +212,7 @@ function ProductMedia({
   }, [playVideo, slide.video]);
 
   if (slide.video) {
-    const preload = playVideo ? "auto" : warm ? "metadata" : "none";
+    const preload = playVideo ? "auto" : buffered ? "metadata" : "none";
     return (
       <video
         ref={videoRef}
@@ -229,28 +234,37 @@ function ProductMedia({
 
 function ProductReel({
   slide,
-  scrollerActive = true,
+  playbackActive = false,
+  cacheMedia = false,
 }: {
   slide: ProductSlide;
-  scrollerActive?: boolean;
+  /** Play when slide is in view and reels panel is focused. */
+  playbackActive?: boolean;
+  /** Keep slide buffers after leaving reels (feed ↔ reels swipe). */
+  cacheMedia?: boolean;
 }) {
   const [interested, setInterested] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
   const [inView, setInView] = useState(false);
+  const [everInView, setEverInView] = useState(false);
 
   useEffect(() => {
     const node = sectionRef.current;
-    if (!node || !scrollerActive) {
-      setInView(false);
-      return;
-    }
+    if (!node) return;
     const observer = new IntersectionObserver(
       ([entry]) => setInView(entry.isIntersecting && entry.intersectionRatio >= 0.55),
       { threshold: [0, 0.55, 0.85] },
     );
     observer.observe(node);
     return () => observer.disconnect();
-  }, [scrollerActive]);
+  }, []);
+
+  useEffect(() => {
+    if (inView) setEverInView(true);
+  }, [inView]);
+
+  const shouldPlay = playbackActive && inView;
+  const shouldWarm = cacheMedia && (everInView || shouldPlay);
 
   return (
     <section
@@ -263,8 +277,8 @@ function ProductReel({
         <ProductMedia
           slide={slide}
           className="discover__media discover__media--product"
-          playVideo={scrollerActive && inView}
-          warm={scrollerActive}
+          playVideo={shouldPlay}
+          warm={shouldWarm}
         />
       </div>
       <div className="discover__top-fade" />
@@ -654,6 +668,7 @@ export default function DiscoverPage() {
     productId: string | null;
   }>({ surface: "grid", productId: null });
   const reelsFromHubScrollDoneRef = useRef(false);
+  const hasVisitedReelsRef = useRef(menuPanelFromViewParam(viewParam) === 1);
   const reelsWelcomeVideoRef = useRef<HTMLVideoElement>(null);
   const onMenuPagerCommitRef = useRef<PagerCommitHandler | undefined>(undefined);
   const onMenuPagerDragRef = useRef<PagerDragHandler | undefined>(undefined);
@@ -1120,11 +1135,11 @@ export default function DiscoverPage() {
   useEffect(() => {
     const video = reelsWelcomeVideoRef.current;
     if (!video) return;
-    const reelsVisible =
+    const welcomeShouldPlay =
       !feedImmersiveOpen &&
       (menuIndex === 1 ||
-        (menuIndex === 2 && (menuPager.dragPx > 8 || menuPager.animating)));
-    if (reelsVisible) void video.play().catch(() => {});
+        (menuPager.dragging && menuPager.dragPx > 8 && menuIndex === 2));
+    if (welcomeShouldPlay) void video.play().catch(() => {});
     else video.pause();
   }, [menuIndex, feedImmersiveOpen, menuPager.dragPx, menuPager.animating]);
 
@@ -1156,11 +1171,9 @@ export default function DiscoverPage() {
   const effectiveChromePanel = pagerInteracting
     ? Math.min(2, Math.max(0, Math.round(fractionalIndex)))
     : chromePanel;
-  const reelsNearPanel =
-    !feedImmersiveOpen &&
-    fractionalIndex > 0.08 &&
-    fractionalIndex < 1.92;
-  const reelsScrollerActive = reelsNearPanel;
+  const reelsPlaybackActive =
+    !feedImmersiveOpen && Math.abs(fractionalIndex - 1) < 0.52;
+  const reelsCacheMedia = hasVisitedReelsRef.current;
   const feedTimelineActive =
     menuIndex === 2 && feedSurface === "timeline" && !feedImmersiveOpen;
   const panelIsNear = (idx: number) =>
@@ -1325,7 +1338,8 @@ export default function DiscoverPage() {
                 <ProductReel
                   key={slide.id}
                   slide={slide}
-                  scrollerActive={reelsScrollerActive}
+                  playbackActive={reelsPlaybackActive}
+                  cacheMedia={reelsCacheMedia}
                 />
               ))}
 
@@ -1466,7 +1480,8 @@ export default function DiscoverPage() {
               <ProductReel
                 key={slide.id}
                 slide={slide}
-                scrollerActive={feedImmersiveOpen}
+                playbackActive={feedImmersiveOpen}
+                cacheMedia
               />
             ))}
           </div>
