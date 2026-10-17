@@ -4,9 +4,11 @@
   font-family: Inter, system-ui, sans-serif;
   --motion-ease-out: cubic-bezier(0.32, 0.72, 0, 1);
   --motion-ease-emphasized: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-ease-pager: cubic-bezier(0.22, 1.18, 0.42, 1);
+  --motion-ease-dismiss: cubic-bezier(0.33, 1.02, 0.52, 1);
   --motion-duration-fast: 0.22s;
   --motion-duration-medium: 0.38s;
-  --motion-duration-pager: 0.46s;
+  --motion-duration-pager: 0.4s;
   --display: "Instrument Serif", Georgia, serif;
   --item-title: "Fraunces", Georgia, serif;
   --price: "Fraunces", Georgia, serif;
@@ -214,7 +216,17 @@ body {
   overscroll-behavior: none;
   touch-action: pan-y pinch-zoom;
   background: var(--app-bg);
-  transition: background 0.25s ease;
+  transition: background 0.32s var(--motion-ease-out);
+}
+
+.menu-pager:not(.menu-pager--interacting) .menu-pager__panel:not(.menu-pager__panel--current) {
+  pointer-events: none;
+  content-visibility: hidden;
+  contain-intrinsic-size: 100% 100dvh;
+}
+
+.menu-pager__panel--current {
+  pointer-events: auto;
 }
 
 .menu-pager__track {
@@ -232,7 +244,7 @@ body {
 }
 
 .menu-pager__track--snap {
-  transition: transform var(--motion-duration-pager) var(--motion-ease-out);
+  transition: transform var(--motion-duration-pager) var(--motion-ease-pager);
   backface-visibility: hidden;
 }
 
@@ -242,6 +254,23 @@ body {
   height: 100%;
   min-width: 0;
   overflow: hidden;
+  transform-origin: center center;
+  transition:
+    transform 0.14s var(--motion-ease-out),
+    opacity 0.14s var(--motion-ease-out);
+  will-change: transform, opacity;
+}
+
+.menu-pager__track--dragging .menu-pager__panel {
+  transition: none;
+}
+
+.discover--pager-chrome--reels {
+  transition: opacity 0.12s linear;
+}
+
+.menu-pager--crossfade-reels .discover--pager-chrome--reels {
+  opacity: calc(1 + min(0, var(--pager-drag-fraction, 0)) * 0.92);
 }
 
 .menu-pager__panel .discover {
@@ -1015,7 +1044,8 @@ button {
   color: #fff;
   touch-action: pan-y;
   overscroll-behavior: contain;
-  will-change: transform, opacity;
+  will-change: transform, opacity, border-radius;
+  transform-origin: center top;
   animation: discover-immersive-in var(--motion-duration-medium) var(--motion-ease-out)
     both;
 }
@@ -1023,6 +1053,10 @@ button {
 .discover__immersive--dragging,
 .discover__immersive--dismissing {
   animation: none;
+  transition:
+    transform var(--motion-duration-medium) var(--motion-ease-dismiss),
+    opacity var(--motion-duration-medium) var(--motion-ease-dismiss),
+    border-radius var(--motion-duration-medium) var(--motion-ease-dismiss);
 }
 
 .discover__reels-scroller--immersive {
@@ -1032,29 +1066,37 @@ button {
 
 @keyframes discover-immersive-in {
   from {
-    opacity: 0;
-    transform: translate3d(14px, 0, 0);
+    opacity: 0.96;
   }
 
   to {
     opacity: 1;
-    transform: translate3d(0, 0, 0);
   }
 }
 
 .feed-surface {
-  animation: feed-surface-in var(--motion-duration-medium) var(--motion-ease-out) both;
+  position: relative;
 }
 
-@keyframes feed-surface-in {
+.feed-surface__layer {
+  display: none;
+}
+
+.feed-surface__layer--on {
+  display: block;
+}
+
+.feed-surface__layer--timeline.feed-surface__layer--on {
+  animation: feed-surface-fade-in 0.22s var(--motion-ease-out) both;
+}
+
+@keyframes feed-surface-fade-in {
   from {
-    opacity: 0.72;
-    transform: translate3d(10px, 0, 0);
+    opacity: 0.94;
   }
 
   to {
     opacity: 1;
-    transform: translate3d(0, 0, 0);
   }
 }
 
@@ -1605,27 +1647,13 @@ button {
 }
 
 @media (max-width: 720px) {
-  @keyframes feed-surface-in {
+  @keyframes feed-surface-fade-in {
     from {
-      opacity: 0.88;
-      transform: translate3d(0, 0, 0);
+      opacity: 0.97;
     }
 
     to {
       opacity: 1;
-      transform: translate3d(0, 0, 0);
-    }
-  }
-
-  @keyframes discover-immersive-in {
-    from {
-      opacity: 0.92;
-      transform: translate3d(0, 0, 0);
-    }
-
-    to {
-      opacity: 1;
-      transform: translate3d(0, 0, 0);
     }
   }
 }
@@ -1639,7 +1667,7 @@ button {
   }
 
   .discover__immersive,
-  .feed-surface,
+  .feed-surface__layer--timeline,
   .discover__cat-dropdown-menu {
     animation: none !important;
   }

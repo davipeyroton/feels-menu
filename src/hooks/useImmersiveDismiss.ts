@@ -175,7 +175,7 @@ export function useImmersiveDismiss(
         shouldDismiss("x", dx, active.velocityX, width)
       ) {
         setOffsets({ x: width, y: 0, dragging: false, dismissing: true });
-        window.setTimeout(() => onDismissRef.current(), 220);
+        window.setTimeout(() => onDismissRef.current(), 280);
         return;
       }
 
@@ -185,7 +185,7 @@ export function useImmersiveDismiss(
         shouldDismiss("y", dy, active.velocityY, height)
       ) {
         setOffsets({ x: 0, y: height, dragging: false, dismissing: true });
-        window.setTimeout(() => onDismissRef.current(), 220);
+        window.setTimeout(() => onDismissRef.current(), 280);
         return;
       }
 

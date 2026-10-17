@@ -8,6 +8,10 @@ import {
 } from "../hooks/useHorizontalPager";
 import { useImmersiveDismiss } from "../hooks/useImmersiveDismiss";
 import {
+  immersiveDismissRadius,
+  panelDepthStyle,
+} from "../motion/instagramMotion";
+import {
   forwardRef,
   useCallback,
   useEffect,
@@ -182,10 +186,13 @@ function ProductMedia({
   slide,
   className,
   playVideo = false,
+  warm = false,
 }: {
   slide: ProductSlide;
   className: string;
   playVideo?: boolean;
+  /** Load buffer without autoplay (adjacent panel / idle). */
+  warm?: boolean;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -200,6 +207,7 @@ function ProductMedia({
   }, [playVideo, slide.video]);
 
   if (slide.video) {
+    const preload = playVideo ? "auto" : warm ? "metadata" : "none";
     return (
       <video
         ref={videoRef}
@@ -208,7 +216,7 @@ function ProductMedia({
         muted
         loop
         playsInline
-        preload={playVideo ? "auto" : "metadata"}
+        preload={preload}
         aria-hidden
       />
     );
@@ -219,21 +227,30 @@ function ProductMedia({
   return null;
 }
 
-function ProductReel({ slide }: { slide: ProductSlide }) {
+function ProductReel({
+  slide,
+  scrollerActive = true,
+}: {
+  slide: ProductSlide;
+  scrollerActive?: boolean;
+}) {
   const [interested, setInterested] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
   const [inView, setInView] = useState(false);
 
   useEffect(() => {
     const node = sectionRef.current;
-    if (!node) return;
+    if (!node || !scrollerActive) {
+      setInView(false);
+      return;
+    }
     const observer = new IntersectionObserver(
       ([entry]) => setInView(entry.isIntersecting && entry.intersectionRatio >= 0.55),
       { threshold: [0, 0.55, 0.85] },
     );
     observer.observe(node);
     return () => observer.disconnect();
-  }, []);
+  }, [scrollerActive]);
 
   return (
     <section
@@ -246,7 +263,8 @@ function ProductReel({ slide }: { slide: ProductSlide }) {
         <ProductMedia
           slide={slide}
           className="discover__media discover__media--product"
-          playVideo={inView}
+          playVideo={scrollerActive && inView}
+          warm={scrollerActive}
         />
       </div>
       <div className="discover__top-fade" />
@@ -497,14 +515,41 @@ function FeedProfileGrid({
 function FeedPost({
   slide,
   onOpenReels,
+  mediaActive = false,
 }: {
   slide: ProductSlide;
   onOpenReels: (product: ProductSlide) => void;
+  mediaActive?: boolean;
 }) {
   const [interested, setInterested] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const articleRef = useRef<HTMLElement>(null);
+  const [inView, setInView] = useState(false);
+
+  useEffect(() => {
+    const node = articleRef.current;
+    if (!node || !mediaActive) {
+      setInView(false);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => setInView(entry.isIntersecting && entry.intersectionRatio >= 0.45),
+      { threshold: [0, 0.45, 0.7] },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [mediaActive]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !slide.video) return;
+    if (mediaActive && inView) void video.play().catch(() => {});
+    else video.pause();
+  }, [mediaActive, inView, slide.video]);
 
   return (
     <article
+      ref={articleRef}
       className="feed-post"
       data-product-id={slide.id}
       data-category={slide.category}
@@ -528,12 +573,12 @@ function FeedPost({
         >
           {slide.video ? (
             <video
+              ref={videoRef}
               src={slide.video}
               muted
               loop
               playsInline
-              autoPlay
-              preload="metadata"
+              preload={mediaActive && inView ? "metadata" : "none"}
               aria-hidden
             />
           ) : (
@@ -669,6 +714,7 @@ export default function DiscoverPage() {
 
   onMenuPagerDragRef.current = (dx, at) => {
     if (immersiveOpenRef.current) return 0;
+    if (at === 1 && dx < 0) return dx * 0.98;
     if (at !== 2) return undefined;
     const surface = feedSurfaceRef.current;
     if (surface === "timeline" && dx > 0) return dx * 0.42;
@@ -677,7 +723,7 @@ export default function DiscoverPage() {
     return undefined;
   };
 
-  onPagerPreferVerticalRef.current = ({ target, dx, dy }) => {
+  onPagerPreferVerticalRef.current = ({ target, dx, dy, panelIndex }) => {
     if (immersiveOpenRef.current) return true;
     if (!(target instanceof Element)) return false;
 
@@ -686,14 +732,14 @@ export default function DiscoverPage() {
     const horizontalIntent = absDx > 10 && absDx > absDy * 1.02;
 
     const reels = reelsRef.current;
-    if (reels?.contains(target) && menuIndexRef.current === 1) {
+    if (reels?.contains(target) && panelIndex === 1) {
       const atTop = reels.scrollTop <= 6;
-      if (atTop && dx > 0 && horizontalIntent) return false;
+      if (horizontalIntent && (dx < 0 || (atTop && dx > 0))) return false;
       return true;
     }
 
     const feed = feedRef.current;
-    if (feed?.contains(target) && menuIndexRef.current === 2) {
+    if (feed?.contains(target) && panelIndex === 2) {
       const surface = feedSurfaceRef.current;
       if (surface === "timeline" && dx > 0 && horizontalIntent) return false;
       if (surface === "grid" && dx < 0 && horizontalIntent) return false;
@@ -722,12 +768,18 @@ export default function DiscoverPage() {
   const menuIndex = menuPager.index;
   menuIndexRef.current = menuIndex;
 
-  const view: DiscoverView = menuIndex === 2 ? "feed" : "reels";
+  const [chromePanel, setChromePanel] = useState(menuIndex);
+  useEffect(() => {
+    if (menuPager.dragging || menuPager.animating) return;
+    setChromePanel(menuIndex);
+  }, [menuIndex, menuPager.dragging, menuPager.animating]);
+
+  const view: DiscoverView = chromePanel === 2 ? "feed" : "reels";
 
   useLayoutEffect(() => {
     const chrome = feedImmersiveOpen
       ? immersiveChromeRef.current
-      : menuIndex === 2
+      : chromePanel === 2
         ? feedToolbarRef.current
         : pagerChromeRef.current;
     if (!chrome) {
@@ -739,7 +791,7 @@ export default function DiscoverPage() {
     const ro = new ResizeObserver(measure);
     ro.observe(chrome);
     return () => ro.disconnect();
-  }, [menuIndex, feedImmersiveOpen]);
+  }, [chromePanel, feedImmersiveOpen]);
   const [pagerWidth, setPagerWidth] = useState(0);
 
   useEffect(() => {
@@ -851,20 +903,25 @@ export default function DiscoverPage() {
 
   const immersiveMotionStyle = useMemo(() => {
     const { x, y, dragging, dismissing } = immersiveDismiss;
+    const width =
+      immersiveRootRef.current?.clientWidth ||
+      menuPager.containerRef.current?.clientWidth ||
+      390;
     const scale = dismissing
-      ? 0.94
+      ? 0.92
       : dragging
-        ? Math.max(0.9, 1 - Math.max(x, y) / 2200)
+        ? Math.max(0.88, 1 - Math.max(x, y) / 2000)
         : 1;
+    const radius = dragging || dismissing
+      ? immersiveDismissRadius(x, y, width)
+      : 0;
     return {
       transform: `translate3d(${x}px, ${y}px, 0) scale(${scale})`,
-      transition:
-        dragging && !dismissing
-          ? "none"
-          : "transform var(--motion-duration-medium) var(--motion-ease-out), opacity var(--motion-duration-medium) var(--motion-ease-out)",
-      opacity: dismissing ? 0.35 : dragging ? Math.max(0.72, 1 - y / 900) : 1,
+      borderRadius: radius > 0 ? `${radius}px` : undefined,
+      transition: dragging && !dismissing ? "none" : undefined,
+      opacity: dismissing ? 0.28 : dragging ? Math.max(0.7, 1 - y / 850) : 1,
     } as React.CSSProperties;
-  }, [immersiveDismiss]);
+  }, [immersiveDismiss, menuPager.containerRef]);
 
   useLayoutEffect(() => {
     if (feedSurface !== "timeline" || !feedScrollToId) return;
@@ -920,7 +977,7 @@ export default function DiscoverPage() {
   const goToMenuPanel = useCallback(
     (panel: number) => {
       setImmersiveProduct(null);
-      if (panel === 1) {
+      if (panel === 1 && menuIndexRef.current === 0) {
         requestAnimationFrame(() =>
           reelsRef.current?.scrollTo({ top: 0, behavior: "auto" }),
         );
@@ -980,7 +1037,6 @@ export default function DiscoverPage() {
     }
     if (menuIndex !== 2) {
       setFeedToolbarPinned(false);
-      setFeedSurface("grid");
     }
     prevMenuIndexRef.current = menuIndex;
   }, [menuIndex]);
@@ -1029,12 +1085,12 @@ export default function DiscoverPage() {
   }, [menuPager.goTo]);
 
   useEffect(() => {
-    if (menuPager.draggingRef.current) return;
+    if (menuPager.draggingRef.current || menuPager.animating) return;
     const q = menuSearchForPanel(menuIndex);
     const current = window.location.search.replace(/^\?/, "");
     if (q === current) return;
     navigate({ pathname: "/", search: q ? `?${q}` : "" }, { replace: true });
-  }, [menuIndex, navigate]);
+  }, [menuIndex, navigate, menuPager.animating]);
 
   useEffect(() => {
     const video = reelsWelcomeVideoRef.current;
@@ -1061,6 +1117,18 @@ export default function DiscoverPage() {
       ? -menuIndex * pagerTrackWidth + menuPager.dragPx
       : menuPager.dragPx;
   const trackTransform = `translate3d(${slideOffset}px, 0, 0)`;
+  const fractionalIndex =
+    pagerTrackWidth > 0
+      ? menuIndex + menuPager.dragPx / pagerTrackWidth
+      : menuIndex;
+  const pagerInteracting = menuPager.dragging || menuPager.animating;
+  const panelDepth = (idx: number): React.CSSProperties =>
+    pagerInteracting ? panelDepthStyle(idx, fractionalIndex) : {};
+  const crossfadeReelsChrome =
+    menuIndex === 1 && menuPager.dragPx < 0 && menuPager.dragging;
+  const reelsScrollerActive = menuIndex === 1 && !feedImmersiveOpen;
+  const feedTimelineActive =
+    menuIndex === 2 && feedSurface === "timeline" && !feedImmersiveOpen;
 
   const trackClass = [
     "menu-pager__track",
@@ -1072,16 +1140,28 @@ export default function DiscoverPage() {
   return (
     <div
       ref={menuPager.containerRef}
-      className={`menu-pager${feedImmersiveOpen ? " menu-pager--immersive menu-pager--reels-view" : ""}${menuIndex === 1 ? " menu-pager--reels-view" : ""}`}
+      className={[
+        "menu-pager",
+        feedImmersiveOpen ? " menu-pager--immersive menu-pager--reels-view" : "",
+        chromePanel === 1 ? " menu-pager--reels-view" : "",
+        crossfadeReelsChrome ? "menu-pager--crossfade-reels" : "",
+        pagerInteracting ? "menu-pager--interacting" : "",
+      ]
+        .filter(Boolean)
+        .join("")}
       style={
-        pagerChromeHeight > 0
-          ? ({
-              "--discover-chrome-h": `${pagerChromeHeight}px`,
-            } as React.CSSProperties)
-          : undefined
+        {
+          ...(pagerChromeHeight > 0
+            ? { "--discover-chrome-h": `${pagerChromeHeight}px` }
+            : {}),
+          "--pager-drag-fraction":
+            pagerTrackWidth > 0
+              ? String(menuPager.dragPx / pagerTrackWidth)
+              : "0",
+        } as React.CSSProperties
       }
     >
-      {menuIndex === 1 && !feedImmersiveOpen && (
+      {chromePanel === 1 && !feedImmersiveOpen && (
         <ReelsChrome
           chromeRef={pagerChromeRef}
           view={view}
@@ -1110,7 +1190,7 @@ export default function DiscoverPage() {
         />
       )}
 
-      {(menuIndex === 1 || feedImmersiveOpen) && (
+      {(chromePanel === 1 || feedImmersiveOpen) && (
         <div
           className={[
             "discover__progress",
@@ -1126,14 +1206,20 @@ export default function DiscoverPage() {
       )}
 
       <div className={trackClass} style={{ transform: trackTransform }}>
-        <div className="menu-pager__panel">
+        <div
+          className={`menu-pager__panel${menuIndex === 0 ? " menu-pager__panel--current" : ""}`}
+          style={panelDepth(0)}
+        >
           <HubPanel
             mediaActive={menuIndex === 0}
             onExploreMenu={() => goToMenuPanel(1)}
           />
         </div>
 
-        <div className="menu-pager__panel">
+        <div
+          className={`menu-pager__panel${menuIndex === 1 ? " menu-pager__panel--current" : ""}`}
+          style={panelDepth(1)}
+        >
           <div className="discover discover--reels">
             <div ref={reelsRef} className="discover__reels-scroller">
               <section
@@ -1181,7 +1267,11 @@ export default function DiscoverPage() {
               </section>
 
               {productSlides.map((slide) => (
-                <ProductReel key={slide.id} slide={slide} />
+                <ProductReel
+                  key={slide.id}
+                  slide={slide}
+                  scrollerActive={reelsScrollerActive}
+                />
               ))}
 
               <section className="discover__slide discover__pane discover__pane--outro">
@@ -1196,7 +1286,10 @@ export default function DiscoverPage() {
           </div>
         </div>
 
-        <div className="menu-pager__panel">
+        <div
+          className={`menu-pager__panel${menuIndex === 2 ? " menu-pager__panel--current" : ""}`}
+          style={panelDepth(2)}
+        >
           <div className="discover discover--feed">
             <div
               ref={feedRef}
@@ -1254,27 +1347,33 @@ export default function DiscoverPage() {
                   />
                 </>
               )}
-              <div key={feedSurface} className="feed-surface">
-                {feedSurface === "grid" ? (
+              <div className="feed-surface">
+                <div
+                  className={`feed-surface__layer feed-surface__layer--grid${feedSurface === "grid" ? " feed-surface__layer--on" : ""}`}
+                  aria-hidden={feedSurface !== "grid"}
+                >
                   <FeedProfileGrid
                     slides={productSlides}
                     onSelect={openFeedTimeline}
                   />
-                ) : (
-                  <>
-                    {productSlides.map((slide) => (
-                      <FeedPost
-                        key={slide.id}
-                        slide={slide}
-                        onOpenReels={openProductInReels}
-                      />
-                    ))}
-                    <footer className="feed-post feed-post--outro">
-                      <h3>{ptBR.discover.outroTitle}</h3>
-                      <p>{ptBR.discover.outroSubtitle}</p>
-                    </footer>
-                  </>
-                )}
+                </div>
+                <div
+                  className={`feed-surface__layer feed-surface__layer--timeline${feedSurface === "timeline" ? " feed-surface__layer--on" : ""}`}
+                  aria-hidden={feedSurface !== "timeline"}
+                >
+                  {productSlides.map((slide) => (
+                    <FeedPost
+                      key={slide.id}
+                      slide={slide}
+                      onOpenReels={openProductInReels}
+                      mediaActive={feedTimelineActive}
+                    />
+                  ))}
+                  <footer className="feed-post feed-post--outro">
+                    <h3>{ptBR.discover.outroTitle}</h3>
+                    <p>{ptBR.discover.outroSubtitle}</p>
+                  </footer>
+                </div>
               </div>
             </div>
           </div>
@@ -1303,7 +1402,11 @@ export default function DiscoverPage() {
             className="discover__reels-scroller discover__reels-scroller--immersive"
           >
             {immersiveSlides.map((slide) => (
-              <ProductReel key={slide.id} slide={slide} />
+              <ProductReel
+                key={slide.id}
+                slide={slide}
+                scrollerActive={feedImmersiveOpen}
+              />
             ))}
           </div>
         </div>
