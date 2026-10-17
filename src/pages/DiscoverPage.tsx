@@ -677,7 +677,7 @@ export default function DiscoverPage() {
     return undefined;
   };
 
-  onPagerPreferVerticalRef.current = ({ target, dx, dy }) => {
+  onPagerPreferVerticalRef.current = ({ target, dx, dy, panelIndex }) => {
     if (immersiveOpenRef.current) return true;
     if (!(target instanceof Element)) return false;
 
@@ -686,14 +686,14 @@ export default function DiscoverPage() {
     const horizontalIntent = absDx > 10 && absDx > absDy * 1.02;
 
     const reels = reelsRef.current;
-    if (reels?.contains(target) && menuIndexRef.current === 1) {
+    if (reels?.contains(target) && panelIndex === 1) {
       const atTop = reels.scrollTop <= 6;
-      if (atTop && dx > 0 && horizontalIntent) return false;
+      if (horizontalIntent && (dx < 0 || (atTop && dx > 0))) return false;
       return true;
     }
 
     const feed = feedRef.current;
-    if (feed?.contains(target) && menuIndexRef.current === 2) {
+    if (feed?.contains(target) && panelIndex === 2) {
       const surface = feedSurfaceRef.current;
       if (surface === "timeline" && dx > 0 && horizontalIntent) return false;
       if (surface === "grid" && dx < 0 && horizontalIntent) return false;
@@ -722,12 +722,18 @@ export default function DiscoverPage() {
   const menuIndex = menuPager.index;
   menuIndexRef.current = menuIndex;
 
-  const view: DiscoverView = menuIndex === 2 ? "feed" : "reels";
+  const [chromePanel, setChromePanel] = useState(menuIndex);
+  useEffect(() => {
+    if (menuPager.dragging || menuPager.animating) return;
+    setChromePanel(menuIndex);
+  }, [menuIndex, menuPager.dragging, menuPager.animating]);
+
+  const view: DiscoverView = chromePanel === 2 ? "feed" : "reels";
 
   useLayoutEffect(() => {
     const chrome = feedImmersiveOpen
       ? immersiveChromeRef.current
-      : menuIndex === 2
+      : chromePanel === 2
         ? feedToolbarRef.current
         : pagerChromeRef.current;
     if (!chrome) {
@@ -739,7 +745,7 @@ export default function DiscoverPage() {
     const ro = new ResizeObserver(measure);
     ro.observe(chrome);
     return () => ro.disconnect();
-  }, [menuIndex, feedImmersiveOpen]);
+  }, [chromePanel, feedImmersiveOpen]);
   const [pagerWidth, setPagerWidth] = useState(0);
 
   useEffect(() => {
@@ -1072,7 +1078,7 @@ export default function DiscoverPage() {
   return (
     <div
       ref={menuPager.containerRef}
-      className={`menu-pager${feedImmersiveOpen ? " menu-pager--immersive menu-pager--reels-view" : ""}${menuIndex === 1 ? " menu-pager--reels-view" : ""}`}
+      className={`menu-pager${feedImmersiveOpen ? " menu-pager--immersive menu-pager--reels-view" : ""}${chromePanel === 1 ? " menu-pager--reels-view" : ""}`}
       style={
         pagerChromeHeight > 0
           ? ({
@@ -1081,7 +1087,7 @@ export default function DiscoverPage() {
           : undefined
       }
     >
-      {menuIndex === 1 && !feedImmersiveOpen && (
+      {chromePanel === 1 && !feedImmersiveOpen && (
         <ReelsChrome
           chromeRef={pagerChromeRef}
           view={view}
@@ -1110,7 +1116,7 @@ export default function DiscoverPage() {
         />
       )}
 
-      {(menuIndex === 1 || feedImmersiveOpen) && (
+      {(chromePanel === 1 || feedImmersiveOpen) && (
         <div
           className={[
             "discover__progress",

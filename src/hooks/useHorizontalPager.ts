@@ -32,6 +32,7 @@ export type PagerPreferVerticalHandler = (info: {
   target: EventTarget | null;
   dx: number;
   dy: number;
+  panelIndex: number;
 }) => boolean;
 
 function defaultPreferVertical(target: EventTarget | null): boolean {
@@ -127,6 +128,7 @@ export function useHorizontalPager(
           target: event.target,
           dx: 0,
           dy: 0,
+          panelIndex: indexRef.current,
         }) ?? defaultPreferVertical(event.target);
 
       activeGesture = {
@@ -164,6 +166,7 @@ export function useHorizontalPager(
             target: event.target,
             dx,
             dy,
+            panelIndex: indexRef.current,
           }) ?? gesture.preferVertical;
 
         if (
@@ -207,7 +210,7 @@ export function useHorizontalPager(
             : null;
       const target = typeof custom === "number" ? custom : fallback;
       if (target !== null && target !== at) {
-        setIndex(target);
+        goTo(target);
       }
     };
 
@@ -274,18 +277,19 @@ export function useHorizontalPager(
       if (event.propertyName !== "transform") return;
       setAnimating(false);
     };
-    el.addEventListener("transitionend", onTransitionEnd);
+    const track = el.querySelector<HTMLElement>(".menu-pager__track");
+    track?.addEventListener("transitionend", onTransitionEnd);
 
     return () => {
       el.removeEventListener("touchstart", onTouchStartFixed);
       el.removeEventListener("touchmove", onTouchMove);
       el.removeEventListener("touchend", onTouchEnd);
       el.removeEventListener("touchcancel", onTouchCancel);
-      el.removeEventListener("transitionend", onTransitionEnd);
+      track?.removeEventListener("transitionend", onTransitionEnd);
       activeGesture = null;
       clearDrag();
     };
-  }, [panelCount, onCommitRef, onDragRef, preferVerticalRef, enabledRef]);
+  }, [panelCount, onCommitRef, onDragRef, preferVerticalRef, enabledRef, goTo]);
 
   return {
     containerRef,
