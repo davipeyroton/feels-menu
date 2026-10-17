@@ -1,0 +1,5 @@
+node_modules/
+dist/
+.rea-cache/
+.DS_Store
+*.local

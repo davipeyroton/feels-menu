@@ -1,0 +1,395 @@
+{
+  "source": "https://francisco.sipfloweb.com/",
+  "discover_source": "https://francisco.sipfloweb.com/discover?from=hub",
+  "observed_at": "2026-10-17T08:10:09.209Z",
+  "stack_notes": {
+    "router": "TanStack Router",
+    "hosting": "sipfloweb.com / Lovable __l5e assets",
+    "fonts": "Instrument Serif + Inter (Google Fonts)"
+  },
+  "hub": {
+    "location": "Porto",
+    "tagline": "Coffee, focaccia and good company.",
+    "video": "https://francisco.sipfloweb.com/__l5e/assets-v1/9d4647a8-2ccf-4ab5-accd-24a8ec7bfc15/capafran_final.mp4",
+    "poster": "https://francisco.sipfloweb.com/__l5e/assets-v1/9652724d-fd80-464b-bc36-b875abd1f50a/cafe-invictus.jpg",
+    "wordmark": "https://francisco.sipfloweb.com/__l5e/assets-v1/59967962-f3e5-4895-9c41-df68a10e7baa/francisco-wordmark.png",
+    "google_review_url": "https://search.google.com/local/writereview?placeid=ChIJq2s7TH9lJA0Ry8C2QZiuv_I",
+    "wifi": {
+      "ssid": "Francisco",
+      "password": "goncalo2025"
+    }
+  },
+  "categories": [
+    {
+      "id": "focaccias",
+      "label": "Focaccias"
+    },
+    {
+      "id": "specials",
+      "label": "Specials"
+    },
+    {
+      "id": "coffee",
+      "label": "Coffee"
+    },
+    {
+      "id": "cold",
+      "label": "Cold Drinks"
+    },
+    {
+      "id": "no-coffee",
+      "label": "No Coffee"
+    },
+    {
+      "id": "drinks",
+      "label": "Drinks"
+    }
+  ],
+  "slides": [
+    {
+      "kind": "welcome",
+      "index": 0
+    },
+    {
+      "kind": "product",
+      "index": 1,
+      "id": "roasted-bell-pepper-eggplants",
+      "category": "focaccias",
+      "name": "Roasted Bell Pepper & Eggplants",
+      "description": "Roasted peppers, eggplant, pickles and sun-dried tomato pesto.",
+      "price": "8,00 €",
+      "image": "https://francisco.sipfloweb.com/__l5e/assets-v1/84c15f4c-1d56-45f8-9107-0b0d065d5c90/roasted-bell-pepper-eggplants.jpeg",
+      "video": null
+    },
+    {
+      "kind": "product",
+      "index": 2,
+      "id": "mortadella",
+      "category": "focaccias",
+      "name": "Mortadella",
+      "description": "Mortadella, pesto, stracciatella, caramelized peanuts and arugula. Contains pork.",
+      "price": "8,50 €",
+      "image": null,
+      "video": "https://francisco.sipfloweb.com/__l5e/assets-v1/6837782c-1733-47c0-93f6-ac65ba70e0a3/Focaccia_mortadela_lovable.mp4"
+    },
+    {
+      "kind": "product",
+      "index": 3,
+      "id": "spicy-chorizo",
+      "category": "focaccias",
+      "name": "Spicy Chorizo",
+      "description": "Spicy chorizo, mashed potatoes, roasted bell peppers, stracciatella and chilli oil.",
+      "price": "8,00 €",
+      "image": "https://francisco.sipfloweb.com/__l5e/assets-v1/b48e3900-5969-4c74-8876-c92c6c4dfa2e/spicy-chorizo.jpeg",
+      "video": null
+    },
+    {
+      "kind": "product",
+      "index": 4,
+      "id": "pulled-pork-barbecue",
+      "category": "focaccias",
+      "name": "Pulled Pork Barbecue",
+      "description": "Pulled pork barbecue, stracciatella, pickles and arugula.",
+      "price": "8,50 €",
+      "image": null,
+      "video": "https://francisco.sipfloweb.com/__l5e/assets-v1/00f3260b-9f9a-433b-a2e9-6a7317e55c0b/Focaccia_pulled_pork_lovable.mp4"
+    },
+    {
+      "kind": "product",
+      "index": 5,
+      "id": "pepperoni",
+      "category": "focaccias",
+      "name": "Pepperoni",
+      "description": "Pepperoni, Taleggio cream cheese, pickles, arugula and hot honey sauce.",
+      "price": "9,00 €",
+      "image": "https://francisco.sipfloweb.com/__l5e/assets-v1/71a26b37-1714-4244-a222-dbeed6f9adf8/pepperoni-focaccia.jpeg",
+      "video": null
+    },
+    {
+      "kind": "product",
+      "index": 6,
+      "id": "iced-strawberry-matcha",
+      "category": "specials",
+      "name": "Iced Strawberry Matcha",
+      "description": "Ceremonial matcha over cold milk and fresh strawberry.",
+      "price": "5,00 €",
+      "image": "https://francisco.sipfloweb.com/__l5e/assets-v1/6109c7ba-8794-4599-a39e-4dbcb1e421a2/iced-strawberry-matcha.jpeg",
+      "video": null
+    },
+    {
+      "kind": "product",
+      "index": 7,
+      "id": "cold-brew-tonic-oj",
+      "category": "specials",
+      "name": "Cold Brew Tonic w/ OJ",
+      "description": "Cold brew and tonic, lifted with fresh orange juice.",
+      "price": "4,00 €",
+      "image": "https://francisco.sipfloweb.com/__l5e/assets-v1/fd384580-9241-4261-8d03-a493dee0b004/cold-brew-tonic-oj.jpg",
+      "video": null
+    },
+    {
+      "kind": "product",
+      "index": 8,
+      "id": "espresso",
+      "category": "coffee",
+      "name": "Espresso",
+      "description": "A short, dense pour of our house espresso.",
+      "price": "1,50 €",
+      "image": "https://francisco.sipfloweb.com/__l5e/assets-v1/b1083271-ba8b-4dc2-b7b4-5d650ced4f07/espresso.jpg",
+      "video": null
+    },
+    {
+      "kind": "product",
+      "index": 9,
+      "id": "americano",
+      "category": "coffee",
+      "name": "Americano",
+      "description": "Espresso lengthened with hot water.",
+      "price": "2,50 €",
+      "image": "https://francisco.sipfloweb.com/__l5e/assets-v1/353c9c91-3bde-47b4-99c0-4fca71e1510e/americano.jpeg",
+      "video": null
+    },
+    {
+      "kind": "product",
+      "index": 10,
+      "id": "batch-brew",
+      "category": "coffee",
+      "name": "Batch Brew",
+      "description": "Filter coffee brewed by the batch, clean and light.",
+      "price": "3,00 €",
+      "image": null,
+      "video": "https://francisco.sipfloweb.com/__l5e/assets-v1/fad5c246-cea3-436a-a9e3-ab557bf8660e/Café_Coado_lovable.mp4"
+    },
+    {
+      "kind": "product",
+      "index": 11,
+      "id": "espresso-milk-small",
+      "category": "coffee",
+      "name": "Espresso + Milk — Small",
+      "description": "Espresso and steamed milk, small.",
+      "price": "2,00 €",
+      "image": "https://francisco.sipfloweb.com/__l5e/assets-v1/c49f7dd0-df44-457e-8a71-42109ed5cf5a/espresso-milk-small.jpeg",
+      "video": null
+    },
+    {
+      "kind": "product",
+      "index": 12,
+      "id": "espresso-milk-medium",
+      "category": "coffee",
+      "name": "Espresso + Milk — Medium",
+      "description": "Espresso and steamed milk, medium.",
+      "price": "2,50 €",
+      "image": "https://francisco.sipfloweb.com/__l5e/assets-v1/d5603b4d-38d3-443c-ac76-2d05651dacf7/espresso-milk-medium.jpeg",
+      "video": null
+    },
+    {
+      "kind": "product",
+      "index": 13,
+      "id": "espresso-milk-large",
+      "category": "coffee",
+      "name": "Espresso + Milk — Large",
+      "description": "Espresso and steamed milk, large.",
+      "price": "3,00 €",
+      "image": null,
+      "video": "https://francisco.sipfloweb.com/__l5e/assets-v1/7b5ed6bb-74ff-4f3b-801f-7d058ea160ce/espresso-milk.mp4"
+    },
+    {
+      "kind": "product",
+      "index": 14,
+      "id": "iced-americano",
+      "category": "cold",
+      "name": "Iced Americano",
+      "description": "Espresso over ice and cold water.",
+      "price": "3,00 €",
+      "image": "https://francisco.sipfloweb.com/__l5e/assets-v1/4f702ed8-c910-4be2-8662-dc09f2cf18d3/iced-americano.jpeg",
+      "video": null
+    },
+    {
+      "kind": "product",
+      "index": 15,
+      "id": "iced-latte",
+      "category": "cold",
+      "name": "Iced Latte",
+      "description": "Espresso and cold milk over plenty of ice.",
+      "price": "4,00 €",
+      "image": null,
+      "video": "https://francisco.sipfloweb.com/__l5e/assets-v1/f12ecf28-e4fb-4dbf-830f-bc986776f401/iced-latte.mp4"
+    },
+    {
+      "kind": "product",
+      "index": 16,
+      "id": "cold-brew",
+      "category": "cold",
+      "name": "Cold Brew",
+      "description": "Steeped for hours, poured cold and smooth.",
+      "price": "4,00 €",
+      "image": "https://francisco.sipfloweb.com/__l5e/assets-v1/c123ffec-69ee-4d78-b144-0538839f53c8/cold-brew.jpg",
+      "video": null
+    },
+    {
+      "kind": "product",
+      "index": 17,
+      "id": "espresso-tonic",
+      "category": "cold",
+      "name": "Espresso Tonic",
+      "description": "Espresso over tonic and ice — bitter, bright, fizzy.",
+      "price": "4,20 €",
+      "image": null,
+      "video": "https://francisco.sipfloweb.com/__l5e/assets-v1/e530e9e9-1b23-4d32-b958-ae8ff61cc1ee/Café_Spritz_lovable.mp4"
+    },
+    {
+      "kind": "product",
+      "index": 18,
+      "id": "matcha-latte",
+      "category": "no-coffee",
+      "name": "Matcha Latte",
+      "description": "Whisked matcha with steamed milk.",
+      "price": "4,20 €",
+      "image": "https://francisco.sipfloweb.com/__l5e/assets-v1/0445879a-42d1-4682-92c5-18ea2bf3d613/matcha-latte.jpg",
+      "video": null
+    },
+    {
+      "kind": "product",
+      "index": 19,
+      "id": "iced-matcha-latte",
+      "category": "no-coffee",
+      "name": "Iced Matcha Latte",
+      "description": "Whisked matcha over cold milk and ice.",
+      "price": "4,50 €",
+      "image": null,
+      "video": "https://francisco.sipfloweb.com/__l5e/assets-v1/b9222c1e-ed21-4008-acb0-ed3915f1591b/Matcha_lovable.mp4"
+    },
+    {
+      "kind": "product",
+      "index": 20,
+      "id": "chai-latte",
+      "category": "no-coffee",
+      "name": "Chai Latte",
+      "description": "Spiced chai with steamed milk.",
+      "price": "3,80 €",
+      "image": "https://francisco.sipfloweb.com/__l5e/assets-v1/5358ad73-cd14-4d58-8629-200986cfa256/chai-latte.jpeg",
+      "video": null
+    },
+    {
+      "kind": "product",
+      "index": 21,
+      "id": "iced-chai-latte",
+      "category": "no-coffee",
+      "name": "Iced Chai Latte",
+      "description": "Spiced chai over cold milk and ice.",
+      "price": "4,00 €",
+      "image": "https://francisco.sipfloweb.com/__l5e/assets-v1/c6c31347-3ca3-4c32-bcf2-695c6d7953b4/iced-chai-latte.jpeg",
+      "video": null
+    },
+    {
+      "kind": "product",
+      "index": 22,
+      "id": "matcha-lemonade",
+      "category": "no-coffee",
+      "name": "Matcha Lemonade",
+      "description": "Matcha and house lemonade over ice.",
+      "price": "3,80 €",
+      "image": "https://francisco.sipfloweb.com/__l5e/assets-v1/5f6a392c-dbda-4b06-b081-431e293be891/matcha-lemonade.jpg",
+      "video": null
+    },
+    {
+      "kind": "product",
+      "index": 23,
+      "id": "teas",
+      "category": "no-coffee",
+      "name": "Teas",
+      "description": "Ask our staff for today's selection.",
+      "price": "2,50 €",
+      "image": "https://francisco.sipfloweb.com/__l5e/assets-v1/07ccd15c-c45e-425c-a703-1e134aa734a4/francisco-selection.jpg",
+      "video": null
+    },
+    {
+      "kind": "product",
+      "index": 24,
+      "id": "water",
+      "category": "drinks",
+      "name": "Water",
+      "description": "Still mineral water.",
+      "price": "1,50 €",
+      "image": "https://francisco.sipfloweb.com/__l5e/assets-v1/afe34ffe-ce16-4258-a867-7286ab0633c9/water.jpg",
+      "video": null
+    },
+    {
+      "kind": "product",
+      "index": 25,
+      "id": "sparkling-water",
+      "category": "drinks",
+      "name": "Sparkling Water",
+      "description": "Sparkling mineral water.",
+      "price": "2,00 €",
+      "image": "https://francisco.sipfloweb.com/__l5e/assets-v1/c60e5e82-9428-4d2c-8d25-0503bedf8a69/castelo.webp",
+      "video": null
+    },
+    {
+      "kind": "product",
+      "index": 26,
+      "id": "coca-cola",
+      "category": "drinks",
+      "name": "Coca-Cola / Zero",
+      "description": "Classic or Zero, served cold.",
+      "price": "2,50 €",
+      "image": "https://francisco.sipfloweb.com/__l5e/assets-v1/ed0cceb7-e22e-4a1e-89d2-4cdde5a6bc96/coca-cola-can.jpg",
+      "video": null
+    },
+    {
+      "kind": "product",
+      "index": 27,
+      "id": "kombuchas",
+      "category": "drinks",
+      "name": "Kombuchas",
+      "description": "Rotating kombucha selection. Ask staff.",
+      "price": "4,00 €",
+      "image": "https://francisco.sipfloweb.com/__l5e/assets-v1/a9494ec0-4e84-4b54-9ef3-4a214d6ccc14/kombuchas.jpg",
+      "video": null
+    },
+    {
+      "kind": "product",
+      "index": 28,
+      "id": "cold-brew-negroni",
+      "category": "drinks",
+      "name": "Cold Brew Negroni",
+      "description": "Cold brew, Campari and Martini.",
+      "price": "7,00 €",
+      "image": "https://francisco.sipfloweb.com/__l5e/assets-v1/da1b08e9-02f6-432f-aa0d-50f9ff7a3d4f/cold-brew-negroni.jpeg",
+      "video": null
+    },
+    {
+      "kind": "product",
+      "index": 29,
+      "id": "espresso-martini",
+      "category": "drinks",
+      "name": "Espresso Martini",
+      "description": "Vodka, double espresso and coffee liqueur.",
+      "price": "7,00 €",
+      "image": "https://francisco.sipfloweb.com/__l5e/assets-v1/bd80de03-3223-4e91-ad56-1d1969a7cf89/espresso-martini.jpeg",
+      "video": null
+    },
+    {
+      "kind": "product",
+      "index": 30,
+      "id": "beers",
+      "category": "drinks",
+      "name": "Beers",
+      "description": "Ask staff.",
+      "price": null,
+      "image": "https://francisco.sipfloweb.com/__l5e/assets-v1/07ccd15c-c45e-425c-a703-1e134aa734a4/francisco-selection.jpg",
+      "video": null
+    },
+    {
+      "kind": "product",
+      "index": 31,
+      "id": "wines",
+      "category": "drinks",
+      "name": "Wines",
+      "description": "Ask staff.",
+      "price": null,
+      "image": "https://francisco.sipfloweb.com/__l5e/assets-v1/07ccd15c-c45e-425c-a703-1e134aa734a4/francisco-selection.jpg",
+      "video": null
+    }
+  ]
+}
