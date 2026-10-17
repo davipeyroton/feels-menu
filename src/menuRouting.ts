@@ -17,3 +17,19 @@ export function normalizeViewParam(view: string | null): "reels" | "feed" | null
   if (view === "feed" || view === "reels") return view;
   return null;
 }
+
+export function readViewParamFromLocation(): "reels" | "feed" | null {
+  return normalizeViewParam(new URLSearchParams(window.location.search).get("view"));
+}
+
+/** Serialized query (no leading `?`), preserving unrelated keys. */
+export function menuSearchForPanel(
+  panel: number,
+  base = new URLSearchParams(window.location.search),
+): string {
+  const next = new URLSearchParams(base);
+  const view = viewParamFromMenuPanel(panel);
+  if (view) next.set("view", view);
+  else next.delete("view");
+  return next.toString();
+}

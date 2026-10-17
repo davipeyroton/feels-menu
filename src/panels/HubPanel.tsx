@@ -1,21 +1,36 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import WifiSheetModal from "../components/WifiSheetModal";
 import { hub } from "../data/menu";
 import { ptBR } from "../i18n/pt-BR";
 
-export default function HubPanel({ onExploreMenu }: { onExploreMenu: () => void }) {
+export default function HubPanel({
+  onExploreMenu,
+  mediaActive = true,
+}: {
+  onExploreMenu: () => void;
+  mediaActive?: boolean;
+}) {
   const [wifiOpen, setWifiOpen] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (mediaActive) void video.play().catch(() => {});
+    else video.pause();
+  }, [mediaActive]);
 
   return (
     <main className="hub">
       <video
+        ref={videoRef}
         className="hub__video"
         src={hub.video}
         poster={hub.poster}
-        autoPlay
         muted
         loop
         playsInline
+        preload="metadata"
       />
       <div className="hub__shade" />
       <div className="hub__gradient" />

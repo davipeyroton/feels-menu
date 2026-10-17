@@ -27,8 +27,9 @@ import { CategoryEmoji } from "../openmoji/categoryEmoji";
 import ThemeToggle from "../components/ThemeToggle";
 import {
   menuPanelFromViewParam,
+  menuSearchForPanel,
   normalizeViewParam,
-  viewParamFromMenuPanel,
+  readViewParamFromLocation,
 } from "../menuRouting";
 
 type DiscoverView = "reels" | "feed";
@@ -178,20 +179,34 @@ function CategoryDropdown({
 function ProductMedia({
   slide,
   className,
+  playVideo = false,
 }: {
   slide: ProductSlide;
   className: string;
+  playVideo?: boolean;
 }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !slide.video) return;
+    if (playVideo) {
+      void video.play().catch(() => {});
+    } else {
+      video.pause();
+    }
+  }, [playVideo, slide.video]);
+
   if (slide.video) {
     return (
       <video
+        ref={videoRef}
         className={className}
         src={slide.video}
         muted
         loop
         playsInline
-        autoPlay
-        preload="auto"
+        preload={playVideo ? "auto" : "metadata"}
         aria-hidden
       />
     );
@@ -204,9 +219,23 @@ function ProductMedia({
 
 function ProductReel({ slide }: { slide: ProductSlide }) {
   const [interested, setInterested] = useState(false);
+  const sectionRef = useRef<HTMLElement>(null);
+  const [inView, setInView] = useState(false);
+
+  useEffect(() => {
+    const node = sectionRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setInView(entry.isIntersecting && entry.intersectionRatio >= 0.55),
+      { threshold: [0, 0.55, 0.85] },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <section
+      ref={sectionRef}
       className="discover__slide"
       data-product-id={slide.id}
       data-category={slide.category}
@@ -215,6 +244,7 @@ function ProductReel({ slide }: { slide: ProductSlide }) {
         <ProductMedia
           slide={slide}
           className="discover__media discover__media--product"
+          playVideo={inView}
         />
       </div>
       <div className="discover__top-fade" />
@@ -580,6 +610,8 @@ export default function DiscoverPage() {
     surface: "grid" | "timeline";
     productId: string | null;
   }>({ surface: "grid", productId: null });
+  const reelsFromHubScrollDoneRef = useRef(false);
+  const reelsWelcomeVideoRef = useRef<HTMLVideoElement>(null);
   const onMenuPagerCommitRef = useRef<PagerCommitHandler | undefined>(undefined);
   const onMenuPagerDragRef = useRef<PagerDragHandler | undefined>(undefined);
   const productSlides = useMemo(() => allProducts, []);
@@ -994,30 +1026,41 @@ export default function DiscoverPage() {
     return () => el.removeEventListener("scroll", onScroll);
   }, [feedImmersiveOpen, syncImmersiveFromVertical]);
 
-  // URL → panel: only when the view query changes (back/forward, deep link).
-  // Do not depend on menuIndex — avoids mobile races where the pager moves before ?view= updates.
+  // Browser back/forward only — never push panel from ?view= while the pager is driving navigation.
+  useEffect(() => {
+    const onPopState = () => {
+      if (menuPager.draggingRef.current) return;
+      menuPager.goTo(menuPanelFromViewParam(readViewParamFromLocation()));
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, [menuPager.goTo]);
+
   useEffect(() => {
     if (menuPager.draggingRef.current) return;
-    menuPager.goTo(menuPanelFromViewParam(viewParam));
-  }, [viewParam, menuPager.goTo]);
-
-  // Panel → URL: one-way sync after swipes / toolbar; never re-run when searchParams object changes alone.
-  useEffect(() => {
-    if (menuPager.draggingRef.current) return;
-    const targetView = viewParamFromMenuPanel(menuIndex);
-    if (targetView === viewParam) return;
-
-    const params = new URLSearchParams(window.location.search);
-    if (targetView) params.set("view", targetView);
-    else params.delete("view");
-    const q = params.toString();
+    const q = menuSearchForPanel(menuIndex);
+    const current = window.location.search.replace(/^\?/, "");
+    if (q === current) return;
     navigate({ pathname: "/", search: q ? `?${q}` : "" }, { replace: true });
-  }, [menuIndex, navigate, viewParam]);
+  }, [menuIndex, navigate]);
 
   useEffect(() => {
-    if (searchParams.get("from") !== "hub" || menuIndex !== 1) return;
+    const video = reelsWelcomeVideoRef.current;
+    if (!video) return;
+    if (menuIndex === 1 && !feedImmersiveOpen) void video.play().catch(() => {});
+    else video.pause();
+  }, [menuIndex, feedImmersiveOpen]);
+
+  const fromHub = searchParams.get("from") === "hub";
+  useEffect(() => {
+    if (menuIndex !== 1) {
+      reelsFromHubScrollDoneRef.current = false;
+      return;
+    }
+    if (!fromHub || reelsFromHubScrollDoneRef.current) return;
+    reelsFromHubScrollDoneRef.current = true;
     requestAnimationFrame(() => reelsRef.current?.scrollTo({ top: 0, behavior: "auto" }));
-  }, [searchParams, menuIndex]);
+  }, [fromHub, menuIndex]);
 
   const pagerTrackWidth =
     pagerWidth > 0 ? pagerWidth : menuPager.containerRef.current?.clientWidth ?? 0;
@@ -1092,7 +1135,10 @@ export default function DiscoverPage() {
 
       <div className={trackClass} style={{ transform: trackTransform }}>
         <div className="menu-pager__panel">
-          <HubPanel onExploreMenu={() => goToMenuPanel(1)} />
+          <HubPanel
+            mediaActive={menuIndex === 0}
+            onExploreMenu={() => goToMenuPanel(1)}
+          />
         </div>
 
         <div className="menu-pager__panel">
@@ -1104,13 +1150,14 @@ export default function DiscoverPage() {
               >
                 <div className="discover__media-wrap" aria-hidden>
                   <video
+                    ref={reelsWelcomeVideoRef}
                     className="discover__media"
                     src={hub.video}
                     poster={hub.poster}
-                    autoPlay
                     muted
                     loop
                     playsInline
+                    preload="metadata"
                   />
                 </div>
                 <div className="discover__shade" />
