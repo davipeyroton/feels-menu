@@ -274,6 +274,10 @@ body {
   transition:
     transform 0.14s var(--motion-ease-out),
     opacity 0.14s var(--motion-ease-out);
+  contain: layout style;
+}
+
+.menu-pager--interacting .menu-pager__panel {
   will-change: transform, opacity;
 }
 
