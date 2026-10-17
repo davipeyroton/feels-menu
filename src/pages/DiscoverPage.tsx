@@ -775,14 +775,34 @@ export default function DiscoverPage() {
     setChromePanel(menuIndex);
   }, [menuIndex, menuPager.dragging, menuPager.animating]);
 
+  const [pagerWidth, setPagerWidth] = useState(0);
+
+  useEffect(() => {
+    const el = menuPager.containerRef.current;
+    if (!el) return;
+    const update = () => setPagerWidth(el.clientWidth);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [menuPager.containerRef]);
+
   useLayoutEffect(() => {
-    const preferReelsChrome =
-      menuIndex !== 2 ||
-      (menuPager.dragging && menuPager.dragPx > 0) ||
-      (menuPager.animating && menuIndex === 1);
+    const trackW =
+      pagerWidth > 0
+        ? pagerWidth
+        : menuPager.containerRef.current?.clientWidth ?? 0;
+    const slideOff =
+      trackW > 0 ? -menuIndex * trackW + menuPager.dragPx : menuPager.dragPx;
+    const frac = trackW > 0 ? -slideOff / trackW : menuIndex;
+    const towardReels =
+      feedImmersiveOpen ||
+      menuIndex <= 1 ||
+      frac < 1.62 ||
+      (menuPager.dragging && menuPager.dragPx > 0);
     const chrome = feedImmersiveOpen
       ? immersiveChromeRef.current
-      : preferReelsChrome
+      : towardReels
         ? pagerChromeRef.current
         : feedToolbarRef.current;
     if (!chrome) {
@@ -795,24 +815,13 @@ export default function DiscoverPage() {
     ro.observe(chrome);
     return () => ro.disconnect();
   }, [
-    chromePanel,
     feedImmersiveOpen,
     menuIndex,
-    menuPager.dragging,
     menuPager.dragPx,
+    menuPager.dragging,
     menuPager.animating,
+    pagerWidth,
   ]);
-  const [pagerWidth, setPagerWidth] = useState(0);
-
-  useEffect(() => {
-    const el = menuPager.containerRef.current;
-    if (!el) return;
-    const update = () => setPagerWidth(el.clientWidth);
-    update();
-    const observer = new ResizeObserver(update);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [menuPager.containerRef]);
 
   const immersiveSlides = useMemo(() => {
     if (!immersiveProduct) return [];
@@ -1135,9 +1144,7 @@ export default function DiscoverPage() {
       : menuPager.dragPx;
   const trackTransform = `translate3d(${slideOffset}px, 0, 0)`;
   const fractionalIndex =
-    pagerTrackWidth > 0
-      ? menuIndex + menuPager.dragPx / pagerTrackWidth
-      : menuIndex;
+    pagerTrackWidth > 0 ? -slideOffset / pagerTrackWidth : menuIndex;
   const pagerInteracting = menuPager.dragging || menuPager.animating;
   const panelDepth = (idx: number): React.CSSProperties =>
     pagerInteracting ? panelDepthStyle(idx, fractionalIndex) : {};
@@ -1147,8 +1154,10 @@ export default function DiscoverPage() {
     ? Math.min(2, Math.max(0, Math.round(fractionalIndex)))
     : chromePanel;
   const reelsNearPanel =
-    !feedImmersiveOpen && Math.abs(fractionalIndex - 1) < 0.94;
-  const reelsScrollerActive = reelsNearPanel && menuIndex !== 0;
+    !feedImmersiveOpen &&
+    fractionalIndex > 0.08 &&
+    fractionalIndex < 1.92;
+  const reelsScrollerActive = reelsNearPanel;
   const feedTimelineActive =
     menuIndex === 2 && feedSurface === "timeline" && !feedImmersiveOpen;
   const panelIsNear = (idx: number) =>
@@ -1187,7 +1196,7 @@ export default function DiscoverPage() {
         } as React.CSSProperties
       }
     >
-      {effectiveChromePanel === 1 && !feedImmersiveOpen && (
+      {!feedImmersiveOpen && (
         <ReelsChrome
           chromeRef={pagerChromeRef}
           view={view}
@@ -1196,6 +1205,11 @@ export default function DiscoverPage() {
           onReels={() => goToMenuPanel(1)}
           onFeed={() => goToMenuPanel(2)}
           onCategory={scrollToCategory}
+          extraClassName={
+            effectiveChromePanel === 1
+              ? undefined
+              : "discover--pager-chrome--hidden"
+          }
         />
       )}
 
@@ -1366,7 +1380,7 @@ export default function DiscoverPage() {
                 )}
                 <ThemeToggle />
               </div>
-              {menuIndex === 2 && (
+              {(menuIndex === 2 || menuPager.animating) && (
                 <>
                   {feedToolbarPinned && pagerChromeHeight > 0 && (
                     <div
