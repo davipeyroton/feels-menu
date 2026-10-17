@@ -743,6 +743,7 @@ export default function DiscoverPage() {
       const surface = feedSurfaceRef.current;
       if (surface === "timeline" && dx > 0 && horizontalIntent) return false;
       if (surface === "grid" && dx < 0 && horizontalIntent) return false;
+      if (surface === "grid" && dx > 0 && absDx > absDy * 1.28) return false;
       const atTop = feed.scrollTop <= 6;
       if (atTop && horizontalIntent) return false;
       return true;
@@ -774,14 +775,16 @@ export default function DiscoverPage() {
     setChromePanel(menuIndex);
   }, [menuIndex, menuPager.dragging, menuPager.animating]);
 
-  const view: DiscoverView = chromePanel === 2 ? "feed" : "reels";
-
   useLayoutEffect(() => {
+    const preferReelsChrome =
+      menuIndex !== 2 ||
+      (menuPager.dragging && menuPager.dragPx > 0) ||
+      (menuPager.animating && menuIndex === 1);
     const chrome = feedImmersiveOpen
       ? immersiveChromeRef.current
-      : chromePanel === 2
-        ? feedToolbarRef.current
-        : pagerChromeRef.current;
+      : preferReelsChrome
+        ? pagerChromeRef.current
+        : feedToolbarRef.current;
     if (!chrome) {
       setPagerChromeHeight(0);
       return;
@@ -791,7 +794,14 @@ export default function DiscoverPage() {
     const ro = new ResizeObserver(measure);
     ro.observe(chrome);
     return () => ro.disconnect();
-  }, [chromePanel, feedImmersiveOpen]);
+  }, [
+    chromePanel,
+    feedImmersiveOpen,
+    menuIndex,
+    menuPager.dragging,
+    menuPager.dragPx,
+    menuPager.animating,
+  ]);
   const [pagerWidth, setPagerWidth] = useState(0);
 
   useEffect(() => {
@@ -1098,9 +1108,13 @@ export default function DiscoverPage() {
   useEffect(() => {
     const video = reelsWelcomeVideoRef.current;
     if (!video) return;
-    if (menuIndex === 1 && !feedImmersiveOpen) void video.play().catch(() => {});
+    const reelsVisible =
+      !feedImmersiveOpen &&
+      (menuIndex === 1 ||
+        (menuIndex === 2 && (menuPager.dragPx > 8 || menuPager.animating)));
+    if (reelsVisible) void video.play().catch(() => {});
     else video.pause();
-  }, [menuIndex, feedImmersiveOpen]);
+  }, [menuIndex, feedImmersiveOpen, menuPager.dragPx, menuPager.animating]);
 
   const fromHub = searchParams.get("from") === "hub";
   useEffect(() => {
@@ -1129,9 +1143,18 @@ export default function DiscoverPage() {
     pagerInteracting ? panelDepthStyle(idx, fractionalIndex) : {};
   const crossfadeReelsChrome =
     menuIndex === 1 && menuPager.dragPx < 0 && menuPager.dragging;
-  const reelsScrollerActive = menuIndex === 1 && !feedImmersiveOpen;
+  const effectiveChromePanel = pagerInteracting
+    ? Math.min(2, Math.max(0, Math.round(fractionalIndex)))
+    : chromePanel;
+  const reelsNearPanel =
+    !feedImmersiveOpen && Math.abs(fractionalIndex - 1) < 0.94;
+  const reelsScrollerActive = reelsNearPanel && menuIndex !== 0;
   const feedTimelineActive =
     menuIndex === 2 && feedSurface === "timeline" && !feedImmersiveOpen;
+  const panelIsNear = (idx: number) =>
+    Math.abs(fractionalIndex - idx) < (pagerInteracting ? 0.58 : 0.01);
+  const view: DiscoverView =
+    effectiveChromePanel === 2 ? "feed" : "reels";
 
   const trackClass = [
     "menu-pager__track",
@@ -1146,7 +1169,7 @@ export default function DiscoverPage() {
       className={[
         "menu-pager",
         feedImmersiveOpen ? " menu-pager--immersive menu-pager--reels-view" : "",
-        chromePanel === 1 ? " menu-pager--reels-view" : "",
+        effectiveChromePanel === 1 ? " menu-pager--reels-view" : "",
         crossfadeReelsChrome ? "menu-pager--crossfade-reels" : "",
         pagerInteracting ? "menu-pager--interacting" : "",
       ]
@@ -1164,7 +1187,7 @@ export default function DiscoverPage() {
         } as React.CSSProperties
       }
     >
-      {chromePanel === 1 && !feedImmersiveOpen && (
+      {effectiveChromePanel === 1 && !feedImmersiveOpen && (
         <ReelsChrome
           chromeRef={pagerChromeRef}
           view={view}
@@ -1193,7 +1216,7 @@ export default function DiscoverPage() {
         />
       )}
 
-      {(chromePanel === 1 || feedImmersiveOpen) && (
+      {(effectiveChromePanel === 1 || feedImmersiveOpen) && (
         <div
           className={[
             "discover__progress",
@@ -1210,7 +1233,13 @@ export default function DiscoverPage() {
 
       <div className={trackClass} style={{ transform: trackTransform }}>
         <div
-          className={`menu-pager__panel${menuIndex === 0 ? " menu-pager__panel--current" : ""}`}
+          className={[
+            "menu-pager__panel",
+            menuIndex === 0 ? "menu-pager__panel--current" : "",
+            panelIsNear(0) ? "menu-pager__panel--near" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
           style={panelDepth(0)}
         >
           <HubPanel
@@ -1220,7 +1249,13 @@ export default function DiscoverPage() {
         </div>
 
         <div
-          className={`menu-pager__panel${menuIndex === 1 ? " menu-pager__panel--current" : ""}`}
+          className={[
+            "menu-pager__panel",
+            menuIndex === 1 ? "menu-pager__panel--current" : "",
+            panelIsNear(1) ? "menu-pager__panel--near" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
           style={panelDepth(1)}
         >
           <div className="discover discover--reels">
@@ -1290,7 +1325,13 @@ export default function DiscoverPage() {
         </div>
 
         <div
-          className={`menu-pager__panel${menuIndex === 2 ? " menu-pager__panel--current" : ""}`}
+          className={[
+            "menu-pager__panel",
+            menuIndex === 2 ? "menu-pager__panel--current" : "",
+            panelIsNear(2) ? "menu-pager__panel--near" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
           style={panelDepth(2)}
         >
           <div className="discover discover--feed">
