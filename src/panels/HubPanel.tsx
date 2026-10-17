@@ -30,7 +30,7 @@ export default function HubPanel({
         muted
         loop
         playsInline
-        preload="metadata"
+        preload={mediaActive ? "auto" : "metadata"}
       />
       <div className="hub__shade" />
       <div className="hub__gradient" />

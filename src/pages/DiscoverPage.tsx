@@ -186,10 +186,13 @@ function ProductMedia({
   slide,
   className,
   playVideo = false,
+  warm = false,
 }: {
   slide: ProductSlide;
   className: string;
   playVideo?: boolean;
+  /** Load buffer without autoplay (adjacent panel / idle). */
+  warm?: boolean;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -204,6 +207,7 @@ function ProductMedia({
   }, [playVideo, slide.video]);
 
   if (slide.video) {
+    const preload = playVideo ? "auto" : warm ? "metadata" : "none";
     return (
       <video
         ref={videoRef}
@@ -212,7 +216,7 @@ function ProductMedia({
         muted
         loop
         playsInline
-        preload={playVideo ? "auto" : "metadata"}
+        preload={preload}
         aria-hidden
       />
     );
@@ -223,21 +227,30 @@ function ProductMedia({
   return null;
 }
 
-function ProductReel({ slide }: { slide: ProductSlide }) {
+function ProductReel({
+  slide,
+  scrollerActive = true,
+}: {
+  slide: ProductSlide;
+  scrollerActive?: boolean;
+}) {
   const [interested, setInterested] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
   const [inView, setInView] = useState(false);
 
   useEffect(() => {
     const node = sectionRef.current;
-    if (!node) return;
+    if (!node || !scrollerActive) {
+      setInView(false);
+      return;
+    }
     const observer = new IntersectionObserver(
       ([entry]) => setInView(entry.isIntersecting && entry.intersectionRatio >= 0.55),
       { threshold: [0, 0.55, 0.85] },
     );
     observer.observe(node);
     return () => observer.disconnect();
-  }, []);
+  }, [scrollerActive]);
 
   return (
     <section
@@ -250,7 +263,8 @@ function ProductReel({ slide }: { slide: ProductSlide }) {
         <ProductMedia
           slide={slide}
           className="discover__media discover__media--product"
-          playVideo={inView}
+          playVideo={scrollerActive && inView}
+          warm={scrollerActive}
         />
       </div>
       <div className="discover__top-fade" />
@@ -501,14 +515,41 @@ function FeedProfileGrid({
 function FeedPost({
   slide,
   onOpenReels,
+  mediaActive = false,
 }: {
   slide: ProductSlide;
   onOpenReels: (product: ProductSlide) => void;
+  mediaActive?: boolean;
 }) {
   const [interested, setInterested] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const articleRef = useRef<HTMLElement>(null);
+  const [inView, setInView] = useState(false);
+
+  useEffect(() => {
+    const node = articleRef.current;
+    if (!node || !mediaActive) {
+      setInView(false);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => setInView(entry.isIntersecting && entry.intersectionRatio >= 0.45),
+      { threshold: [0, 0.45, 0.7] },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [mediaActive]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !slide.video) return;
+    if (mediaActive && inView) void video.play().catch(() => {});
+    else video.pause();
+  }, [mediaActive, inView, slide.video]);
 
   return (
     <article
+      ref={articleRef}
       className="feed-post"
       data-product-id={slide.id}
       data-category={slide.category}
@@ -532,12 +573,12 @@ function FeedPost({
         >
           {slide.video ? (
             <video
+              ref={videoRef}
               src={slide.video}
               muted
               loop
               playsInline
-              autoPlay
-              preload="metadata"
+              preload={mediaActive && inView ? "metadata" : "none"}
               aria-hidden
             />
           ) : (
@@ -936,7 +977,7 @@ export default function DiscoverPage() {
   const goToMenuPanel = useCallback(
     (panel: number) => {
       setImmersiveProduct(null);
-      if (panel === 1) {
+      if (panel === 1 && menuIndexRef.current === 0) {
         requestAnimationFrame(() =>
           reelsRef.current?.scrollTo({ top: 0, behavior: "auto" }),
         );
@@ -996,7 +1037,6 @@ export default function DiscoverPage() {
     }
     if (menuIndex !== 2) {
       setFeedToolbarPinned(false);
-      setFeedSurface("grid");
     }
     prevMenuIndexRef.current = menuIndex;
   }, [menuIndex]);
@@ -1045,12 +1085,12 @@ export default function DiscoverPage() {
   }, [menuPager.goTo]);
 
   useEffect(() => {
-    if (menuPager.draggingRef.current) return;
+    if (menuPager.draggingRef.current || menuPager.animating) return;
     const q = menuSearchForPanel(menuIndex);
     const current = window.location.search.replace(/^\?/, "");
     if (q === current) return;
     navigate({ pathname: "/", search: q ? `?${q}` : "" }, { replace: true });
-  }, [menuIndex, navigate]);
+  }, [menuIndex, navigate, menuPager.animating]);
 
   useEffect(() => {
     const video = reelsWelcomeVideoRef.current;
@@ -1081,9 +1121,14 @@ export default function DiscoverPage() {
     pagerTrackWidth > 0
       ? menuIndex + menuPager.dragPx / pagerTrackWidth
       : menuIndex;
-  const panelDepth = (idx: number) => panelDepthStyle(idx, fractionalIndex);
+  const pagerInteracting = menuPager.dragging || menuPager.animating;
+  const panelDepth = (idx: number): React.CSSProperties =>
+    pagerInteracting ? panelDepthStyle(idx, fractionalIndex) : {};
   const crossfadeReelsChrome =
     menuIndex === 1 && menuPager.dragPx < 0 && menuPager.dragging;
+  const reelsScrollerActive = menuIndex === 1 && !feedImmersiveOpen;
+  const feedTimelineActive =
+    menuIndex === 2 && feedSurface === "timeline" && !feedImmersiveOpen;
 
   const trackClass = [
     "menu-pager__track",
@@ -1100,6 +1145,7 @@ export default function DiscoverPage() {
         feedImmersiveOpen ? " menu-pager--immersive menu-pager--reels-view" : "",
         chromePanel === 1 ? " menu-pager--reels-view" : "",
         crossfadeReelsChrome ? "menu-pager--crossfade-reels" : "",
+        pagerInteracting ? "menu-pager--interacting" : "",
       ]
         .filter(Boolean)
         .join("")}
@@ -1160,14 +1206,20 @@ export default function DiscoverPage() {
       )}
 
       <div className={trackClass} style={{ transform: trackTransform }}>
-        <div className="menu-pager__panel" style={panelDepth(0)}>
+        <div
+          className={`menu-pager__panel${menuIndex === 0 ? " menu-pager__panel--current" : ""}`}
+          style={panelDepth(0)}
+        >
           <HubPanel
             mediaActive={menuIndex === 0}
             onExploreMenu={() => goToMenuPanel(1)}
           />
         </div>
 
-        <div className="menu-pager__panel" style={panelDepth(1)}>
+        <div
+          className={`menu-pager__panel${menuIndex === 1 ? " menu-pager__panel--current" : ""}`}
+          style={panelDepth(1)}
+        >
           <div className="discover discover--reels">
             <div ref={reelsRef} className="discover__reels-scroller">
               <section
@@ -1215,7 +1267,11 @@ export default function DiscoverPage() {
               </section>
 
               {productSlides.map((slide) => (
-                <ProductReel key={slide.id} slide={slide} />
+                <ProductReel
+                  key={slide.id}
+                  slide={slide}
+                  scrollerActive={reelsScrollerActive}
+                />
               ))}
 
               <section className="discover__slide discover__pane discover__pane--outro">
@@ -1230,7 +1286,10 @@ export default function DiscoverPage() {
           </div>
         </div>
 
-        <div className="menu-pager__panel" style={panelDepth(2)}>
+        <div
+          className={`menu-pager__panel${menuIndex === 2 ? " menu-pager__panel--current" : ""}`}
+          style={panelDepth(2)}
+        >
           <div className="discover discover--feed">
             <div
               ref={feedRef}
@@ -1288,27 +1347,33 @@ export default function DiscoverPage() {
                   />
                 </>
               )}
-              <div key={feedSurface} className="feed-surface">
-                {feedSurface === "grid" ? (
+              <div className="feed-surface">
+                <div
+                  className={`feed-surface__layer feed-surface__layer--grid${feedSurface === "grid" ? " feed-surface__layer--on" : ""}`}
+                  aria-hidden={feedSurface !== "grid"}
+                >
                   <FeedProfileGrid
                     slides={productSlides}
                     onSelect={openFeedTimeline}
                   />
-                ) : (
-                  <>
-                    {productSlides.map((slide) => (
-                      <FeedPost
-                        key={slide.id}
-                        slide={slide}
-                        onOpenReels={openProductInReels}
-                      />
-                    ))}
-                    <footer className="feed-post feed-post--outro">
-                      <h3>{ptBR.discover.outroTitle}</h3>
-                      <p>{ptBR.discover.outroSubtitle}</p>
-                    </footer>
-                  </>
-                )}
+                </div>
+                <div
+                  className={`feed-surface__layer feed-surface__layer--timeline${feedSurface === "timeline" ? " feed-surface__layer--on" : ""}`}
+                  aria-hidden={feedSurface !== "timeline"}
+                >
+                  {productSlides.map((slide) => (
+                    <FeedPost
+                      key={slide.id}
+                      slide={slide}
+                      onOpenReels={openProductInReels}
+                      mediaActive={feedTimelineActive}
+                    />
+                  ))}
+                  <footer className="feed-post feed-post--outro">
+                    <h3>{ptBR.discover.outroTitle}</h3>
+                    <p>{ptBR.discover.outroSubtitle}</p>
+                  </footer>
+                </div>
               </div>
             </div>
           </div>
@@ -1337,7 +1402,11 @@ export default function DiscoverPage() {
             className="discover__reels-scroller discover__reels-scroller--immersive"
           >
             {immersiveSlides.map((slide) => (
-              <ProductReel key={slide.id} slide={slide} />
+              <ProductReel
+                key={slide.id}
+                slide={slide}
+                scrollerActive={feedImmersiveOpen}
+              />
             ))}
           </div>
         </div>

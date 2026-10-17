@@ -84,7 +84,11 @@ export function useHorizontalPager(
       setDragPx(0);
       const root = containerRef.current;
       if (root) {
-        root.style.setProperty("--motion-duration-pager", "0.46s");
+        root.style.setProperty(
+          "--motion-duration-pager",
+          `${pagerSnapDurationSeconds(0).toFixed(3)}s`,
+        );
+        root.style.setProperty("--motion-ease-pager", PAGER_SNAP_EASE_OUT);
       }
     },
     [panelCount],

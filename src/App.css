@@ -216,7 +216,17 @@ body {
   overscroll-behavior: none;
   touch-action: pan-y pinch-zoom;
   background: var(--app-bg);
-  transition: background 0.25s ease;
+  transition: background 0.32s var(--motion-ease-out);
+}
+
+.menu-pager:not(.menu-pager--interacting) .menu-pager__panel:not(.menu-pager__panel--current) {
+  pointer-events: none;
+  content-visibility: hidden;
+  contain-intrinsic-size: 100% 100dvh;
+}
+
+.menu-pager__panel--current {
+  pointer-events: auto;
 }
 
 .menu-pager__track {
@@ -1049,11 +1059,6 @@ button {
     border-radius var(--motion-duration-medium) var(--motion-ease-dismiss);
 }
 
-.discover__immersive--dragging,
-.discover__immersive--dismissing {
-  animation: none;
-}
-
 .discover__reels-scroller--immersive {
   touch-action: pan-y;
   overscroll-behavior-y: contain;
@@ -1061,29 +1066,37 @@ button {
 
 @keyframes discover-immersive-in {
   from {
-    opacity: 0;
-    transform: translate3d(14px, 0, 0);
+    opacity: 0.96;
   }
 
   to {
     opacity: 1;
-    transform: translate3d(0, 0, 0);
   }
 }
 
 .feed-surface {
-  animation: feed-surface-in var(--motion-duration-medium) var(--motion-ease-out) both;
+  position: relative;
 }
 
-@keyframes feed-surface-in {
+.feed-surface__layer {
+  display: none;
+}
+
+.feed-surface__layer--on {
+  display: block;
+}
+
+.feed-surface__layer--timeline.feed-surface__layer--on {
+  animation: feed-surface-fade-in 0.22s var(--motion-ease-out) both;
+}
+
+@keyframes feed-surface-fade-in {
   from {
-    opacity: 0.72;
-    transform: translate3d(10px, 0, 0);
+    opacity: 0.94;
   }
 
   to {
     opacity: 1;
-    transform: translate3d(0, 0, 0);
   }
 }
 
@@ -1634,27 +1647,13 @@ button {
 }
 
 @media (max-width: 720px) {
-  @keyframes feed-surface-in {
+  @keyframes feed-surface-fade-in {
     from {
-      opacity: 0.88;
-      transform: translate3d(0, 0, 0);
+      opacity: 0.97;
     }
 
     to {
       opacity: 1;
-      transform: translate3d(0, 0, 0);
-    }
-  }
-
-  @keyframes discover-immersive-in {
-    from {
-      opacity: 0.92;
-      transform: translate3d(0, 0, 0);
-    }
-
-    to {
-      opacity: 1;
-      transform: translate3d(0, 0, 0);
     }
   }
 }
@@ -1668,7 +1667,7 @@ button {
   }
 
   .discover__immersive,
-  .feed-surface,
+  .feed-surface__layer--timeline,
   .discover__cat-dropdown-menu {
     animation: none !important;
   }
