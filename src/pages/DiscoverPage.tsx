@@ -8,6 +8,10 @@ import {
 } from "../hooks/useHorizontalPager";
 import { useImmersiveDismiss } from "../hooks/useImmersiveDismiss";
 import {
+  immersiveDismissRadius,
+  panelDepthStyle,
+} from "../motion/instagramMotion";
+import {
   forwardRef,
   useCallback,
   useEffect,
@@ -669,6 +673,7 @@ export default function DiscoverPage() {
 
   onMenuPagerDragRef.current = (dx, at) => {
     if (immersiveOpenRef.current) return 0;
+    if (at === 1 && dx < 0) return dx * 0.98;
     if (at !== 2) return undefined;
     const surface = feedSurfaceRef.current;
     if (surface === "timeline" && dx > 0) return dx * 0.42;
@@ -857,20 +862,25 @@ export default function DiscoverPage() {
 
   const immersiveMotionStyle = useMemo(() => {
     const { x, y, dragging, dismissing } = immersiveDismiss;
+    const width =
+      immersiveRootRef.current?.clientWidth ||
+      menuPager.containerRef.current?.clientWidth ||
+      390;
     const scale = dismissing
-      ? 0.94
+      ? 0.92
       : dragging
-        ? Math.max(0.9, 1 - Math.max(x, y) / 2200)
+        ? Math.max(0.88, 1 - Math.max(x, y) / 2000)
         : 1;
+    const radius = dragging || dismissing
+      ? immersiveDismissRadius(x, y, width)
+      : 0;
     return {
       transform: `translate3d(${x}px, ${y}px, 0) scale(${scale})`,
-      transition:
-        dragging && !dismissing
-          ? "none"
-          : "transform var(--motion-duration-medium) var(--motion-ease-out), opacity var(--motion-duration-medium) var(--motion-ease-out)",
-      opacity: dismissing ? 0.35 : dragging ? Math.max(0.72, 1 - y / 900) : 1,
+      borderRadius: radius > 0 ? `${radius}px` : undefined,
+      transition: dragging && !dismissing ? "none" : undefined,
+      opacity: dismissing ? 0.28 : dragging ? Math.max(0.7, 1 - y / 850) : 1,
     } as React.CSSProperties;
-  }, [immersiveDismiss]);
+  }, [immersiveDismiss, menuPager.containerRef]);
 
   useLayoutEffect(() => {
     if (feedSurface !== "timeline" || !feedScrollToId) return;
@@ -1067,6 +1077,13 @@ export default function DiscoverPage() {
       ? -menuIndex * pagerTrackWidth + menuPager.dragPx
       : menuPager.dragPx;
   const trackTransform = `translate3d(${slideOffset}px, 0, 0)`;
+  const fractionalIndex =
+    pagerTrackWidth > 0
+      ? menuIndex + menuPager.dragPx / pagerTrackWidth
+      : menuIndex;
+  const panelDepth = (idx: number) => panelDepthStyle(idx, fractionalIndex);
+  const crossfadeReelsChrome =
+    menuIndex === 1 && menuPager.dragPx < 0 && menuPager.dragging;
 
   const trackClass = [
     "menu-pager__track",
@@ -1078,13 +1095,24 @@ export default function DiscoverPage() {
   return (
     <div
       ref={menuPager.containerRef}
-      className={`menu-pager${feedImmersiveOpen ? " menu-pager--immersive menu-pager--reels-view" : ""}${chromePanel === 1 ? " menu-pager--reels-view" : ""}`}
+      className={[
+        "menu-pager",
+        feedImmersiveOpen ? " menu-pager--immersive menu-pager--reels-view" : "",
+        chromePanel === 1 ? " menu-pager--reels-view" : "",
+        crossfadeReelsChrome ? "menu-pager--crossfade-reels" : "",
+      ]
+        .filter(Boolean)
+        .join("")}
       style={
-        pagerChromeHeight > 0
-          ? ({
-              "--discover-chrome-h": `${pagerChromeHeight}px`,
-            } as React.CSSProperties)
-          : undefined
+        {
+          ...(pagerChromeHeight > 0
+            ? { "--discover-chrome-h": `${pagerChromeHeight}px` }
+            : {}),
+          "--pager-drag-fraction":
+            pagerTrackWidth > 0
+              ? String(menuPager.dragPx / pagerTrackWidth)
+              : "0",
+        } as React.CSSProperties
       }
     >
       {chromePanel === 1 && !feedImmersiveOpen && (
@@ -1132,14 +1160,14 @@ export default function DiscoverPage() {
       )}
 
       <div className={trackClass} style={{ transform: trackTransform }}>
-        <div className="menu-pager__panel">
+        <div className="menu-pager__panel" style={panelDepth(0)}>
           <HubPanel
             mediaActive={menuIndex === 0}
             onExploreMenu={() => goToMenuPanel(1)}
           />
         </div>
 
-        <div className="menu-pager__panel">
+        <div className="menu-pager__panel" style={panelDepth(1)}>
           <div className="discover discover--reels">
             <div ref={reelsRef} className="discover__reels-scroller">
               <section
@@ -1202,7 +1230,7 @@ export default function DiscoverPage() {
           </div>
         </div>
 
-        <div className="menu-pager__panel">
+        <div className="menu-pager__panel" style={panelDepth(2)}>
           <div className="discover discover--feed">
             <div
               ref={feedRef}

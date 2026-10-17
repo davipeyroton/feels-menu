@@ -1,4 +1,9 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
+import {
+  PAGER_SNAP_EASE_OUT,
+  pagerRubberBandFactor,
+  pagerSnapDurationSeconds,
+} from "../motion/instagramMotion";
 
 const LOCK_THRESHOLD_PX = 8;
 const HORIZONTAL_LOCK_RATIO = 1.48;
@@ -92,18 +97,16 @@ export function useHorizontalPager(
     const panelWidth = () => el.clientWidth || window.innerWidth;
 
     const setSnapDuration = (velocityX = 0) => {
-      const speed = Math.min(1.5, Math.abs(velocityX));
-      const seconds = Math.max(0.34, Math.min(0.52, 0.5 - speed * 0.11));
+      const seconds = pagerSnapDurationSeconds(velocityX);
       el.style.setProperty("--motion-duration-pager", `${seconds.toFixed(3)}s`);
+      el.style.setProperty("--motion-ease-pager", PAGER_SNAP_EASE_OUT);
     };
 
     const rubberBand = (dx: number, atIndex: number) => {
       const custom = onDragRef?.current?.(dx, atIndex);
       if (custom !== undefined) return custom;
-      let next = dx;
-      if (atIndex === 0 && next > 0) next *= 0.32;
-      if (atIndex === panelCount - 1 && next < 0) next *= 0.32;
-      return next;
+      const factor = pagerRubberBandFactor(dx, atIndex, panelCount);
+      return dx * factor;
     };
 
     const clearDrag = () => {
@@ -194,7 +197,15 @@ export function useHorizontalPager(
       gesture.lastT = event.timeStamp;
 
       event.preventDefault();
-      setDragPx(rubberBand(dx, indexRef.current));
+      const banded = rubberBand(dx, indexRef.current);
+      setDragPx(banded);
+      const width = panelWidth();
+      if (width > 0) {
+        el.style.setProperty(
+          "--pager-drag-fraction",
+          String(Math.max(-1, Math.min(1, banded / width))),
+        );
+      }
     };
 
     const applyCommit = (at: number, direction: PagerCommitDirection) => {
@@ -219,6 +230,8 @@ export function useHorizontalPager(
       activeGesture = null;
       setDragging(false);
       draggingRef.current = false;
+
+      el.style.setProperty("--pager-drag-fraction", "0");
 
       if (!gesture || gesture.locked !== "x") {
         setDragPx(0);
@@ -265,6 +278,7 @@ export function useHorizontalPager(
     const onTouchCancel = () => {
       activeGesture = null;
       setAnimating(true);
+      el.style.setProperty("--pager-drag-fraction", "0");
       clearDrag();
     };
 
@@ -273,11 +287,11 @@ export function useHorizontalPager(
     el.addEventListener("touchend", onTouchEnd, { passive: true });
     el.addEventListener("touchcancel", onTouchCancel, { passive: true });
 
+    const track = el.querySelector<HTMLElement>(".menu-pager__track");
     const onTransitionEnd = (event: TransitionEvent) => {
-      if (event.propertyName !== "transform") return;
+      if (event.target !== track || event.propertyName !== "transform") return;
       setAnimating(false);
     };
-    const track = el.querySelector<HTMLElement>(".menu-pager__track");
     track?.addEventListener("transitionend", onTransitionEnd);
 
     return () => {
