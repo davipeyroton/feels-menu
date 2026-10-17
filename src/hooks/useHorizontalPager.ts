@@ -235,9 +235,8 @@ export function useHorizontalPager(
       setDragging(false);
       draggingRef.current = false;
 
-      el.style.setProperty("--pager-drag-fraction", "0");
-
       if (!gesture || gesture.locked !== "x") {
+        el.style.setProperty("--pager-drag-fraction", "0");
         setDragPx(0);
         return;
       }
@@ -247,9 +246,6 @@ export function useHorizontalPager(
       const width = panelWidth();
       const commitPx = Math.max(52, width * COMMIT_FRACTION);
       const progress = -dx / width;
-
-      setAnimating(true);
-      setDragPx(0);
 
       const at = indexRef.current;
       const velocity = gesture.velocityX;
@@ -266,17 +262,30 @@ export function useHorizontalPager(
         dx > commitPx ||
         (flingRight && dx > 0);
 
+      setAnimating(true);
+
+      const finishCommit = (direction: PagerCommitDirection) => {
+        requestAnimationFrame(() => {
+          applyCommit(at, direction);
+          el.style.setProperty("--pager-drag-fraction", "0");
+        });
+      };
+
       if (wantsNext && !wantsPrev) {
-        applyCommit(at, "next");
+        finishCommit("next");
         return;
       }
       if (wantsPrev && !wantsNext) {
-        applyCommit(at, "prev");
+        finishCommit("prev");
         return;
       }
       if (wantsNext && wantsPrev) {
-        applyCommit(at, dx < 0 ? "next" : "prev");
+        finishCommit(dx < 0 ? "next" : "prev");
+        return;
       }
+
+      el.style.setProperty("--pager-drag-fraction", "0");
+      setDragPx(0);
     };
 
     const onTouchCancel = () => {
