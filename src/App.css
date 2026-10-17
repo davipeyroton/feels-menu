@@ -1013,8 +1013,15 @@ button {
   display: flex;
   flex-direction: column;
   color: #fff;
+  touch-action: pan-y;
+  overscroll-behavior: contain;
   animation: discover-immersive-in var(--motion-duration-medium) var(--motion-ease-out)
     both;
+}
+
+.discover__reels-scroller--immersive {
+  touch-action: pan-y;
+  overscroll-behavior-y: contain;
 }
 
 @keyframes discover-immersive-in {

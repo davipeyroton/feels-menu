@@ -625,21 +625,12 @@ export default function DiscoverPage() {
 
   immersiveOpenRef.current = immersiveProduct !== null;
 
-  const restoreFromImmersive = useCallback(() => {
-    const place = feedImmersiveReturnRef.current;
-    setImmersiveProduct(null);
-    setFeedSurface(place.surface);
-    if (place.surface === "timeline" && place.productId) {
-      setFeedScrollToId(place.productId);
-    } else {
-      feedRef.current?.scrollTo({ top: 0, behavior: "auto" });
-    }
-  }, []);
+  const restoreFromImmersiveRef = useRef<() => void>(() => {});
 
   onMenuPagerCommitRef.current = (at, direction) => {
     if (immersiveOpenRef.current) {
       if (direction === "prev") {
-        restoreFromImmersive();
+        restoreFromImmersiveRef.current();
         return "handled";
       }
       return "handled";
@@ -690,7 +681,7 @@ export default function DiscoverPage() {
   const menuPager = useHorizontalPager(
     3,
     menuPanelFromViewParam(viewParam),
-    true,
+    !feedImmersiveOpen,
     onMenuPagerCommitRef,
     onMenuPagerDragRef,
   );
@@ -835,6 +826,24 @@ export default function DiscoverPage() {
     [pagerChromeHeight],
   );
 
+  const restoreFromImmersive = useCallback(() => {
+    const place = feedImmersiveReturnRef.current;
+    immersiveReelsRef.current?.scrollTo({ top: 0, behavior: "auto" });
+    setImmersiveProduct(null);
+    setFeedSurface(place.surface);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (place.surface === "timeline" && place.productId) {
+          scrollFeedToProduct(place.productId, "auto");
+        } else {
+          feedRef.current?.scrollTo({ top: 0, behavior: "auto" });
+        }
+      });
+    });
+  }, [scrollFeedToProduct]);
+
+  restoreFromImmersiveRef.current = restoreFromImmersive;
+
   useLayoutEffect(() => {
     if (feedSurface !== "timeline" || !feedScrollToId) return;
     scrollFeedToProduct(feedScrollToId, "auto");
@@ -883,6 +892,8 @@ export default function DiscoverPage() {
   );
 
   const onDiscoverTouchStart = (event: React.TouchEvent) => {
+    if (!feedImmersiveOpen) return;
+    event.stopPropagation();
     const touch = event.touches[0];
     discoverSwipeRef.current = {
       x: touch.clientX,
@@ -896,6 +907,9 @@ export default function DiscoverPage() {
   }, []);
 
   const onDiscoverTouchEnd = (event: React.TouchEvent) => {
+    if (!feedImmersiveOpen) return;
+    event.stopPropagation();
+
     const start = discoverSwipeRef.current;
     discoverSwipeRef.current = null;
     if (!start) return;
@@ -907,21 +921,21 @@ export default function DiscoverPage() {
 
     const verticalDominant =
       Math.abs(dy) >= SWIPE_MIN_PX && Math.abs(dy) > Math.abs(dx) * 1.15;
-    if (feedImmersiveOpen) {
-      const horizontalDominant =
-        Math.abs(dx) >= SWIPE_MIN_PX && Math.abs(dx) > Math.abs(dy) * 1.15;
-      if (horizontalDominant && dx > 0) {
-        restoreFromImmersive();
-        return;
-      }
-      if (verticalDominant && dy > 0) {
-        const scroller = immersiveReelsRef.current;
-        if (scroller && visibleSlideIndex(scroller) === 0) {
-          restoreFromImmersive();
-          return;
-        }
-      }
+    const horizontalDominant =
+      Math.abs(dx) >= SWIPE_MIN_PX && Math.abs(dx) > Math.abs(dy) * 1.15;
+    if (horizontalDominant && dx > 0) {
+      restoreFromImmersive();
       return;
+    }
+    if (verticalDominant && dy > 0) {
+      const scroller = immersiveReelsRef.current;
+      const atTop =
+        scroller &&
+        (scroller.scrollTop <= 12 ||
+          visibleSlideIndex(scroller) === 0);
+      if (atTop) {
+        restoreFromImmersive();
+      }
     }
   };
 
@@ -1297,12 +1311,12 @@ export default function DiscoverPage() {
           role="dialog"
           aria-modal="true"
           aria-label={ptBR.discover.reelDialog(immersiveProduct.name)}
+          onTouchStart={onDiscoverTouchStart}
+          onTouchEnd={onDiscoverTouchEnd}
         >
           <div
             ref={immersiveReelsRef}
             className="discover__reels-scroller discover__reels-scroller--immersive"
-            onTouchStart={onDiscoverTouchStart}
-            onTouchEnd={onDiscoverTouchEnd}
           >
             {immersiveSlides.map((slide) => (
               <ProductReel key={slide.id} slide={slide} />
