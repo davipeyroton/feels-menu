@@ -18,15 +18,6 @@ type Gesture = {
   preferVertical: boolean;
 };
 
-function isVerticalScrollSurface(target: EventTarget | null): boolean {
-  if (!(target instanceof Element)) return false;
-  return Boolean(
-    target.closest(
-      ".discover__reels-scroller, .discover__feed, .discover__v-scroller",
-    ),
-  );
-}
-
 export type PagerCommitDirection = "next" | "prev";
 export type PagerCommitResult = number | "handled" | undefined;
 
@@ -37,12 +28,28 @@ export type PagerCommitHandler = (
 
 export type PagerDragHandler = (dx: number, at: number) => number | undefined;
 
+export type PagerPreferVerticalHandler = (info: {
+  target: EventTarget | null;
+  dx: number;
+  dy: number;
+}) => boolean;
+
+function defaultPreferVertical(target: EventTarget | null): boolean {
+  if (!(target instanceof Element)) return false;
+  return Boolean(
+    target.closest(
+      ".discover__reels-scroller, .discover__feed, .discover__v-scroller",
+    ),
+  );
+}
+
 export function useHorizontalPager(
   panelCount: number,
   initialIndex = 0,
-  enabled = true,
+  enabledRef?: RefObject<boolean>,
   onCommitRef?: RefObject<PagerCommitHandler | undefined>,
   onDragRef?: RefObject<PagerDragHandler | undefined>,
+  preferVerticalRef?: RefObject<PagerPreferVerticalHandler | undefined>,
 ) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(initialIndex);
@@ -50,11 +57,12 @@ export function useHorizontalPager(
   const [dragging, setDragging] = useState(false);
   const [animating, setAnimating] = useState(false);
   const indexRef = useRef(index);
-  const gestureRef = useRef<Gesture | null>(null);
   const draggingRef = useRef(false);
 
   indexRef.current = index;
   draggingRef.current = dragging;
+
+  const isEnabled = () => enabledRef?.current !== false;
 
   const goTo = useCallback(
     (next: number) => {
@@ -78,7 +86,7 @@ export function useHorizontalPager(
 
   useEffect(() => {
     const el = containerRef.current;
-    if (!el || !enabled) return;
+    if (!el) return;
 
     const panelWidth = () => el.clientWidth || window.innerWidth;
 
@@ -97,10 +105,31 @@ export function useHorizontalPager(
       return next;
     };
 
-    const onTouchStart = (event: TouchEvent) => {
-      if (event.touches.length !== 1) return;
+    const clearDrag = () => {
+      setDragging(false);
+      draggingRef.current = false;
+      setDragPx(0);
+    };
+
+    let activeGesture: Gesture | null = null;
+
+    const onTouchStartFixed = (event: TouchEvent) => {
+      if (!isEnabled() || event.touches.length !== 1) return;
+      if (
+        event.target instanceof Element &&
+        event.target.closest(".discover__immersive")
+      ) {
+        return;
+      }
       const touch = event.touches[0];
-      gestureRef.current = {
+      const preferVertical =
+        preferVerticalRef?.current?.({
+          target: event.target,
+          dx: 0,
+          dy: 0,
+        }) ?? defaultPreferVertical(event.target);
+
+      activeGesture = {
         x: touch.clientX,
         y: touch.clientY,
         t: event.timeStamp,
@@ -108,14 +137,14 @@ export function useHorizontalPager(
         lastX: touch.clientX,
         lastT: event.timeStamp,
         velocityX: 0,
-        preferVertical: isVerticalScrollSurface(event.target),
+        preferVertical,
       };
       setAnimating(false);
     };
 
     const onTouchMove = (event: TouchEvent) => {
-      const gesture = gestureRef.current;
-      if (!gesture || event.touches.length !== 1) return;
+      const gesture = activeGesture;
+      if (!gesture || !isEnabled() || event.touches.length !== 1) return;
 
       const touch = event.touches[0];
       const dx = touch.clientX - gesture.x;
@@ -130,8 +159,15 @@ export function useHorizontalPager(
         }
         const absDx = Math.abs(dx);
         const absDy = Math.abs(dy);
+        const preferVerticalNow =
+          preferVerticalRef?.current?.({
+            target: event.target,
+            dx,
+            dy,
+          }) ?? gesture.preferVertical;
+
         if (
-          gesture.preferVertical &&
+          preferVerticalNow &&
           absDy > LOCK_THRESHOLD_PX &&
           absDy >= absDx * VERTICAL_SCROLL_LOCK_RATIO
         ) {
@@ -176,8 +212,8 @@ export function useHorizontalPager(
     };
 
     const onTouchEnd = (event: TouchEvent) => {
-      const gesture = gestureRef.current;
-      gestureRef.current = null;
+      const gesture = activeGesture;
+      activeGesture = null;
       setDragging(false);
       draggingRef.current = false;
 
@@ -219,30 +255,37 @@ export function useHorizontalPager(
         return;
       }
       if (wantsNext && wantsPrev) {
-        applyCommit(at, Math.abs(dx) >= commitPx ? (dx < 0 ? "next" : "prev") : "prev");
+        applyCommit(at, dx < 0 ? "next" : "prev");
       }
     };
 
     const onTouchCancel = () => {
-      gestureRef.current = null;
-      setDragging(false);
-      draggingRef.current = false;
+      activeGesture = null;
       setAnimating(true);
-      setDragPx(0);
+      clearDrag();
     };
 
-    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchstart", onTouchStartFixed, { passive: true });
     el.addEventListener("touchmove", onTouchMove, { passive: false });
     el.addEventListener("touchend", onTouchEnd, { passive: true });
     el.addEventListener("touchcancel", onTouchCancel, { passive: true });
 
+    const onTransitionEnd = (event: TransitionEvent) => {
+      if (event.propertyName !== "transform") return;
+      setAnimating(false);
+    };
+    el.addEventListener("transitionend", onTransitionEnd);
+
     return () => {
-      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchstart", onTouchStartFixed);
       el.removeEventListener("touchmove", onTouchMove);
       el.removeEventListener("touchend", onTouchEnd);
       el.removeEventListener("touchcancel", onTouchCancel);
+      el.removeEventListener("transitionend", onTransitionEnd);
+      activeGesture = null;
+      clearDrag();
     };
-  }, [enabled, panelCount, onCommitRef, onDragRef]);
+  }, [panelCount, onCommitRef, onDragRef, preferVerticalRef, enabledRef]);
 
   return {
     containerRef,
