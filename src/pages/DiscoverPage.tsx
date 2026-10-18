@@ -24,6 +24,14 @@ import {
 } from "react";
 import { flushSync } from "react-dom";
 import { useFeedPostSwipeDismiss } from "../hooks/useFeedPostSwipeDismiss";
+import { useNearViewport } from "../hooks/useNearViewport";
+import {
+  imageLoadingForUrl,
+  isMediaWarm,
+  markMediaWarm,
+  videoPreloadForUrl,
+  warmProductMedia,
+} from "../media/mediaWarm";
 import {
   allProducts,
   categories,
@@ -208,8 +216,12 @@ function ProductMedia({
   const [buffered, setBuffered] = useState(false);
 
   useEffect(() => {
-    if (warm || playVideo) setBuffered(true);
-  }, [warm, playVideo]);
+    if (warm || playVideo) {
+      setBuffered(true);
+      markMediaWarm(slide.video);
+      markMediaWarm(slide.image);
+    }
+  }, [warm, playVideo, slide.video, slide.image]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -222,7 +234,10 @@ function ProductMedia({
   }, [playVideo, slide.video]);
 
   if (slide.video) {
-    const preload = playVideo ? "auto" : buffered ? "metadata" : "none";
+    const preload = videoPreloadForUrl(
+      slide.video,
+      playVideo || (buffered && warm),
+    );
     return (
       <video
         ref={videoRef}
@@ -237,17 +252,29 @@ function ProductMedia({
     );
   }
   if (slide.image) {
-    return <img className={className} src={slide.image} alt="" />;
+    return (
+      <img
+        className={className}
+        src={slide.image}
+        alt=""
+        loading={imageLoadingForUrl(slide.image, playVideo || warm)}
+        decoding="async"
+      />
+    );
   }
   return null;
 }
 
 function ProductReel({
   slide,
+  reelIndex,
+  allSlides,
   playbackActive = false,
   cacheMedia = false,
 }: {
   slide: ProductSlide;
+  reelIndex: number;
+  allSlides: ProductSlide[];
   /** Play when slide is in view and reels panel is focused. */
   playbackActive?: boolean;
   /** Keep slide buffers after leaving reels (feed ↔ reels swipe). */
@@ -272,6 +299,15 @@ function ProductReel({
   useEffect(() => {
     if (inView) setEverInView(true);
   }, [inView]);
+
+  useEffect(() => {
+    if (!inView) return;
+    warmProductMedia(slide);
+    const prev = allSlides[reelIndex - 1];
+    const next = allSlides[reelIndex + 1];
+    if (prev) warmProductMedia(prev);
+    if (next) warmProductMedia(next);
+  }, [allSlides, inView, reelIndex, slide]);
 
   const shouldPlay = playbackActive && inView;
   const shouldWarm = cacheMedia && (everInView || shouldPlay);
@@ -506,17 +542,44 @@ function primeVideoThumb(video: HTMLVideoElement) {
 }
 
 function FeedGridThumb({ slide }: { slide: ProductSlide }) {
+  const hostRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const nearView = useNearViewport(hostRef);
+  const mediaReady =
+    nearView ||
+    isMediaWarm(slide.video ?? slide.image);
 
   useEffect(() => {
-    if (slide.image || !slide.video) return;
+    if (!nearView) return;
+    warmProductMedia(slide);
+  }, [nearView, slide]);
+
+  useEffect(() => {
+    if (!mediaReady || slide.image || !slide.video) return;
     const video = videoRef.current;
     if (!video) return;
     primeVideoThumb(video);
-  }, [slide.image, slide.video]);
+  }, [mediaReady, slide.image, slide.video]);
+
+  if (!mediaReady) {
+    return (
+      <div ref={hostRef} className="feed-grid__thumb-host">
+        <span className="feed-grid__placeholder" aria-hidden />
+      </div>
+    );
+  }
 
   if (slide.image) {
-    return <img src={slide.image} alt="" loading="lazy" />;
+    return (
+      <div ref={hostRef} className="feed-grid__thumb-host">
+        <img
+          src={slide.image}
+          alt=""
+          loading={imageLoadingForUrl(slide.image, nearView)}
+          decoding="async"
+        />
+      </div>
+    );
   }
 
   if (slide.video) {
@@ -524,20 +587,26 @@ function FeedGridThumb({ slide }: { slide: ProductSlide }) {
       ? slide.video
       : `${slide.video}#t=0.05`;
     return (
-      <video
-        ref={videoRef}
-        className="feed-grid__video-thumb"
-        src={thumbSrc}
-        muted
-        playsInline
-        preload="auto"
-        aria-hidden
-        onLoadedData={(event) => primeVideoThumb(event.currentTarget)}
-      />
+      <div ref={hostRef} className="feed-grid__thumb-host">
+        <video
+          ref={videoRef}
+          className="feed-grid__video-thumb"
+          src={thumbSrc}
+          muted
+          playsInline
+          preload={videoPreloadForUrl(slide.video, nearView)}
+          aria-hidden
+          onLoadedData={(event) => primeVideoThumb(event.currentTarget)}
+        />
+      </div>
     );
   }
 
-  return <span className="feed-grid__placeholder" aria-hidden />;
+  return (
+    <div ref={hostRef} className="feed-grid__thumb-host">
+      <span className="feed-grid__placeholder" aria-hidden />
+    </div>
+  );
 }
 
 function FeedProfileGrid({
@@ -620,9 +689,18 @@ function FeedPost({
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !slide.video) return;
-    if (mediaActive && inView) void video.play().catch(() => {});
-    else video.pause();
+    if (mediaActive && inView) {
+      markMediaWarm(slide.video);
+      void video.play().catch(() => {});
+    } else {
+      video.pause();
+    }
   }, [mediaActive, inView, slide.video]);
+
+  useEffect(() => {
+    if (!mediaActive || !inView) return;
+    warmProductMedia(slide);
+  }, [mediaActive, inView, slide]);
 
   return (
     <article
@@ -682,10 +760,15 @@ function FeedPost({
                 muted
                 loop
                 playsInline
-                preload={mediaActive && inView ? "metadata" : "none"}
+                preload={videoPreloadForUrl(slide.video, mediaActive && inView)}
               />
             ) : (
-              <img src={slide.image!} alt="" loading="lazy" />
+              <img
+                src={slide.image!}
+                alt=""
+                loading={imageLoadingForUrl(slide.image, mediaActive && inView)}
+                decoding="async"
+              />
             )}
           </button>
         ) : (
@@ -705,10 +788,15 @@ function FeedPost({
                 muted
                 loop
                 playsInline
-                preload={mediaActive && inView ? "metadata" : "none"}
+                preload={videoPreloadForUrl(slide.video, mediaActive && inView)}
               />
             ) : (
-              <img src={slide.image!} alt="" loading="lazy" />
+              <img
+                src={slide.image!}
+                alt=""
+                loading={imageLoadingForUrl(slide.image, mediaActive && inView)}
+                decoding="async"
+              />
             )}
           </div>
         ))}
@@ -749,6 +837,7 @@ export default function DiscoverPage() {
   const [activeCat, setActiveCat] = useState(categories[0]?.id ?? "focaccias");
   const [progress, setProgress] = useState(0);
   const [feedSurface, setFeedSurface] = useState<"grid" | "timeline">("grid");
+  const [feedTimelineEver, setFeedTimelineEver] = useState(false);
   const [feedScrollToId, setFeedScrollToId] = useState<string | null>(null);
   const [feedGridDismissActive, setFeedGridDismissActive] = useState(false);
   const [flyHiddenProductId, setFlyHiddenProductId] = useState<string | null>(
@@ -808,6 +897,7 @@ export default function DiscoverPage() {
 
   const openFeedTimeline = useCallback(
     (product: ProductSlide, originCell?: HTMLElement) => {
+      setFeedTimelineEver(true);
       setActiveCat(product.category);
       setFeedScrollToId(product.id);
       if (originCell) {
@@ -1519,10 +1609,12 @@ export default function DiscoverPage() {
                 </div>
               </section>
 
-              {productSlides.map((slide) => (
+              {productSlides.map((slide, index) => (
                 <ProductReel
                   key={slide.id}
                   slide={slide}
+                  reelIndex={index}
+                  allSlides={productSlides}
                   playbackActive={reelsPlaybackActive}
                   cacheMedia={reelsCacheMedia}
                 />
@@ -1566,18 +1658,19 @@ export default function DiscoverPage() {
                   className={`feed-surface__layer feed-surface__layer--timeline${feedSurface === "timeline" ? " feed-surface__layer--on" : ""}`}
                   aria-hidden={feedSurface !== "timeline"}
                 >
-                  {productSlides.map((slide) => (
-                    <FeedPost
-                      key={slide.id}
-                      slide={slide}
-                      mediaActive={feedTimelineActive}
-                      mediaFlyHidden={flyHiddenProductId === slide.id}
-                      closableFromGrid={feedGridDismissActive}
-                      onCloseFromGrid={(fromRect) =>
-                        closeExpandedFeedPost(slide.id, fromRect)
-                      }
-                    />
-                  ))}
+                  {feedTimelineEver &&
+                    productSlides.map((slide) => (
+                      <FeedPost
+                        key={slide.id}
+                        slide={slide}
+                        mediaActive={feedTimelineActive}
+                        mediaFlyHidden={flyHiddenProductId === slide.id}
+                        closableFromGrid={feedGridDismissActive}
+                        onCloseFromGrid={(fromRect) =>
+                          closeExpandedFeedPost(slide.id, fromRect)
+                        }
+                      />
+                    ))}
                   <footer className="feed-post feed-post--outro">
                     <h3>{ptBR.discover.outroTitle}</h3>
                     <p>{ptBR.discover.outroSubtitle}</p>

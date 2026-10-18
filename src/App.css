@@ -1359,6 +1359,8 @@ button {
 .feed-post {
   border-bottom: 1px solid var(--border-subtle);
   margin-bottom: 0.25rem;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 420px;
 }
 
 .feed-post__head {
@@ -1529,10 +1531,20 @@ button {
   overflow: hidden;
   cursor: pointer;
   background: #111;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 160px;
+}
+
+.feed-grid__thumb-host {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .feed-grid__cell img,
-.feed-grid__cell video {
+.feed-grid__cell video,
+.feed-grid__thumb-host img,
+.feed-grid__thumb-host video {
   width: 100%;
   height: 100%;
   object-fit: cover;
