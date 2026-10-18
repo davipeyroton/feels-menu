@@ -41,6 +41,7 @@ import {
 } from "../data/menu";
 import { ptBR } from "../i18n/pt-BR";
 import { CategoryEmoji } from "../openmoji/categoryEmoji";
+import { WifiIcon } from "../components/icons";
 import ThemeToggle from "../components/ThemeToggle";
 import FeedMediaFlyOverlay, {
   readPostMediaRect,
@@ -74,35 +75,6 @@ function FeedIcon() {
       <rect x="14" y="3" width="7" height="7" rx="1" fill="currentColor" />
       <rect x="3" y="14" width="7" height="7" rx="1" fill="currentColor" />
       <rect x="14" y="14" width="7" height="7" rx="1" fill="currentColor" />
-    </svg>
-  );
-}
-
-function WifiIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden>
-      <path
-        d="M2.5 8.5a14 14 0 0 1 19 0"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.65"
-        strokeLinecap="round"
-      />
-      <path
-        d="M5.5 11.8a9.5 9.5 0 0 1 13 0"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.65"
-        strokeLinecap="round"
-      />
-      <path
-        d="M8.6 15a5 5 0 0 1 6.8 0"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.65"
-        strokeLinecap="round"
-      />
-      <circle cx="12" cy="18.25" r="1.15" fill="currentColor" />
     </svg>
   );
 }
@@ -518,6 +490,7 @@ function ReelsChrome({
                   aria-label={ptBR.discover.wifiOpenHub}
                 >
                   <WifiIcon />
+                  <span className="discover__wifi-label">{ptBR.discover.wifiLabel}</span>
                 </button>
               </>
             )}

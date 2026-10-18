@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { GoogleBusinessIcon, WifiIcon } from "../components/icons";
 import WifiSheetModal from "../components/WifiSheetModal";
 import { hub } from "../data/menu";
 import { ptBR } from "../i18n/pt-BR";
@@ -50,21 +51,27 @@ export default function HubPanel({
           </button>
           {hub.google_review_url && (
             <a
-              className="btn btn--glass"
+              className="btn btn--glass btn--hub-icon-trail"
               href={hub.google_review_url}
               target="_blank"
               rel="noreferrer"
             >
-              {ptBR.hub.googleReview} <span aria-hidden>↗</span>
+              <span className="btn__label">{ptBR.hub.googleReview}</span>
+              <span className="btn__trail-icon">
+                <GoogleBusinessIcon />
+              </span>
             </a>
           )}
           {hub.wifi && (
             <button
               type="button"
-              className="btn btn--glass"
+              className="btn btn--glass btn--hub-icon-trail"
               onClick={() => setWifiOpen(true)}
             >
-              {ptBR.hub.wifi} <span aria-hidden>›</span>
+              <span className="btn__label">{ptBR.hub.wifi}</span>
+              <span className="btn__trail-icon">
+                <WifiIcon />
+              </span>
             </button>
           )}
         </nav>
