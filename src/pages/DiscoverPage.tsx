@@ -42,6 +42,7 @@ import {
 import { ptBR } from "../i18n/pt-BR";
 import { CategoryEmoji } from "../openmoji/categoryEmoji";
 import { WifiIcon } from "../components/icons";
+import ProductMediaPlaceholder from "../components/ProductMediaPlaceholder";
 import ThemeToggle from "../components/ThemeToggle";
 import FeedMediaFlyOverlay, {
   readPostMediaRect,
@@ -263,7 +264,7 @@ function ProductMedia({
       />
     );
   }
-  return null;
+  return <ProductMediaPlaceholder className={className} />;
 }
 
 function ProductReel({
@@ -581,7 +582,7 @@ function FeedGridThumb({ slide }: { slide: ProductSlide }) {
   if (!mediaReady) {
     return (
       <div ref={hostRef} className="feed-grid__thumb-host">
-        <span className="feed-grid__placeholder" aria-hidden />
+        <ProductMediaPlaceholder className="feed-grid__placeholder" />
       </div>
     );
   }
@@ -595,6 +596,14 @@ function FeedGridThumb({ slide }: { slide: ProductSlide }) {
           loading={imageLoadingForUrl(slide.image, nearView)}
           decoding="async"
         />
+      </div>
+    );
+  }
+
+  if (!slide.video) {
+    return (
+      <div ref={hostRef} className="feed-grid__thumb-host">
+        <ProductMediaPlaceholder />
       </div>
     );
   }
@@ -621,7 +630,7 @@ function FeedGridThumb({ slide }: { slide: ProductSlide }) {
 
   return (
     <div ref={hostRef} className="feed-grid__thumb-host">
-      <span className="feed-grid__placeholder" aria-hidden />
+      <ProductMediaPlaceholder className="feed-grid__placeholder" />
     </div>
   );
 }
@@ -719,6 +728,31 @@ function FeedPost({
     warmProductMedia(slide);
   }, [mediaActive, inView, slide]);
 
+  const feedMediaContent = slide.video ? (
+    <video
+      ref={videoRef}
+      src={slide.video}
+      muted
+      loop
+      playsInline
+      preload={videoPreloadForUrl(slide.video, mediaActive && inView)}
+    />
+  ) : slide.image ? (
+    <img
+      src={slide.image}
+      alt=""
+      loading={imageLoadingForUrl(slide.image, mediaActive && inView)}
+      decoding="async"
+    />
+  ) : (
+    <ProductMediaPlaceholder />
+  );
+
+  const feedMediaClass = [
+    "feed-post__media",
+    !slide.image && !slide.video ? "feed-post__media--placeholder" : "",
+  ];
+
   return (
     <article
       ref={articleRef}
@@ -748,75 +782,42 @@ function FeedPost({
           {categoryLabel(slide.category)}
         </span>
       </header>
-      {(slide.image || slide.video) &&
-        (closableFromGrid ? (
-          <button
-            ref={mediaRef}
-            type="button"
-            className={[
-              "feed-post__media",
-              "feed-post__media--closable",
-              swipeMotion.dragging ? "feed-post__media--dragging" : "",
-              mediaFlyHidden ? "feed-post__media--fly-hidden" : "",
-            ]
-              .filter(Boolean)
-              .join(" ")}
-            style={{
-              transform: `translate3d(${swipeMotion.translateX}px, 0, 0) scale(${swipeMotion.scale})`,
-            }}
-            onClick={() => {
-              if (shouldSuppressClick()) return;
-              onCloseFromGrid?.();
-            }}
-            aria-label={ptBR.discover.closeFeedPostToGrid}
-          >
-            {slide.video ? (
-              <video
-                ref={videoRef}
-                src={slide.video}
-                muted
-                loop
-                playsInline
-                preload={videoPreloadForUrl(slide.video, mediaActive && inView)}
-              />
-            ) : (
-              <img
-                src={slide.image!}
-                alt=""
-                loading={imageLoadingForUrl(slide.image, mediaActive && inView)}
-                decoding="async"
-              />
-            )}
-          </button>
-        ) : (
-          <div
-            className={[
-              "feed-post__media",
-              mediaFlyHidden ? "feed-post__media--fly-hidden" : "",
-            ]
-              .filter(Boolean)
-              .join(" ")}
-            aria-hidden
-          >
-            {slide.video ? (
-              <video
-                ref={videoRef}
-                src={slide.video}
-                muted
-                loop
-                playsInline
-                preload={videoPreloadForUrl(slide.video, mediaActive && inView)}
-              />
-            ) : (
-              <img
-                src={slide.image!}
-                alt=""
-                loading={imageLoadingForUrl(slide.image, mediaActive && inView)}
-                decoding="async"
-              />
-            )}
-          </div>
-        ))}
+      {closableFromGrid ? (
+        <button
+          ref={mediaRef}
+          type="button"
+          className={[
+            ...feedMediaClass,
+            "feed-post__media--closable",
+            swipeMotion.dragging ? "feed-post__media--dragging" : "",
+            mediaFlyHidden ? "feed-post__media--fly-hidden" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          style={{
+            transform: `translate3d(${swipeMotion.translateX}px, 0, 0) scale(${swipeMotion.scale})`,
+          }}
+          onClick={() => {
+            if (shouldSuppressClick()) return;
+            onCloseFromGrid?.();
+          }}
+          aria-label={ptBR.discover.closeFeedPostToGrid}
+        >
+          {feedMediaContent}
+        </button>
+      ) : (
+        <div
+          className={[
+            ...feedMediaClass,
+            mediaFlyHidden ? "feed-post__media--fly-hidden" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          aria-hidden
+        >
+          {feedMediaContent}
+        </div>
+      )}
       <div className="feed-post__body">
         <div className="feed-post__actions">
           <button
@@ -851,7 +852,7 @@ export default function DiscoverPage() {
   const feedToolbarRef = useRef<HTMLDivElement>(null);
   const pagerChromeRef = useRef<HTMLDivElement>(null);
   const [pagerChromeHeight, setPagerChromeHeight] = useState(0);
-  const [activeCat, setActiveCat] = useState(categories[0]?.id ?? "focaccias");
+  const [activeCat, setActiveCat] = useState(categories[0]?.id ?? "quente");
   const [progress, setProgress] = useState(0);
   const [feedSurface, setFeedSurface] = useState<"grid" | "timeline">("grid");
   const [feedTimelineEver, setFeedTimelineEver] = useState(false);
@@ -1602,13 +1603,13 @@ export default function DiscoverPage() {
                 <div className="discover__welcome">
                   <span className="hub__location">{hub.location}</span>
                   <h1 className="hub__title">
-                    <img src={hub.wordmark} alt="Francisco" className="hub__wordmark" />
+                    <img src={hub.wordmark} alt={ptBR.hub.logoAlt} className="hub__wordmark" />
                   </h1>
                   <p className="hub__tagline">{hub.tagline}</p>
                   <button
                     type="button"
                     className="btn btn--primary btn--inline"
-                    onClick={() => scrollToCategory(categories[0]?.id ?? "focaccias")}
+                    onClick={() => scrollToCategory(categories[0]?.id ?? "quente")}
                   >
                     {ptBR.discover.exploreMenu}
                     <span className="btn__arrow-down" aria-hidden>

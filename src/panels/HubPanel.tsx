@@ -40,7 +40,7 @@ export default function HubPanel({
         <header className="hub__hero">
           <span className="hub__location">{hub.location}</span>
           <h1 className="hub__title">
-            <img src={hub.wordmark} alt="Francisco" className="hub__wordmark" />
+            <img src={hub.wordmark} alt={ptBR.hub.logoAlt} className="hub__wordmark" />
           </h1>
           <p className="hub__tagline">{hub.tagline}</p>
         </header>

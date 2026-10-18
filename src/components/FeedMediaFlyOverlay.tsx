@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, type CSSProperties } from "react";
+import ProductMediaPlaceholder from "./ProductMediaPlaceholder";
 import type { ProductSlide } from "../data/menu";
 import {
   domRectToViewRect,
@@ -30,7 +31,7 @@ function FlyMedia({ slide }: { slide: ProductSlide }) {
       />
     );
   }
-  return <span className="feed-media-fly__placeholder" aria-hidden />;
+  return <ProductMediaPlaceholder className="feed-media-fly__placeholder" />;
 }
 
 export default function FeedMediaFlyOverlay({

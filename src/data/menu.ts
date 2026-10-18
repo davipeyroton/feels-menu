@@ -8,6 +8,13 @@ function decodeHtml(text: string): string {
     .replaceAll("&amp;", "&");
 }
 
+function normalizeProductMedia(image: string | null, video: string | null) {
+  return {
+    image: image?.startsWith("/menu/") ? image : null,
+    video: video?.startsWith("/menu/") ? video : null,
+  };
+}
+
 const snapshot = {
   ...rawSnapshot,
   hub: {
@@ -24,8 +31,10 @@ const snapshot = {
       ? decodeHtml(slide.description)
       : "";
     const tr = ptBR.products[slide.id];
+    const media = normalizeProductMedia(slide.image, slide.video);
     return {
       ...slide,
+      ...media,
       name: tr?.name ?? slide.name,
       description: tr?.description ?? description,
       price: priceInBrl(slide.price),

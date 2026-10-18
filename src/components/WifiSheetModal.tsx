@@ -67,13 +67,13 @@ export default function WifiSheetModal({
 
         <div className="wifi-sheet__block">
           <p className="wifi-sheet__label">{ptBR.hub.wifiNetwork}</p>
-          <p className="wifi-sheet__value font-display">{wifi.ssid}</p>
+          <p className="wifi-sheet__value">{wifi.ssid}</p>
         </div>
 
         <div className="wifi-sheet__block">
           <p className="wifi-sheet__label">{ptBR.hub.wifiPassword}</p>
           <div className="wifi-sheet__password-row">
-            <p className="wifi-sheet__value font-display">{wifi.password}</p>
+            <p className="wifi-sheet__value">{wifi.password}</p>
             <button
               type="button"
               className="wifi-sheet__copy"

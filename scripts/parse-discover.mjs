@@ -94,8 +94,8 @@ const out = {
     fonts: "Instrument Serif + Inter (Google Fonts)",
   },
   hub: {
-    location: "Porto",
-    tagline: "Coffee, focaccia and good company.",
+    location: "São Paulo",
+    tagline: "Um café e um tempo de mesa.",
     video: asset(hubHtml.match(/<video[^>]+src="([^"]+)"/)?.[1]),
     poster: asset(hubHtml.match(/poster="([^"]+)"/)?.[1]),
     wordmark: asset(

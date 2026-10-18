@@ -5,12 +5,13 @@
 const OPENMOJI_VERSION = "15.1.0";
 
 const categoryEmojiHex: Record<string, string> = {
-  focaccias: "1F35E",
-  specials: "2728",
-  coffee: "2615",
-  cold: "1F9CA",
-  "no-coffee": "1F375",
-  drinks: "1F964",
+  quente: "2615",
+  gelado: "1F9CA",
+  matcha: "1F33F",
+  metodos: "2699",
+  chas: "1F375",
+  comer: "1F35E",
+  refrescos: "1F964",
 };
 
 function openMojiBlackSvg(hex: string): string {

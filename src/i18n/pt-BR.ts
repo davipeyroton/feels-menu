@@ -4,10 +4,11 @@ export const ptBR = {
     switchToDark: "Ativar modo escuro",
   },
   meta: {
-    title: "Francisco · Porto — Boas-vindas",
+    title: "Francisco · São Paulo — Boas-vindas",
   },
   hub: {
-    tagline: "Café, focaccia e boa companhia.",
+    logoAlt: "Coffee Feelings",
+    tagline: "Um café e um tempo de mesa.",
     exploreMenu: "Explorar cardápio",
     googleReview: "Avaliar no Google",
     wifi: "Conectar ao Wi-Fi",
@@ -32,7 +33,7 @@ export const ptBR = {
     viewProduct: (name: string) => `Ver ${name}`,
     exploreMenu: "Explorar cardápio",
     outroTitle: "Tudo o que servimos.",
-    outroSubtitle: "Porto, Portugal",
+    outroSubtitle: "São Paulo, Brasil",
     backToFeed: "Voltar ao feed",
     backToProfileGrid: "Voltar ao perfil",
     feedLayout: "Visualização do cardápio no feed",
@@ -44,141 +45,182 @@ export const ptBR = {
     closeFeedPostToGrid: "Fechar e voltar à grade",
   },
   categories: {
-    focaccias: "Focaccias",
-    specials: "Especiais",
-    coffee: "Café",
-    cold: "Bebidas geladas",
-    "no-coffee": "Sem café",
-    drinks: "Bebidas",
+    quente: "Quente",
+    gelado: "Gelado",
+    matcha: "Matcha",
+    metodos: "Métodos",
+    chas: "Chás",
+    comer: "Para comer",
+    refrescos: "Refrescos",
   },
   products: {
-    "roasted-bell-pepper-eggplants": {
-      name: "Pimentão e berinjela assados",
-      description:
-        "Pimentões assados, berinjela, pickles e pesto de tomate seco.",
-    },
-    mortadella: {
-      name: "Mortadela",
-      description:
-        "Mortadela, pesto, stracciatella, amendoim caramelizado e rúcula. Contém porco.",
-    },
-    "spicy-chorizo": {
-      name: "Chouriço picante",
-      description:
-        "Chouriço picante, purê de batata, pimentões assados, stracciatella e óleo de pimenta.",
-    },
-    "pulled-pork-barbecue": {
-      name: "Pulled pork barbecue",
-      description: "Pulled pork barbecue, stracciatella, pickles e rúcula.",
-    },
-    pepperoni: {
-      name: "Pepperoni",
-      description:
-        "Pepperoni, creme de Taleggio, pickles, rúcula e molho de mel picante.",
-    },
-    "iced-strawberry-matcha": {
-      name: "Matcha gelado com morango",
-      description: "Matcha cerimonial sobre leite gelado e morango fresco.",
-    },
-    "cold-brew-tonic-oj": {
-      name: "Cold brew com tônica e laranja",
-      description: "Cold brew e tônica, com suco de laranja fresco.",
-    },
     espresso: {
       name: "Espresso",
-      description: "Uma extração curta e intensa do nosso espresso da casa.",
+      description: "Shot curto, encorpado e aromático.",
+    },
+    "espresso-duplo": {
+      name: "Espresso duplo",
+      description: "Dois shots para um café mais intenso.",
+    },
+    macchiato: {
+      name: "Macchiato",
+      description: "Espresso marcado com uma camada de leite vaporizado.",
     },
     americano: {
       name: "Americano",
-      description: "Espresso alongado com água quente.",
+      description: "Espresso alongado com água quente, suave e longo.",
     },
-    "batch-brew": {
-      name: "Café filtrado",
-      description: "Café filtrado em lote, limpo e leve.",
+    cappuccino: {
+      name: "Cappuccino",
+      description: "Espresso, leite vaporizado e espuma cremosa.",
     },
-    "espresso-milk-small": {
-      name: "Espresso com leite — Pequeno",
-      description: "Espresso e leite vaporizado, tamanho pequeno.",
+    cortado: {
+      name: "Cortado",
+      description: "Espresso equilibrado com pouco leite quente.",
     },
-    "espresso-milk-medium": {
-      name: "Espresso com leite — Médio",
-      description: "Espresso e leite vaporizado, tamanho médio.",
+    "chocolate-quente": {
+      name: "Chocolate quente",
+      description: "Chocolate belga derretido no leite vaporizado.",
     },
-    "espresso-milk-large": {
-      name: "Espresso com leite — Grande",
-      description: "Espresso e leite vaporizado, tamanho grande.",
+    latte: {
+      name: "Latte",
+      description: "Espresso com leite vaporizado, sedoso e confortável.",
     },
-    "iced-americano": {
-      name: "Americano gelado",
-      description: "Espresso sobre gelo e água fria.",
+    "mocha-quente": {
+      name: "Mocha",
+      description: "Espresso, chocolate e leite em uma bebida quente.",
     },
-    "iced-latte": {
+    "chai-latte-quente": {
+      name: "Chai latte",
+      description: "Chai especiado batido com leite vaporizado.",
+    },
+    "flat-white": {
+      name: "Flat white",
+      description: "Espresso duplo com microespuma de leite, intenso e liso.",
+    },
+    "gelado-latte": {
       name: "Latte gelado",
-      description: "Espresso e leite gelado com bastante gelo.",
+      description: "Espresso e leite frio sobre gelo.",
+    },
+    "espresso-tonica": {
+      name: "Espresso tônica",
+      description: "Espresso sobre tônica e gelo, cítrico e refrescante.",
+    },
+    "chocolate-gelado": {
+      name: "Chocolate gelado",
+      description: "Chocolate da casa com leite gelado e gelo.",
+    },
+    "mocha-gelado": {
+      name: "Mocha gelado",
+      description: "Café, chocolate e leite servidos bem gelados.",
     },
     "cold-brew": {
       name: "Cold brew",
-      description: "Extraído por horas, servido gelado e suave.",
+      description: "Extração lenta, servida gelada e suave.",
     },
-    "espresso-tonic": {
-      name: "Espresso tônica",
-      description: "Espresso sobre tônica e gelo — amargo, vibrante e com gás.",
+    "cold-brew-tonica": {
+      name: "Cold brew tônica",
+      description: "Cold brew com tônica e gelo, leve amargor e gás.",
+    },
+    "gelado-matcha-latte": {
+      name: "Matcha latte",
+      description: "Matcha batido com leite gelado.",
+    },
+    "gelado-chai": {
+      name: "Chai gelado",
+      description: "Chai especiado com leite frio e gelo.",
     },
     "matcha-latte": {
       name: "Matcha latte",
-      description: "Matcha batido com leite vaporizado.",
+      description: "Matcha cerimonial whisked com leite vaporizado.",
     },
-    "iced-matcha-latte": {
+    "matcha-latte-gelado": {
       name: "Matcha latte gelado",
-      description: "Matcha batido sobre leite gelado e gelo.",
+      description: "Matcha sobre leite gelado, fresco e herbáceo.",
     },
-    "chai-latte": {
-      name: "Chai latte",
-      description: "Chai especiado com leite vaporizado.",
+    "matcha-tonica": {
+      name: "Matcha tônica",
+      description: "Matcha com tônica e gelo, vibrante e leve.",
     },
-    "iced-chai-latte": {
-      name: "Chai latte gelado",
-      description: "Chai especiado sobre leite gelado e gelo.",
+    "coado-da-casa": {
+      name: "Coado da casa",
+      description: "Filtro do dia, perfil limpo e aromático.",
     },
-    "matcha-lemonade": {
-      name: "Limonada de matcha",
-      description: "Matcha e limonada da casa sobre gelo.",
+    aeropress: {
+      name: "Aeropress",
+      description: "Pressão suave para uma xícara encorpada e rápida.",
     },
-    teas: {
-      name: "Chás",
-      description: "Pergunte à equipe a seleção do dia.",
+    v60: {
+      name: "V60",
+      description: "Pour-over manual, destaca notas frutadas e florais.",
     },
-    water: {
-      name: "Água",
-      description: "Água mineral sem gás.",
+    "cha-casa-de-vo": {
+      name: "Casa de vó",
+      description: "Capim-limão, limão siciliano, laranja, gengibre e menta.",
     },
-    "sparkling-water": {
-      name: "Água com gás",
-      description: "Água mineral com gás.",
+    "cha-flor-de-noiva": {
+      name: "Flor de noiva",
+      description: "Oolong de Taiwan com flor de laranjeira e aroma de laranja.",
     },
-    "coca-cola": {
-      name: "Coca-Cola / Zero",
-      description: "Clássica ou Zero, bem gelada.",
+    "cha-do-mes": {
+      name: "Chá do mês",
+      description: "Seleção especial — consulte o sabor com a equipe.",
     },
-    kombuchas: {
-      name: "Kombuchas",
-      description: "Seleção rotativa. Pergunte à equipe.",
+    "queijo-quente": {
+      name: "Queijo quente",
+      description: "Pão sourdough na chapa com queijo canastra.",
     },
-    "cold-brew-negroni": {
-      name: "Negroni de cold brew",
-      description: "Cold brew, Campari e Martini.",
+    croissant: {
+      name: "Croissant",
+      description: "Ricota temperada, abobrinha marinada e rúcula.",
     },
-    "espresso-martini": {
-      name: "Espresso martini",
-      description: "Vodka, espresso duplo e licor de café.",
+    presunto: {
+      name: "Presunto",
+      description: "Presunto royal, mostarda e rúcula.",
     },
-    beers: {
-      name: "Cervejas",
-      description: "Pergunte à equipe.",
+    "peito-frango-defumado": {
+      name: "Peito de frango defumado",
+      description: "Gouda, rúcula, picles de pepino e salada de batata com mostarda dijon.",
     },
-    wines: {
-      name: "Vinhos",
-      description: "Pergunte à equipe.",
+    "torta-salgada-mix": {
+      name: "Torta salgada fatia + mix salada",
+      description: "Fatia do dia acompanhada de mix de folhas.",
+    },
+    "combo-cafe-manha": {
+      name: "Combo café-da-manhã",
+      description: "Bebida, iogurte com granola e pão sourdough na chapa.",
+    },
+    "bowl-iogurte-granola": {
+      name: "Bowl de iogurte com granola da casa",
+      description: "Iogurte cremoso com granola artesanal.",
+    },
+    refrigerante: {
+      name: "Refrigerante",
+      description: "Lata gelada, consulte marcas disponíveis.",
+    },
+    "cha-mate": {
+      name: "Chá mate",
+      description: "Mate gelado ou natural, conforme disponibilidade.",
+    },
+    cerveja: {
+      name: "Cerveja",
+      description: "Seleção gelada — pergunte à equipe.",
+    },
+    "suco-laranja": {
+      name: "Suco de laranja",
+      description: "Espremido na hora, doce e fresco.",
+    },
+    "groselha-punch": {
+      name: "Groselha punch",
+      description: "Groselha com toque cítrico e gelo.",
+    },
+    "refresco-hibisco": {
+      name: "Refresco de hibisco",
+      description: "Hibisco infusionado, levemente adocicado.",
+    },
+    "ginger-ale-casa": {
+      name: "Ginger ale da casa",
+      description: "Gengibre fresco, gás suave e final picante.",
     },
   } as Record<string, { name: string; description: string }>,
 };
@@ -190,6 +232,7 @@ export const EUR_TO_BRL = 6.1;
 
 export function priceInBrl(euroLabel: string | null): string | null {
   if (!euroLabel) return null;
+  if (/^\s*R\$\s*/.test(euroLabel)) return euroLabel;
   const match = euroLabel.match(/(\d+),(\d+)\s*€/);
   if (!match) return euroLabel;
   const euros = Number(`${match[1]}.${match[2]}`);

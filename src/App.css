@@ -554,8 +554,10 @@ body {
 
 .hub__wordmark {
   display: block;
-  width: min(56vw, 300px);
+  width: min(44vw, 200px);
+  max-height: min(36vh, 220px);
   height: auto;
+  object-fit: contain;
   margin: 1.25rem auto 0;
 }
 
@@ -728,10 +730,12 @@ button {
 
 .wifi-sheet__eyebrow {
   margin: 0;
-  font-size: 11px;
-  letter-spacing: 0.35em;
+  font-family: var(--paragraph);
+  font-size: 14px;
+  line-height: 1.5;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: rgba(23, 23, 23, 0.5);
+  color: rgba(23, 23, 23, 0.72);
 }
 
 .wifi-sheet__block {
@@ -746,15 +750,17 @@ button {
 
 .wifi-sheet__label {
   margin: 0;
-  font-size: 11px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: rgba(23, 23, 23, 0.5);
+  font-family: var(--paragraph);
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(23, 23, 23, 0.72);
 }
 
 .wifi-sheet__value {
   margin: 0.25rem 0 0;
+  font-family: var(--item-title);
   font-size: 1.5rem;
+  font-weight: 600;
   line-height: 1.2;
   word-break: break-word;
 }
@@ -772,7 +778,9 @@ button {
   border: none;
   border-radius: 999px;
   padding: 0.625rem 1.25rem;
-  font-size: 13px;
+  font-family: var(--paragraph);
+  font-size: 14px;
+  line-height: 1.5;
   font-weight: 500;
   background: #171717;
   color: #fafafa;
@@ -786,9 +794,10 @@ button {
 
 .wifi-sheet__hint {
   margin: 1.25rem 0 0;
-  font-size: 12px;
-  line-height: 1.45;
-  color: rgba(23, 23, 23, 0.55);
+  font-family: var(--paragraph);
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(23, 23, 23, 0.72);
 }
 
 .wifi-sheet__close {
@@ -797,8 +806,10 @@ button {
   border-radius: 999px;
   border: 1px solid rgba(23, 23, 23, 0.15);
   padding: 0.875rem 1rem;
-  font-size: 13px;
-  color: rgba(23, 23, 23, 0.55);
+  font-family: var(--paragraph);
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(23, 23, 23, 0.72);
   background: transparent;
   cursor: pointer;
 }
@@ -876,8 +887,9 @@ button {
   flex: 0 0 auto;
   margin-left: 0;
   padding: 0.15rem 0;
-  font-family: var(--display);
+  font-family: var(--item-title);
   font-size: 17px;
+  font-weight: 600;
   line-height: 1.2;
   color: var(--app-fg);
   text-decoration: none;
@@ -1521,14 +1533,71 @@ button {
   display: block;
 }
 
-.feed-media-fly__placeholder {
-  display: block;
+.product-media-placeholder {
+  display: grid;
+  place-items: center;
+  justify-items: center;
   width: 100%;
   height: 100%;
-  background: #1a1a1a;
+  min-height: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  background: #000;
+  container-type: size;
 }
 
-.feed-post__media img,
+.product-media-placeholder__frame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  aspect-ratio: 3 / 4;
+  width: min(100%, calc(100cqh * 3 / 4));
+  height: auto;
+  max-height: 100%;
+  min-width: 0;
+  container-type: size;
+}
+
+.discover__media.discover__media--product.product-media-placeholder {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  justify-items: center;
+  transform: none;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  overflow: hidden;
+  object-fit: unset;
+  container-type: size;
+}
+
+
+.product-media-placeholder__logo {
+  display: block;
+  box-sizing: border-box;
+  width: 60cqw;
+  height: 60cqh;
+  max-width: 60cqw;
+  max-height: 60cqh;
+  object-fit: contain;
+  object-position: center;
+  opacity: 0.92;
+}
+
+.feed-post__media--placeholder {
+  background: #000;
+}
+
+.feed-post__media--placeholder > .product-media-placeholder,
+.feed-grid__thumb-host > .product-media-placeholder {
+  padding: 10%;
+  box-sizing: border-box;
+}
+
+.feed-post__media img:not(.product-media-placeholder__logo),
 .feed-post__media video {
   width: 100%;
   height: 100%;
@@ -1614,9 +1683,9 @@ button {
   height: 100%;
 }
 
-.feed-grid__cell img,
+.feed-grid__cell img:not(.product-media-placeholder__logo),
 .feed-grid__cell video,
-.feed-grid__thumb-host img,
+.feed-grid__thumb-host img:not(.product-media-placeholder__logo),
 .feed-grid__thumb-host video {
   width: 100%;
   height: 100%;
@@ -1629,11 +1698,11 @@ button {
   background: #111;
 }
 
-.feed-grid__placeholder {
+.feed-grid__placeholder:not(.product-media-placeholder) {
   display: block;
   width: 100%;
   height: 100%;
-  background: #1a1a1a;
+  background: #000;
 }
 
 .feed-grid__caption {
@@ -1827,6 +1896,10 @@ button {
 
 .discover__media--product {
   transform: scale(1.05);
+}
+
+.discover__media--product.product-media-placeholder {
+  transform: none;
 }
 
 .discover__slide-inner {
