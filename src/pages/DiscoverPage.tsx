@@ -6,7 +6,11 @@ import {
   type PagerPreferVerticalHandler,
   useHorizontalPager,
 } from "../hooks/useHorizontalPager";
-import { panelDepthStyle } from "../motion/instagramMotion";
+import {
+  discoverModeFractionalIndex,
+  discoverModeTrackTransform,
+  panelDepthStyle,
+} from "../motion/instagramMotion";
 import {
   forwardRef,
   useCallback,
@@ -18,6 +22,7 @@ import {
   type CSSProperties,
   type RefObject,
 } from "react";
+import { flushSync } from "react-dom";
 import { useFeedPostSwipeDismiss } from "../hooks/useFeedPostSwipeDismiss";
 import {
   allProducts,
@@ -388,7 +393,10 @@ const DiscoverToolbar = forwardRef<
 
 function ReelsChrome({
   chromeRef,
+  toolbarRef,
   feedChrome,
+  modeFraction,
+  showDiscoverToolbar,
   toolbarView,
   activeCat,
   onHub,
@@ -399,7 +407,10 @@ function ReelsChrome({
   extraClassName,
 }: {
   chromeRef?: RefObject<HTMLDivElement | null>;
+  toolbarRef?: RefObject<HTMLDivElement | null>;
   feedChrome: boolean;
+  modeFraction: number;
+  showDiscoverToolbar: boolean;
   toolbarView: DiscoverToolbarView;
   activeCat: string;
   onHub: () => void;
@@ -414,6 +425,7 @@ function ReelsChrome({
       ref={chromeRef}
       className={[
         "discover--pager-chrome",
+        "discover--pager-chrome--discover",
         feedChrome
           ? "discover--pager-chrome--feed"
           : "discover--pager-chrome--reels",
@@ -421,16 +433,21 @@ function ReelsChrome({
       ]
         .filter(Boolean)
         .join(" ")}
+      style={{ "--mode-fraction": modeFraction } as CSSProperties}
     >
-      <header className="discover__header">
+      <div className="discover-chrome-fade discover-chrome-fade--reels" aria-hidden />
+      <div className="discover-chrome-fade discover-chrome-fade--feed" aria-hidden />
+      <header className="discover__header discover__header--pager">
         <div className="discover__header-row">
           <button type="button" className="discover__brand-link" onClick={onHub}>
             Francisco
           </button>
           {feedChrome && <ThemeToggle />}
         </div>
-        {!feedChrome && (
+        {showDiscoverToolbar && (
           <DiscoverToolbar
+            ref={toolbarRef}
+            className="discover__toolbar--chrome"
             toolbarView={toolbarView}
             activeCat={activeCat}
             onReels={onReels}
@@ -729,7 +746,6 @@ export default function DiscoverPage() {
   const feedToolbarRef = useRef<HTMLDivElement>(null);
   const pagerChromeRef = useRef<HTMLDivElement>(null);
   const [pagerChromeHeight, setPagerChromeHeight] = useState(0);
-  const [feedToolbarHeight, setFeedToolbarHeight] = useState(46);
   const [activeCat, setActiveCat] = useState(categories[0]?.id ?? "focaccias");
   const [progress, setProgress] = useState(0);
   const [feedSurface, setFeedSurface] = useState<"grid" | "timeline">("grid");
@@ -746,6 +762,15 @@ export default function DiscoverPage() {
     from: ViewRect;
     to: ViewRect;
   } | null>(null);
+  const initialChromePanel =
+    mainPanelFromViewParam(viewParam) === 0
+      ? 0
+      : discoverModeFromViewParam(viewParam) === 1
+        ? 2
+        : 1;
+  const [chromePanel, setChromePanel] = useState(initialChromePanel);
+  const [pagerWidth, setPagerWidth] = useState(0);
+  const [modePagerWidth, setModePagerWidth] = useState(0);
   const pendingGridOpenRef = useRef<{
     product: ProductSlide;
     fromRect: ViewRect;
@@ -827,21 +852,21 @@ export default function DiscoverPage() {
       setFlyHiddenProductId(productId);
       setFlyTargetProductId(productId);
       setFeedGridDismissActive(false);
-      setFeedSurface("grid");
 
-      requestAnimationFrame(() => {
-        const cell = scroller.querySelector<HTMLElement>(
-          `.feed-grid__cell[data-product-id="${productId}"]`,
-        );
-        cell?.scrollIntoView({ block: "center", behavior: "auto" });
-        requestAnimationFrame(() => {
-          if (!cell) {
-            completeMediaFly();
-            return;
-          }
-          const toRect = readThumbRect(cell);
-          setMediaFly({ slide, from: fromRect, to: toRect });
-        });
+      flushSync(() => {
+        setFeedSurface("grid");
+      });
+
+      const cell = scroller.querySelector<HTMLElement>(
+        `.feed-grid__cell[data-product-id="${productId}"]`,
+      );
+      cell?.scrollIntoView({ block: "center", behavior: "auto" });
+      void cell?.offsetHeight;
+
+      const toRect = cell ? readThumbRect(cell) : fromRect;
+
+      flushSync(() => {
+        setMediaFly({ slide, from: fromRect, to: toRect });
       });
     },
     [completeMediaFly, feedGridDismissActive, mediaFly, productSlides],
@@ -941,13 +966,6 @@ export default function DiscoverPage() {
     );
   };
 
-  const initialChrome =
-    mainPanelFromViewParam(viewParam) === 0
-      ? 0
-      : discoverModeFromViewParam(viewParam) === 1
-        ? 2
-        : 1;
-  const [chromePanel, setChromePanel] = useState(initialChrome);
   useEffect(() => {
     if (menuPager.dragging || menuPager.animating) return;
     if (modePager.dragging || modePager.animating) return;
@@ -962,8 +980,6 @@ export default function DiscoverPage() {
     modePager.animating,
   ]);
 
-  const [pagerWidth, setPagerWidth] = useState(0);
-
   useEffect(() => {
     const el = menuPager.containerRef.current;
     if (!el) return;
@@ -973,8 +989,6 @@ export default function DiscoverPage() {
     observer.observe(el);
     return () => observer.disconnect();
   }, [menuPager.containerRef]);
-
-  const [modePagerWidth, setModePagerWidth] = useState(0);
 
   useEffect(() => {
     const el = modePager.containerRef.current;
@@ -1053,18 +1067,16 @@ export default function DiscoverPage() {
       );
       if (!target) return;
 
-      const toolbarPx =
-        feedToolbarRef.current?.offsetHeight || feedToolbarHeight || 0;
       const scrollerTop = scroller.getBoundingClientRect().top;
       const targetTop = target.getBoundingClientRect().top;
-      const nextTop = scroller.scrollTop + (targetTop - scrollerTop - toolbarPx);
+      const nextTop = scroller.scrollTop + (targetTop - scrollerTop);
 
       scroller.scrollTo({
         top: Math.max(0, nextTop),
         behavior,
       });
     },
-    [feedToolbarHeight],
+    [],
   );
 
   useLayoutEffect(() => {
@@ -1131,18 +1143,37 @@ export default function DiscoverPage() {
     [menuIndex, discoverModeIndex, feedSurface, scrollFeedToProduct],
   );
 
+  const syncDiscoverViewInUrl = useCallback(
+    (mode: DiscoverModeIndex) => {
+      const q = menuSearchForState(1, mode);
+      const current = window.location.search.replace(/^\?/, "");
+      if (q === current) return;
+      navigate({ pathname: "/", search: q ? `?${q}` : "" }, { replace: true });
+    },
+    [navigate],
+  );
+
   const goToMenuPanel = useCallback(
     (panel: number) => {
       const fromMain = menuIndexRef.current;
-      const mode = panel === 2 ? 1 : 0;
+      const mode: DiscoverModeIndex = panel === 2 ? 1 : 0;
 
       if (panel === 0) {
-        if (!menuPager.draggingRef.current) setChromePanel(0);
+        clearFeedGridFly();
+        setFeedGridDismissActive(false);
+        setChromePanel(0);
         menuPager.goTo(0);
         return;
       }
 
+      if (panel === 1) {
+        clearFeedGridFly();
+        setFeedGridDismissActive(false);
+      }
+
       hasVisitedReelsRef.current = true;
+      setChromePanel(panel === 2 ? 2 : 1);
+
       if (fromMain === 0 && mode === 0) {
         requestAnimationFrame(() =>
           reelsRef.current?.scrollTo({ top: 0, behavior: "auto" }),
@@ -1154,12 +1185,26 @@ export default function DiscoverPage() {
       if (fromMain === 0) {
         menuPager.goTo(1);
       }
-      if (!menuPager.draggingRef.current && !modePager.draggingRef.current) {
-        setChromePanel(panel === 2 ? 2 : 1);
+
+      const modeViewport = modePager.containerRef.current;
+      if (modeViewport) {
+        modeViewport.style.setProperty("--motion-duration-pager", "0.34s");
+        modeViewport.style.setProperty(
+          "--motion-ease-pager",
+          "cubic-bezier(0.22, 1.18, 0.42, 1)",
+        );
       }
+
       modePager.goTo(mode);
+      syncDiscoverViewInUrl(mode);
     },
-    [menuPager.goTo, modePager.goTo],
+    [
+      clearFeedGridFly,
+      menuPager.goTo,
+      modePager.containerRef,
+      modePager.goTo,
+      syncDiscoverViewInUrl,
+    ],
   );
 
   useEffect(() => {
@@ -1295,46 +1340,37 @@ export default function DiscoverPage() {
     modePagerWidth > 0
       ? modePagerWidth
       : modePager.containerRef.current?.clientWidth ?? 0;
-  const modeSlideOffset =
-    modeTrackWidth > 0
-      ? -discoverModeIndex * modeTrackWidth + modePager.dragPx
-      : modePager.dragPx;
-  const modeTrackTransform = `translate3d(${modeSlideOffset}px, 0, 0)`;
-  const modeFractionalIndex =
-    modeTrackWidth > 0 ? -modeSlideOffset / modeTrackWidth : discoverModeIndex;
+  const modeTrackTransform = discoverModeTrackTransform(
+    discoverModeIndex,
+    modePager.dragPx,
+  );
+  const modeFractionalIndex = discoverModeFractionalIndex(
+    discoverModeIndex,
+    modePager.dragPx,
+    modeTrackWidth,
+    modePager.dragging,
+  );
 
   const pagerInteracting = menuPager.dragging || menuPager.animating;
   const modePagerInteracting = modePager.dragging || modePager.animating;
-  const panelDepth = (idx: number): React.CSSProperties =>
+  const panelDepth = (idx: number): CSSProperties =>
     pagerInteracting ? panelDepthStyle(idx, fractionalIndex) : {};
-  const effectiveChromePanel =
-    menuIndex === 0 && pagerInteracting
-      ? Math.min(1, Math.max(0, Math.round(fractionalIndex)))
-      : menuIndex === 1 && modePagerInteracting
-        ? Math.min(2, Math.max(1, Math.round(modeFractionalIndex) + 1))
-        : chromePanel;
+  const chromeFeedTone =
+    modePagerInteracting
+      ? modeFractionalIndex >= 0.5
+      : discoverModeIndex === 1;
+  const reelsProgressOpacity = Math.max(0, 1 - modeFractionalIndex * 1.35);
   const reelsPlaybackActive = menuIndex === 1 && discoverModeIndex === 0;
   const reelsCacheMedia = hasVisitedReelsRef.current;
   const feedTimelineActive =
     menuIndex === 1 && discoverModeIndex === 1 && feedSurface === "timeline";
   const panelIsNear = (idx: number) =>
     Math.abs(fractionalIndex - idx) < (pagerInteracting ? 0.58 : 0.01);
-  const feedChrome = menuIndex === 1 && discoverModeIndex === 1;
   const toolbarView: DiscoverToolbarView =
     menuIndex !== 1 || discoverModeIndex === 0 ? "reels" : "grid";
   const showDiscoverChrome =
     menuIndex >= 1 ||
     (menuIndex === 0 && menuPager.dragging && menuPager.dragPx < -8);
-
-  useLayoutEffect(() => {
-    const el = feedToolbarRef.current;
-    if (!el || !feedChrome) return;
-    const measure = () => setFeedToolbarHeight(el.offsetHeight);
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [feedChrome, feedSurface, activeCat]);
 
   const trackClass = [
     "menu-pager__track",
@@ -1361,9 +1397,7 @@ export default function DiscoverPage() {
           ...(pagerChromeHeight > 0
             ? { "--discover-chrome-h": `${pagerChromeHeight}px` }
             : {}),
-          ...(feedChrome && feedToolbarHeight > 0
-            ? { "--discover-feed-toolbar-h": `${feedToolbarHeight}px` }
-            : {}),
+          "--mode-fraction": String(modeFractionalIndex),
           "--mode-drag-fraction":
             modeTrackWidth > 0
               ? String(modePager.dragPx / modeTrackWidth)
@@ -1374,7 +1408,10 @@ export default function DiscoverPage() {
       {showDiscoverChrome && (
         <ReelsChrome
           chromeRef={pagerChromeRef}
-          feedChrome={feedChrome}
+          toolbarRef={feedToolbarRef}
+          feedChrome={chromeFeedTone}
+          modeFraction={modeFractionalIndex}
+          showDiscoverToolbar={menuIndex === 1}
           toolbarView={toolbarView}
           activeCat={activeCat}
           onHub={() => goToMenuPanel(0)}
@@ -1384,10 +1421,11 @@ export default function DiscoverPage() {
         />
       )}
 
-      {effectiveChromePanel === 1 && (
+      {menuIndex === 1 && (
         <div
           className="discover__progress discover__progress--pager"
           aria-hidden
+          style={{ opacity: reelsProgressOpacity }}
         >
           <span style={{ width: `${Math.max(4, progress * 100)}%` }} />
         </div>
@@ -1507,15 +1545,6 @@ export default function DiscoverPage() {
               ref={feedRef}
               className="discover__feed discover__feed--timeline"
             >
-              <DiscoverToolbar
-                ref={feedToolbarRef}
-                className="discover__toolbar--feed-sticky"
-                toolbarView={toolbarView}
-                activeCat={activeCat}
-                onReels={() => goToMenuPanel(1)}
-                onFeedGrid={selectFeedGrid}
-                onCategory={scrollToCategory}
-              />
               <div className="feed-surface">
                 <div
                   id="feed-surface-grid"

@@ -332,7 +332,7 @@ body {
 }
 
 .discover-mode-track--snap {
-  transition: transform var(--motion-duration-pager) var(--motion-ease-pager);
+  transition: transform 0.34s cubic-bezier(0.25, 1, 0.45, 1);
 }
 
 .discover-mode-track--dragging {
@@ -345,6 +345,8 @@ body {
   height: 100%;
   min-height: 0;
   overflow: hidden;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .menu-pager--discover-open .discover__reels-scroller,
@@ -352,12 +354,10 @@ body {
   touch-action: pan-y;
 }
 
-.menu-pager--discover-open.menu-pager--feed-mode .discover__feed {
+.menu-pager--discover-open .discover__feed {
   box-sizing: border-box;
   padding-top: var(--discover-chrome-h, 3.5rem);
-  scroll-padding-top: calc(
-    var(--discover-chrome-h, 3.5rem) + var(--discover-feed-toolbar-h, 2.85rem) + 0.35rem
-  );
+  scroll-padding-top: calc(var(--discover-chrome-h, 3.5rem) + 0.35rem);
 }
 
 .discover--pager-chrome--feed {
@@ -431,16 +431,51 @@ body {
   background: transparent;
 }
 
+.discover--pager-chrome--discover {
+  isolation: isolate;
+}
+
+.discover-chrome-fade {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  transition: opacity 0.34s cubic-bezier(0.25, 1, 0.45, 1);
+}
+
+.discover-chrome-fade--reels {
+  opacity: calc(1 - var(--mode-fraction, 0));
+  background: var(--chrome-header);
+}
+
+.discover-chrome-fade--feed {
+  opacity: var(--mode-fraction, 0);
+  background: var(--feed-bg, var(--app-bg));
+  border-bottom: 1px solid var(--border-subtle);
+}
+
 .discover--pager-chrome .discover__header {
   position: relative;
+  z-index: 1;
   max-width: none;
   margin: 0;
   pointer-events: auto;
+  background: transparent;
+}
+
+.discover__header--pager {
+  position: relative;
+  inset: auto;
+}
+
+.discover__toolbar--chrome {
+  padding-bottom: 0.5rem;
 }
 
 .discover__progress--pager {
   position: fixed;
   z-index: 40;
+  transition: opacity 0.34s cubic-bezier(0.25, 1, 0.45, 1);
 }
 
 .menu-pager--immersive .menu-pager__track {
@@ -1244,7 +1279,7 @@ button {
 }
 
 .feed-surface__layer--timeline.feed-surface__layer--on {
-  animation: feed-surface-fade-in 0.22s var(--motion-ease-out) both;
+  animation: none;
 }
 
 @keyframes feed-surface-fade-in {
@@ -1317,10 +1352,8 @@ button {
   touch-action: pan-x pan-y;
 }
 
-.menu-pager--feed-mode .feed-post {
-  scroll-margin-top: calc(
-    var(--discover-chrome-h, 3.5rem) + var(--discover-feed-toolbar-h, 2.85rem) + 0.5rem
-  );
+.menu-pager--discover-open .feed-post {
+  scroll-margin-top: calc(var(--discover-chrome-h, 3.5rem) + 0.5rem);
 }
 
 .feed-post {
@@ -1399,7 +1432,11 @@ button {
   overflow: hidden;
   pointer-events: none;
   background: #111;
-  will-change: left, top, width, height;
+  transform-origin: center center;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
 }
 
 .feed-media-fly__media {

@@ -344,7 +344,9 @@ export function useHorizontalPager(
     el.addEventListener("touchend", onTouchEnd, { passive: true });
     el.addEventListener("touchcancel", onTouchCancel, { passive: true });
 
-    const track = el.querySelector<HTMLElement>(".menu-pager__track");
+    const track =
+      el.querySelector<HTMLElement>(".menu-pager__track") ??
+      el.querySelector<HTMLElement>(".discover-mode-track");
     const onTransitionEnd = (event: TransitionEvent) => {
       if (event.target !== track || event.propertyName !== "transform") return;
       clearAnimatingEnd();

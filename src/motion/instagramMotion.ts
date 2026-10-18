@@ -36,3 +36,23 @@ export function panelDepthStyle(
   };
 }
 
+/** Horizontal discover track is 200% wide; each pane is 50% of the track. */
+export function discoverModeTrackTransform(
+  modeIndex: number,
+  dragPx: number,
+): string {
+  return `translate3d(calc(${-modeIndex * 50}% + ${dragPx}px), 0, 0)`;
+}
+
+export function discoverModeFractionalIndex(
+  modeIndex: number,
+  dragPx: number,
+  trackWidth: number,
+  dragging: boolean,
+): number {
+  if (trackWidth > 0 && dragging) {
+    return Math.max(0, Math.min(1, modeIndex - dragPx / trackWidth));
+  }
+  return modeIndex;
+}
+
