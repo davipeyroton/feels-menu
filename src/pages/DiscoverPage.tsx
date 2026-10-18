@@ -479,7 +479,7 @@ function ReelsChrome({
         <div className="discover__header-row">
           <div className="discover__header-brand">
             <button type="button" className="discover__brand-link" onClick={onHub}>
-              Francisco
+              {ptBR.discover.brandName}
             </button>
             {hub.wifi && (
               <>

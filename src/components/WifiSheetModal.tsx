@@ -48,12 +48,15 @@ export default function WifiSheetModal({
 
   if (!open || typeof document === "undefined") return null;
 
+  const brandName = ptBR.discover.brandName;
+  const wifiModalLabel = ptBR.hub.wifiModalAria(brandName);
+
   return createPortal(
     <div
       className="wifi-sheet"
       role="dialog"
       aria-modal="true"
-      aria-label={ptBR.hub.wifiModalAria}
+      aria-label={wifiModalLabel}
     >
       <button
         type="button"
@@ -63,7 +66,9 @@ export default function WifiSheetModal({
       />
       <div className="wifi-sheet__panel">
         <div className="wifi-sheet__handle" aria-hidden />
-        <p className="wifi-sheet__eyebrow">{ptBR.hub.wifiModalTitle}</p>
+        <p className="wifi-sheet__eyebrow">
+          {ptBR.hub.wifiModalTitle(brandName)}
+        </p>
 
         <div className="wifi-sheet__block">
           <p className="wifi-sheet__label">{ptBR.hub.wifiNetwork}</p>

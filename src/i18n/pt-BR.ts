@@ -8,12 +8,12 @@ export const ptBR = {
   },
   hub: {
     logoAlt: "Coffee Feelings",
-    tagline: "Um café e um tempo de mesa.",
+    tagline: "Aqui tem café especial",
     exploreMenu: "Explorar cardápio",
     googleReview: "Avaliar no Google",
     wifi: "Conectar ao Wi-Fi",
-    wifiModalAria: "Wi-Fi Francisco",
-    wifiModalTitle: "Wi-Fi Francisco",
+    wifiModalAria: (brandName: string) => `Wi-Fi ${brandName}`,
+    wifiModalTitle: (brandName: string) => `Wi-Fi ${brandName}`,
     wifiNetwork: "Rede",
     wifiPassword: "Senha",
     wifiCopy: "Copiar",
@@ -23,6 +23,7 @@ export const ptBR = {
     close: "Fechar",
   },
   discover: {
+    brandName: "Studios Coffee",
     wifiLabel: "wifi",
     wifiOpenHub: "Abrir boas-vindas e Wi-Fi",
     viewMode: "Modo de visualização",

@@ -9,14 +9,14 @@
   },
   "hub": {
     "location": "São Paulo",
-    "tagline": "Um café e um tempo de mesa.",
+    "tagline": "Aqui tem café especial",
     "video": "/brand/intro-menu.mp4",
     "poster": "/brand/intro-menu-poster.jpg",
     "wordmark": "/brand/coffee-feelings-logo.png",
     "google_review_url": "https://search.google.com/local/writereview?placeid=ChIJq2s7TH9lJA0Ry8C2QZiuv_I",
     "wifi": {
-      "ssid": "Francisco",
-      "password": "goncalo2025"
+      "ssid": "StudiosGuest",
+      "password": "studios2019!"
     }
   },
   "categories": [
