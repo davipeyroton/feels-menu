@@ -26,11 +26,14 @@ import { flushSync } from "react-dom";
 import { useFeedPostSwipeDismiss } from "../hooks/useFeedPostSwipeDismiss";
 import { useNearViewport } from "../hooks/useNearViewport";
 import {
+  pauseDiscoverMedia,
+  prepareReturnToHub,
+} from "../lib/discoverNavigation";
+import {
   imageLoadingForUrl,
   isMediaWarm,
   markMediaWarm,
   pauseVideosWithin,
-  releaseVideoPrimersExcept,
   videoPreloadForUrl,
   warmHubIntroMedia,
   warmProductMedia,
@@ -235,8 +238,13 @@ function ProductMedia({
     if (!video || !slide.video) return;
     if (playVideo) {
       void video.play().catch(() => {});
-    } else {
-      video.pause();
+      return;
+    }
+    video.pause();
+    try {
+      if (video.currentTime > 0) video.currentTime = 0;
+    } catch {
+      /* ignore */
     }
   }, [playVideo, slide.video]);
 
@@ -1051,11 +1059,11 @@ export default function DiscoverPage() {
   const discoverReelsReady =
     menuIndex === 1 &&
     (!menuPager.animating || menuTransitionFromRef.current !== 0);
-  const reelsPlaybackActive =
-    discoverReelsReady &&
+  const reelsModeReady =
     discoverModeIndex === 0 &&
     !modePager.animating &&
     !modePager.dragging;
+  const reelsPlaybackActive = discoverReelsReady && reelsModeReady;
 
   onModePagerCommitRef.current = (at, direction) => {
     const surface = feedSurfaceRef.current;
@@ -1332,10 +1340,7 @@ export default function DiscoverPage() {
         clearFeedGridFly();
         setFeedGridDismissActive(false);
         setChromePanel(0);
-        const discoverRoot =
-          menuPager.containerRef.current?.querySelector(".discover-shell");
-        pauseVideosWithin(discoverRoot);
-        releaseVideoPrimersExcept(hub.video);
+        prepareReturnToHub(menuPager.containerRef.current);
         replaceMenuSearch(0, modePager.index as DiscoverModeIndex);
         menuPager.goTo(0);
         return;
@@ -1366,6 +1371,10 @@ export default function DiscoverPage() {
         menuPager.goTo(1);
       }
 
+      if (mode === 1) {
+        pauseVideosWithin(reelsRef.current);
+      }
+
       const modeViewport = modePager.containerRef.current;
       if (modeViewport) {
         modeViewport.style.setProperty("--motion-duration-pager", "0.34s");
@@ -1390,10 +1399,13 @@ export default function DiscoverPage() {
 
   useEffect(() => {
     if (menuIndex !== 0) return;
-    const discoverRoot =
-      menuPager.containerRef.current?.querySelector(".discover-shell");
-    pauseVideosWithin(discoverRoot);
+    pauseDiscoverMedia(menuPager.containerRef.current);
   }, [menuIndex, menuPager.containerRef]);
+
+  useEffect(() => {
+    if (menuIndex !== 1 || discoverModeIndex !== 1) return;
+    pauseVideosWithin(reelsRef.current);
+  }, [menuIndex, discoverModeIndex]);
 
   useEffect(() => {
     const el = reelsRef.current;
@@ -1472,6 +1484,7 @@ export default function DiscoverPage() {
         setChromePanel(0);
         clearFeedGridFly();
         setFeedGridDismissActive(false);
+        prepareReturnToHub(menuPager.containerRef.current);
         return;
       }
       const mode = discoverModeFromViewParam(view);
@@ -1484,7 +1497,7 @@ export default function DiscoverPage() {
     };
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
-  }, [clearFeedGridFly, menuPager.goTo, modePager.goTo]);
+  }, [clearFeedGridFly, menuPager.containerRef, menuPager.goTo, modePager.goTo]);
 
   useEffect(() => {
     if (
@@ -1649,6 +1662,7 @@ export default function DiscoverPage() {
             .filter(Boolean)
             .join(" ")}
           style={panelDepth(1)}
+          inert={menuIndex === 0}
         >
           <div
             ref={modePager.containerRef}
