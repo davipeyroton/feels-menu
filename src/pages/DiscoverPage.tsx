@@ -1593,10 +1593,18 @@ export default function DiscoverPage() {
                     className="discover__media"
                     src={hub.video}
                     poster={hub.poster}
+                    autoPlay
                     muted
                     loop
                     playsInline
-                    preload="metadata"
+                    preload="auto"
+                    onCanPlay={() => {
+                      const video = reelsWelcomeVideoRef.current;
+                      if (!video) return;
+                      if (menuIndex === 1 && discoverModeIndex === 0) {
+                        void video.play().catch(() => {});
+                      }
+                    }}
                   />
                 </div>
                 <div className="discover__shade" />

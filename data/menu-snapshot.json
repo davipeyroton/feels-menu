@@ -10,8 +10,8 @@
   "hub": {
     "location": "São Paulo",
     "tagline": "Um café e um tempo de mesa.",
-    "video": "https://francisco.sipfloweb.com/__l5e/assets-v1/9d4647a8-2ccf-4ab5-accd-24a8ec7bfc15/capafran_final.mp4",
-    "poster": "https://francisco.sipfloweb.com/__l5e/assets-v1/9652724d-fd80-464b-bc36-b875abd1f50a/cafe-invictus.jpg",
+    "video": "/brand/intro-menu.mp4",
+    "poster": "/brand/intro-menu-poster.jpg",
     "wordmark": "/brand/coffee-feelings-logo.png",
     "google_review_url": "https://search.google.com/local/writereview?placeid=ChIJq2s7TH9lJA0Ry8C2QZiuv_I",
     "wifi": {

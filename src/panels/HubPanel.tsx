@@ -28,10 +28,14 @@ export default function HubPanel({
         className="hub__video"
         src={hub.video}
         poster={hub.poster}
+        autoPlay
         muted
         loop
         playsInline
         preload={mediaActive ? "auto" : "metadata"}
+        onCanPlay={() => {
+          if (mediaActive) void videoRef.current?.play().catch(() => {});
+        }}
       />
       <div className="hub__shade" />
       <div className="hub__gradient" />
