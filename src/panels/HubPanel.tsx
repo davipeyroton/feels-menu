@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
+import HubIntroVideo from "../components/HubIntroVideo";
 import { GoogleBusinessIcon, WifiIcon } from "../components/icons";
 import WifiSheetModal from "../components/WifiSheetModal";
 import { hub } from "../data/menu";
@@ -12,31 +13,10 @@ export default function HubPanel({
   mediaActive?: boolean;
 }) {
   const [wifiOpen, setWifiOpen] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    if (mediaActive) void video.play().catch(() => {});
-    else video.pause();
-  }, [mediaActive]);
 
   return (
     <main className="hub">
-      <video
-        ref={videoRef}
-        className="hub__video"
-        src={hub.video}
-        poster={hub.poster}
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload={mediaActive ? "auto" : "metadata"}
-        onCanPlay={() => {
-          if (mediaActive) void videoRef.current?.play().catch(() => {});
-        }}
-      />
+      <HubIntroVideo className="hub__video" active={mediaActive} />
       <div className="hub__shade" />
       <div className="hub__gradient" />
 

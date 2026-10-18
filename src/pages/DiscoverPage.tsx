@@ -29,7 +29,10 @@ import {
   imageLoadingForUrl,
   isMediaWarm,
   markMediaWarm,
+  pauseVideosWithin,
+  releaseVideoPrimersExcept,
   videoPreloadForUrl,
+  warmHubIntroMedia,
   warmProductMedia,
 } from "../media/mediaWarm";
 import {
@@ -42,6 +45,7 @@ import {
 import { ptBR } from "../i18n/pt-BR";
 import { CategoryEmoji } from "../openmoji/categoryEmoji";
 import { WifiIcon } from "../components/icons";
+import HubIntroVideo from "../components/HubIntroVideo";
 import ProductMediaPlaceholder from "../components/ProductMediaPlaceholder";
 import ThemeToggle from "../components/ThemeToggle";
 import FeedMediaFlyOverlay, {
@@ -56,6 +60,7 @@ import {
   normalizeViewParam,
   readViewParamFromLocation,
   type DiscoverModeIndex,
+  type MainPanelIndex,
 } from "../menuRouting";
 
 type DiscoverToolbarView = "reels" | "grid";
@@ -847,6 +852,14 @@ export default function DiscoverPage() {
   const [searchParams] = useSearchParams();
   const viewParam = normalizeViewParam(searchParams.get("view"));
 
+  useEffect(() => {
+    document.title = ptBR.meta.title;
+  }, []);
+
+  useEffect(() => {
+    warmHubIntroMedia(hub.video, hub.poster);
+  }, []);
+
   const reelsRef = useRef<HTMLDivElement>(null);
   const feedRef = useRef<HTMLDivElement>(null);
   const feedToolbarRef = useRef<HTMLDivElement>(null);
@@ -876,6 +889,9 @@ export default function DiscoverPage() {
         ? 2
         : 1;
   const [chromePanel, setChromePanel] = useState(initialChromePanel);
+  const initialDiscoverMode = discoverModeFromViewParam(viewParam);
+  const [modeChromeVisual, setModeChromeVisual] =
+    useState<DiscoverModeIndex>(initialDiscoverMode);
   const [pagerWidth, setPagerWidth] = useState(0);
   const [modePagerWidth, setModePagerWidth] = useState(0);
   const pendingGridOpenRef = useRef<{
@@ -888,8 +904,8 @@ export default function DiscoverPage() {
   const feedSurfaceRef = useRef(feedSurface);
   feedSurfaceRef.current = feedSurface;
   const reelsFromHubScrollDoneRef = useRef(false);
+  const menuTransitionFromRef = useRef<number | null>(null);
   const hasVisitedReelsRef = useRef(mainPanelFromViewParam(viewParam) === 1);
-  const reelsWelcomeVideoRef = useRef<HTMLVideoElement>(null);
   const onMenuPagerCommitRef = useRef<PagerCommitHandler | undefined>(undefined);
   const onMenuPagerDragRef = useRef<PagerDragHandler | undefined>(undefined);
   const onPagerPreferVerticalRef = useRef<PagerPreferVerticalHandler | undefined>(
@@ -992,9 +1008,6 @@ export default function DiscoverPage() {
     return Boolean(target.closest(".discover-shell__viewport"));
   };
 
-  menuPagerEnabledRef.current =
-    mainPanelFromViewParam(viewParam) !== 1;
-
   const menuPager = useHorizontalPager(
     2,
     mainPanelFromViewParam(viewParam),
@@ -1020,6 +1033,29 @@ export default function DiscoverPage() {
     onModePagerPreferVerticalRef,
   );
   const discoverModeIndex = modePager.index as DiscoverModeIndex;
+
+  useLayoutEffect(() => {
+    if (menuPager.animating) {
+      if (menuTransitionFromRef.current === null) {
+        menuTransitionFromRef.current = prevMenuIndexRef.current;
+      }
+      return;
+    }
+    menuTransitionFromRef.current = null;
+  }, [menuPager.animating, menuIndex]);
+
+  const hubIntroLeaving =
+    menuPager.animating && menuTransitionFromRef.current === 0;
+  const hubIntroVideoActive = menuIndex === 0 || hubIntroLeaving;
+
+  const discoverReelsReady =
+    menuIndex === 1 &&
+    (!menuPager.animating || menuTransitionFromRef.current !== 0);
+  const reelsPlaybackActive =
+    discoverReelsReady &&
+    discoverModeIndex === 0 &&
+    !modePager.animating &&
+    !modePager.dragging;
 
   onModePagerCommitRef.current = (at, direction) => {
     const surface = feedSurfaceRef.current;
@@ -1086,6 +1122,32 @@ export default function DiscoverPage() {
     menuPager.animating,
     modePager.dragging,
     modePager.animating,
+  ]);
+
+  useEffect(() => {
+    if (menuIndex !== 1) {
+      setModeChromeVisual(0);
+      return;
+    }
+    if (modePager.dragging && modePagerWidth > 0) {
+      const frac = discoverModeFractionalIndex(
+        discoverModeIndex,
+        modePager.dragPx,
+        modePagerWidth,
+        true,
+      );
+      setModeChromeVisual(frac >= 0.5 ? 1 : 0);
+      return;
+    }
+    if (modePager.animating) return;
+    setModeChromeVisual(discoverModeIndex);
+  }, [
+    menuIndex,
+    discoverModeIndex,
+    modePager.dragging,
+    modePager.animating,
+    modePager.dragPx,
+    modePagerWidth,
   ]);
 
   useEffect(() => {
@@ -1251,9 +1313,9 @@ export default function DiscoverPage() {
     [menuIndex, discoverModeIndex, feedSurface, scrollFeedToProduct],
   );
 
-  const syncDiscoverViewInUrl = useCallback(
-    (mode: DiscoverModeIndex) => {
-      const q = menuSearchForState(1, mode);
+  const replaceMenuSearch = useCallback(
+    (mainPanel: MainPanelIndex, mode: DiscoverModeIndex) => {
+      const q = menuSearchForState(mainPanel, mode);
       const current = window.location.search.replace(/^\?/, "");
       if (q === current) return;
       navigate({ pathname: "/", search: q ? `?${q}` : "" }, { replace: true });
@@ -1270,17 +1332,23 @@ export default function DiscoverPage() {
         clearFeedGridFly();
         setFeedGridDismissActive(false);
         setChromePanel(0);
+        const discoverRoot =
+          menuPager.containerRef.current?.querySelector(".discover-shell");
+        pauseVideosWithin(discoverRoot);
+        releaseVideoPrimersExcept(hub.video);
+        replaceMenuSearch(0, modePager.index as DiscoverModeIndex);
         menuPager.goTo(0);
         return;
       }
 
-      if (panel === 1) {
-        clearFeedGridFly();
-        setFeedGridDismissActive(false);
-      }
-
+      clearFeedGridFly();
+      setFeedGridDismissActive(false);
       hasVisitedReelsRef.current = true;
       setChromePanel(panel === 2 ? 2 : 1);
+
+      if (panel === 1 && feedSurfaceRef.current === "timeline") {
+        setFeedSurface("grid");
+      }
 
       if (fromMain === 0 && mode === 0) {
         requestAnimationFrame(() =>
@@ -1290,7 +1358,11 @@ export default function DiscoverPage() {
       if (fromMain === 0 && mode === 1) {
         setFeedSurface("grid");
       }
-      if (fromMain === 0) {
+      if (mode === 1 && feedSurfaceRef.current === "timeline") {
+        setFeedSurface("grid");
+      }
+
+      if (fromMain !== 1) {
         menuPager.goTo(1);
       }
 
@@ -1304,16 +1376,24 @@ export default function DiscoverPage() {
       }
 
       modePager.goTo(mode);
-      syncDiscoverViewInUrl(mode);
+      replaceMenuSearch(1, mode);
     },
     [
       clearFeedGridFly,
+      menuPager.containerRef,
       menuPager.goTo,
       modePager.containerRef,
       modePager.goTo,
-      syncDiscoverViewInUrl,
+      replaceMenuSearch,
     ],
   );
+
+  useEffect(() => {
+    if (menuIndex !== 0) return;
+    const discoverRoot =
+      menuPager.containerRef.current?.querySelector(".discover-shell");
+    pauseVideosWithin(discoverRoot);
+  }, [menuIndex, menuPager.containerRef]);
 
   useEffect(() => {
     const el = reelsRef.current;
@@ -1386,14 +1466,25 @@ export default function DiscoverPage() {
     const onPopState = () => {
       if (menuPager.draggingRef.current || modePager.draggingRef.current) return;
       const view = readViewParamFromLocation();
-      menuPager.goTo(mainPanelFromViewParam(view));
-      if (mainPanelFromViewParam(view) === 1) {
-        modePager.goTo(discoverModeFromViewParam(view));
+      const main = mainPanelFromViewParam(view);
+      menuPager.goTo(main);
+      if (main === 0) {
+        setChromePanel(0);
+        clearFeedGridFly();
+        setFeedGridDismissActive(false);
+        return;
       }
+      const mode = discoverModeFromViewParam(view);
+      modePager.goTo(mode);
+      setChromePanel(mode === 1 ? 2 : 1);
+      setFeedSurface("grid");
+      clearFeedGridFly();
+      setFeedGridDismissActive(false);
+      hasVisitedReelsRef.current = true;
     };
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
-  }, [menuPager.goTo, modePager.goTo]);
+  }, [clearFeedGridFly, menuPager.goTo, modePager.goTo]);
 
   useEffect(() => {
     if (
@@ -1414,14 +1505,6 @@ export default function DiscoverPage() {
     menuPager.animating,
     modePager.animating,
   ]);
-
-  useEffect(() => {
-    const video = reelsWelcomeVideoRef.current;
-    if (!video) return;
-    const welcomeShouldPlay = menuIndex === 1 && discoverModeIndex === 0;
-    if (welcomeShouldPlay) void video.play().catch(() => {});
-    else video.pause();
-  }, [menuIndex, discoverModeIndex, menuPager.dragPx, menuPager.animating]);
 
   const fromHub = searchParams.get("from") === "hub";
   useEffect(() => {
@@ -1463,19 +1546,19 @@ export default function DiscoverPage() {
   const modePagerInteracting = modePager.dragging || modePager.animating;
   const panelDepth = (idx: number): CSSProperties =>
     pagerInteracting ? panelDepthStyle(idx, fractionalIndex) : {};
-  const chromeFeedTone =
-    modePagerInteracting
-      ? modeFractionalIndex >= 0.5
-      : discoverModeIndex === 1;
+  const chromeModeFraction =
+    modePager.dragging && modeTrackWidth > 0
+      ? modeFractionalIndex
+      : discoverModeIndex;
+  const chromeFeedTone = modeChromeVisual === 1;
   const reelsProgressOpacity = Math.max(0, 1 - modeFractionalIndex * 1.35);
-  const reelsPlaybackActive = menuIndex === 1 && discoverModeIndex === 0;
   const reelsCacheMedia = hasVisitedReelsRef.current;
   const feedTimelineActive =
     menuIndex === 1 && discoverModeIndex === 1 && feedSurface === "timeline";
   const panelIsNear = (idx: number) =>
     Math.abs(fractionalIndex - idx) < (pagerInteracting ? 0.58 : 0.01);
   const toolbarView: DiscoverToolbarView =
-    menuIndex !== 1 || discoverModeIndex === 0 ? "reels" : "grid";
+    menuIndex !== 1 ? "reels" : modeChromeVisual === 1 ? "grid" : "reels";
   const showDiscoverChrome =
     menuIndex >= 1 ||
     (menuIndex === 0 && menuPager.dragging && menuPager.dragPx < -8);
@@ -1518,7 +1601,7 @@ export default function DiscoverPage() {
           chromeRef={pagerChromeRef}
           toolbarRef={feedToolbarRef}
           feedChrome={chromeFeedTone}
-          modeFraction={modeFractionalIndex}
+          modeFraction={chromeModeFraction}
           showDiscoverToolbar={menuIndex === 1}
           toolbarView={toolbarView}
           activeCat={activeCat}
@@ -1551,7 +1634,7 @@ export default function DiscoverPage() {
           style={panelDepth(0)}
         >
           <HubPanel
-            mediaActive={menuIndex === 0}
+            mediaActive={hubIntroVideoActive}
             onExploreMenu={() => goToMenuPanel(1)}
           />
         </div>
@@ -1580,7 +1663,10 @@ export default function DiscoverPage() {
               ].join(" ")}
               style={{ transform: modeTrackTransform }}
             >
-              <div className="discover-mode-pane discover-mode-pane--reels">
+              <div
+                className="discover-mode-pane discover-mode-pane--reels"
+                aria-hidden={modeChromeVisual !== 0}
+              >
           <div className="discover discover--reels">
             <div ref={reelsRef} className="discover__reels-scroller">
               <section
@@ -1588,23 +1674,9 @@ export default function DiscoverPage() {
                 data-welcome="true"
               >
                 <div className="discover__media-wrap" aria-hidden>
-                  <video
-                    ref={reelsWelcomeVideoRef}
+                  <HubIntroVideo
                     className="discover__media"
-                    src={hub.video}
-                    poster={hub.poster}
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    preload="auto"
-                    onCanPlay={() => {
-                      const video = reelsWelcomeVideoRef.current;
-                      if (!video) return;
-                      if (menuIndex === 1 && discoverModeIndex === 0) {
-                        void video.play().catch(() => {});
-                      }
-                    }}
+                    active={reelsPlaybackActive}
                   />
                 </div>
                 <div className="discover__shade" />
@@ -1657,7 +1729,10 @@ export default function DiscoverPage() {
             </div>
           </div>
               </div>
-              <div className="discover-mode-pane discover-mode-pane--feed">
+              <div
+                className="discover-mode-pane discover-mode-pane--feed"
+                aria-hidden={modeChromeVisual !== 1}
+              >
           <div className="discover discover--feed">
             <div
               ref={feedRef}

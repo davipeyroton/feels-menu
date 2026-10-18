@@ -35,6 +35,7 @@ export function menuSearchForState(
   const next = new URLSearchParams(base);
   if (mainPanel === 0) {
     next.delete("view");
+    next.delete("from");
   } else {
     next.set("view", viewParamFromDiscoverMode(discoverMode));
   }

@@ -4,7 +4,7 @@ export const ptBR = {
     switchToDark: "Ativar modo escuro",
   },
   meta: {
-    title: "Francisco · São Paulo — Boas-vindas",
+    title: "Studios Coffee · São Paulo",
   },
   hub: {
     logoAlt: "Coffee Feelings",

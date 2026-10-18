@@ -26,13 +26,11 @@ export function pagerRubberBandFactor(
 export function panelDepthStyle(
   panelIndex: number,
   fractionalIndex: number,
-): { transform: string; opacity: number } {
+): { transform: string } {
   const dist = Math.min(1, Math.abs(panelIndex - fractionalIndex));
   const scale = 1 - dist * 0.038;
-  const opacity = 1 - dist * 0.14;
   return {
     transform: `scale(${scale.toFixed(4)})`,
-    opacity,
   };
 }
 

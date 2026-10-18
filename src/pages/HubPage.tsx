@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useState } from "react";
+import HubIntroVideo from "../components/HubIntroVideo";
 import WifiSheetModal from "../components/WifiSheetModal";
 import { hub } from "../data/menu";
 import { ptBR } from "../i18n/pt-BR";
@@ -9,15 +10,7 @@ export default function HubPage() {
 
   return (
     <main className="hub">
-      <video
-        className="hub__video"
-        src={hub.video}
-        poster={hub.poster}
-        autoPlay
-        muted
-        loop
-        playsInline
-      />
+      <HubIntroVideo className="hub__video" active />
       <div className="hub__shade" />
       <div className="hub__gradient" />
 

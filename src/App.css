@@ -271,14 +271,13 @@ body {
   min-width: 0;
   overflow: hidden;
   transform-origin: center center;
-  transition:
-    transform 0.14s var(--motion-ease-out),
-    opacity 0.14s var(--motion-ease-out);
-  contain: layout style;
+  background: var(--app-bg);
+  transition: transform 0.14s var(--motion-ease-out);
+  contain: layout style paint;
 }
 
 .menu-pager--interacting .menu-pager__panel {
-  will-change: transform, opacity;
+  will-change: transform;
 }
 
 .menu-pager__track--dragging .menu-pager__panel {
@@ -319,6 +318,8 @@ body {
   width: 100%;
   overflow: hidden;
   touch-action: pan-y pinch-zoom;
+  --motion-duration-pager: 0.34s;
+  --motion-ease-pager: cubic-bezier(0.22, 1.18, 0.42, 1);
 }
 
 .discover-mode-track {
@@ -332,7 +333,9 @@ body {
 }
 
 .discover-mode-track--snap {
-  transition: transform 0.34s cubic-bezier(0.25, 1, 0.45, 1);
+  -webkit-transition: -webkit-transform var(--motion-duration-pager)
+    var(--motion-ease-pager);
+  transition: transform var(--motion-duration-pager) var(--motion-ease-pager);
 }
 
 .discover-mode-track--dragging {
@@ -347,6 +350,14 @@ body {
   overflow: hidden;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+}
+
+.menu-pager--reels-mode .discover-mode-pane--feed {
+  pointer-events: none;
+}
+
+.menu-pager--feed-mode .discover-mode-pane--reels {
+  pointer-events: none;
 }
 
 .menu-pager--discover-open .discover__reels-scroller,

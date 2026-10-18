@@ -1,16 +1,15 @@
-const STORAGE_KEY = "feels-menu:warm-media";
-const MAX_STORED_URLS = 64;
-const MAX_VIDEO_PRIMERS = 4;
+const STORAGE_KEY_SESSION = "feels-menu:warm-media";
+const STORAGE_KEY_LOCAL = "feels-menu:warm-media:v1";
+const MAX_STORED_URLS = 96;
+const MAX_VIDEO_PRIMERS = 3;
 
 const warmUrls = new Set<string>(readStoredUrls());
 const prefetchedImages = new Set<string>();
 const videoPrimers = new Map<string, HTMLVideoElement>();
 
-function readStoredUrls(): string[] {
-  if (typeof sessionStorage === "undefined") return [];
+function readJsonUrls(raw: string | null): string[] {
+  if (!raw) return [];
   try {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
     const parsed: unknown = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
     return parsed.filter((item): item is string => typeof item === "string");
@@ -19,11 +18,31 @@ function readStoredUrls(): string[] {
   }
 }
 
+function readStoredUrls(): string[] {
+  const merged: string[] = [];
+  if (typeof sessionStorage !== "undefined") {
+    merged.push(...readJsonUrls(sessionStorage.getItem(STORAGE_KEY_SESSION)));
+  }
+  if (typeof localStorage !== "undefined") {
+    merged.push(...readJsonUrls(localStorage.getItem(STORAGE_KEY_LOCAL)));
+  }
+  return [...new Set(merged)].slice(-MAX_STORED_URLS);
+}
+
 function persistWarmUrls(): void {
-  if (typeof sessionStorage === "undefined") return;
+  const list = [...warmUrls].slice(-MAX_STORED_URLS);
+  const payload = JSON.stringify(list);
   try {
-    const list = [...warmUrls].slice(-MAX_STORED_URLS);
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    if (typeof sessionStorage !== "undefined") {
+      sessionStorage.setItem(STORAGE_KEY_SESSION, payload);
+    }
+  } catch {
+    /* quota or private mode */
+  }
+  try {
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem(STORAGE_KEY_LOCAL, payload);
+    }
   } catch {
     /* quota or private mode */
   }
@@ -102,6 +121,41 @@ export function warmProductMedia(slide: {
 }): void {
   if (slide.image) prefetchImage(slide.image);
   if (slide.video) prefetchVideoThumb(slide.video);
+}
+
+export function warmHubIntroMedia(videoUrl: string, posterUrl: string): void {
+  prefetchImage(posterUrl);
+  markMediaWarm(videoUrl);
+  markMediaWarm(posterUrl);
+  prefetchVideoThumb(videoUrl);
+}
+
+/** Pause decoders before hub transition (Safari/iOS). */
+export function pauseVideosWithin(
+  root: ParentNode | null | undefined,
+  selector = "video",
+): void {
+  if (!root) return;
+  root.querySelectorAll<HTMLVideoElement>(selector).forEach((video) => {
+    video.pause();
+    try {
+      if (video.currentTime > 0) video.currentTime = 0;
+    } catch {
+      /* ignore */
+    }
+  });
+}
+
+export function releaseVideoPrimersExcept(keepUrl?: string | null): void {
+  const keep = keepUrl ? stripMediaFragment(keepUrl) : null;
+  for (const [key, el] of [...videoPrimers.entries()]) {
+    if (keep && key === keep) continue;
+    el.pause();
+    el.removeAttribute("src");
+    el.load();
+    el.remove();
+    videoPrimers.delete(key);
+  }
 }
 
 function stripMediaFragment(url: string): string {
