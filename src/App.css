@@ -291,11 +291,105 @@ body {
 
 .discover--pager-chrome--hidden {
   opacity: 0;
+  visibility: hidden;
   pointer-events: none;
 }
 
-.menu-pager--crossfade-reels .discover--pager-chrome--reels {
-  opacity: calc(1 + min(0, var(--pager-drag-fraction, 0)) * 0.92);
+
+/* Discover: fixed chrome + horizontal reels ↔ feed under the header. */
+.menu-pager--discover-open {
+  touch-action: pan-y pinch-zoom;
+}
+
+.menu-pager--discover-open .menu-pager__track {
+  touch-action: pan-y;
+}
+
+.discover-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.discover-shell__viewport {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+  touch-action: pan-y pinch-zoom;
+}
+
+.discover-mode-track {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  width: 200%;
+  will-change: transform;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.discover-mode-track--snap {
+  transition: transform var(--motion-duration-pager) var(--motion-ease-pager);
+}
+
+.discover-mode-track--dragging {
+  transition: none;
+}
+
+.discover-mode-pane {
+  flex: 0 0 50%;
+  width: 50%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.menu-pager--discover-open .discover__reels-scroller,
+.menu-pager--discover-open .discover__feed {
+  touch-action: pan-y;
+}
+
+.menu-pager--discover-open.menu-pager--feed-mode .discover__feed {
+  box-sizing: border-box;
+  padding-top: var(--discover-chrome-h, 3.5rem);
+  scroll-padding-top: calc(
+    var(--discover-chrome-h, 3.5rem) + var(--discover-feed-toolbar-h, 2.85rem) + 0.35rem
+  );
+}
+
+.discover--pager-chrome--feed {
+  color-scheme: light dark;
+  background: var(--feed-bg, var(--app-bg));
+  color: var(--app-fg);
+  transition:
+    background 0.25s ease,
+    color 0.25s ease;
+}
+
+.discover--pager-chrome--feed .discover__header {
+  background: var(--feed-bg, var(--app-bg));
+  color: var(--app-fg);
+  border-bottom: 1px solid var(--border-subtle);
+  transition:
+    background 0.25s ease,
+    border-color 0.25s ease;
+}
+
+.discover--pager-chrome--feed .discover__header-row {
+  padding-bottom: 0.65rem;
+}
+
+.discover--pager-chrome--feed .discover__brand-link,
+.discover--pager-chrome--feed .discover__view-btn {
+  color: var(--control-fg);
+}
+
+.discover--pager-chrome--feed .discover__view-btn--on {
+  background: var(--control-on-bg);
+  color: var(--control-on-fg);
 }
 
 .menu-pager__panel .discover {
@@ -776,7 +870,8 @@ button {
   position: -webkit-sticky;
   position: sticky;
   top: 0;
-  z-index: 40;
+  z-index: 35;
+  margin: 0;
   padding-top: 0.35rem;
   padding-bottom: 0.5rem;
   background: var(--feed-bg, var(--app-bg));
@@ -930,12 +1025,17 @@ button {
   opacity: 0.82;
 }
 
-[data-theme="light"] .discover--feed .discover__cat-dropdown-option--on .discover__cat-emoji {
+[data-theme="light"] .discover--feed .discover__cat-dropdown-option--on .discover__cat-emoji,
+[data-theme="light"]
+  .discover--pager-chrome--feed
+  .discover__cat-dropdown-option--on
+  .discover__cat-emoji {
   filter: brightness(0) invert(1);
   opacity: 0.92;
 }
 
-[data-theme="light"] .discover--feed .discover__cat-dropdown-menu {
+[data-theme="light"] .discover--feed .discover__cat-dropdown-menu,
+[data-theme="light"] .discover--pager-chrome--feed .discover__cat-dropdown-menu {
   box-shadow: 0 8px 28px -10px rgba(0, 0, 0, 0.12);
 }
 
@@ -1059,44 +1159,76 @@ button {
   z-index: 72;
 }
 
-.discover__immersive {
+.discover__immersive-drawer {
   position: fixed;
   inset: 0;
   z-index: 68;
-  background: #000;
   display: flex;
   flex-direction: column;
+  background: #000;
   color: #fff;
   touch-action: pan-y;
   overscroll-behavior: contain;
-  will-change: transform, opacity, border-radius;
-  transform-origin: center top;
-  animation: discover-immersive-in var(--motion-duration-medium) var(--motion-ease-out)
-    both;
+  will-change: transform;
+  box-shadow: -16px 0 48px rgba(0, 0, 0, 0.45);
 }
 
-.discover__immersive--dragging,
-.discover__immersive--dismissing {
+.discover__immersive-drawer:not(.discover__immersive-drawer--interacting) {
+  animation: discover-immersive-drawer-in var(--motion-duration-medium)
+    var(--motion-ease-out) both;
+}
+
+.discover__immersive-drawer--interacting {
   animation: none;
-  transition:
-    transform var(--motion-duration-medium) var(--motion-ease-dismiss),
-    opacity var(--motion-duration-medium) var(--motion-ease-dismiss),
-    border-radius var(--motion-duration-medium) var(--motion-ease-dismiss);
+  transition: transform var(--motion-duration-medium) var(--motion-ease-dismiss);
+}
+
+.discover__immersive-drawer .discover--pager-chrome {
+  position: relative;
+  inset: auto;
+  z-index: 2;
+  flex-shrink: 0;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  pointer-events: auto;
+}
+
+.discover__immersive-drawer .discover__header {
+  position: relative;
+  inset: auto;
+  max-width: none;
+}
+
+.discover__immersive-drawer .discover__progress--pager {
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
+}
+
+.discover__immersive--in-drawer {
+  position: relative;
+  inset: auto;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #000;
+}
+
+@keyframes discover-immersive-drawer-in {
+  from {
+    transform: translate3d(100%, 0, 0);
+  }
+
+  to {
+    transform: translate3d(0, 0, 0);
+  }
 }
 
 .discover__reels-scroller--immersive {
   touch-action: pan-y;
   overscroll-behavior-y: contain;
-}
-
-@keyframes discover-immersive-in {
-  from {
-    opacity: 0.96;
-  }
-
-  to {
-    opacity: 1;
-  }
 }
 
 .feed-surface {
@@ -1182,14 +1314,18 @@ button {
 
 .discover__feed--timeline {
   padding-top: 0;
-  scroll-padding-top: calc(var(--discover-chrome-h, 3.25rem) + 0.35rem);
   touch-action: pan-x pan-y;
+}
+
+.menu-pager--feed-mode .feed-post {
+  scroll-margin-top: calc(
+    var(--discover-chrome-h, 3.5rem) + var(--discover-feed-toolbar-h, 2.85rem) + 0.5rem
+  );
 }
 
 .feed-post {
   border-bottom: 1px solid var(--border-subtle);
   margin-bottom: 0.25rem;
-  scroll-margin-top: calc(var(--discover-chrome-h, 3.25rem) + 0.5rem);
 }
 
 .feed-post__head {
@@ -1216,9 +1352,68 @@ button {
   padding: 0;
   border: 0;
   background: #111;
-  cursor: pointer;
-  aspect-ratio: 1;
+  cursor: default;
+  aspect-ratio: 3 / 4;
   overflow: hidden;
+}
+
+.feed-post__media--closable {
+  cursor: pointer;
+  text-align: inherit;
+  font: inherit;
+  color: inherit;
+  touch-action: pan-y;
+  -webkit-tap-highlight-color: transparent;
+  transform-origin: center center;
+  transition: transform 0.32s cubic-bezier(0.33, 1.02, 0.52, 1);
+  will-change: transform;
+}
+
+.feed-post__media--closable.feed-post__media--dragging {
+  transition: none;
+  z-index: 2;
+  position: relative;
+}
+
+.feed-post__media--closable:active {
+  opacity: 0.96;
+}
+
+.feed-post--grid-pull .feed-post__body,
+.feed-post--grid-pull .feed-post__head {
+  opacity: calc(1 - var(--feed-dismiss, 0) * 0.55);
+  transition: opacity 0.05s linear;
+}
+
+.feed-post__media--fly-hidden,
+.feed-grid__cell--fly-target img,
+.feed-grid__cell--fly-target video {
+  opacity: 0;
+}
+
+.feed-media-fly {
+  position: fixed;
+  z-index: 80;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: #111;
+  will-change: left, top, width, height;
+}
+
+.feed-media-fly__media {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.feed-media-fly__placeholder {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: #1a1a1a;
 }
 
 .feed-post__media img,
@@ -1293,7 +1488,7 @@ button {
   margin: 0;
   padding: 0;
   border: 0;
-  aspect-ratio: 1;
+  aspect-ratio: 3 / 4;
   overflow: hidden;
   cursor: pointer;
   background: #111;
@@ -1319,18 +1514,41 @@ button {
   background: #1a1a1a;
 }
 
-.feed-grid__price {
+.feed-grid__caption {
   position: absolute;
   left: 0.45rem;
+  right: 0.45rem;
   bottom: 0.4rem;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.12rem;
+  pointer-events: none;
+  text-align: left;
+}
+
+.feed-grid__title {
+  font-family: var(--item-title);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+  color: #fff;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.88);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.feed-grid__price {
   font-family: var(--price);
   font-size: 11px;
   font-weight: 600;
   line-height: 1.2;
   color: #fff;
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.85);
-  pointer-events: none;
 }
 
 .feed-grid__cell::after {

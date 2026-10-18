@@ -33,9 +33,13 @@ export const ptBR = {
     outroSubtitle: "Porto, Portugal",
     backToFeed: "Voltar ao feed",
     backToProfileGrid: "Voltar ao perfil",
+    feedLayout: "Visualização do cardápio no feed",
+    feedLayoutGrid: "Grade",
+    feedLayoutList: "Lista",
     profileGrid: "Publicações do cardápio",
     reelDialog: (name: string) => `Reel de ${name}`,
     closeImmersiveFromFeed: "Fechar e voltar ao feed",
+    closeFeedPostToGrid: "Fechar e voltar à grade",
   },
   categories: {
     focaccias: "Focaccias",

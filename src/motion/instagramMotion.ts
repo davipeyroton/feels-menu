@@ -17,6 +17,9 @@ export function pagerRubberBandFactor(
 ): number {
   if (atIndex === 0 && dx > 0) return 0.28;
   if (atIndex === panelCount - 1 && dx < 0) return 0.28;
+  // Reels (1) and feed (2) are decoupled — no horizontal drag between them.
+  if (atIndex === 1 && dx < 0) return 0;
+  if (atIndex === 2 && dx > 0) return 0;
   return 1;
 }
 
@@ -33,7 +36,3 @@ export function panelDepthStyle(
   };
 }
 
-export function immersiveDismissRadius(x: number, y: number, width: number): number {
-  const progress = Math.min(1, Math.max(x, y) / Math.max(width * 0.55, 1));
-  return Math.round(progress * 22);
-}

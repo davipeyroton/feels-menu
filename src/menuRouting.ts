@@ -1,35 +1,47 @@
-/** Panel index for the horizontal hub → reels → feed pager. */
-export type MenuPanelIndex = 0 | 1 | 2;
+/** Main pager: 0 = hub, 1 = discover (reels + feed). */
+export type MainPanelIndex = 0 | 1;
 
-export function menuPanelFromViewParam(view: string | null): MenuPanelIndex {
-  if (view === "feed") return 2;
-  if (view === "reels") return 1;
-  return 0;
-}
-
-export function viewParamFromMenuPanel(panel: number): "reels" | "feed" | null {
-  if (panel === 2) return "feed";
-  if (panel === 1) return "reels";
-  return null;
-}
+/** Inner discover track: 0 = reels, 1 = feed. */
+export type DiscoverModeIndex = 0 | 1;
 
 export function normalizeViewParam(view: string | null): "reels" | "feed" | null {
   if (view === "feed" || view === "reels") return view;
   return null;
 }
 
+export function mainPanelFromViewParam(view: string | null): MainPanelIndex {
+  if (view === "feed" || view === "reels") return 1;
+  return 0;
+}
+
+export function discoverModeFromViewParam(view: string | null): DiscoverModeIndex {
+  return view === "feed" ? 1 : 0;
+}
+
+export function viewParamFromDiscoverMode(mode: DiscoverModeIndex): "reels" | "feed" {
+  return mode === 1 ? "feed" : "reels";
+}
+
 export function readViewParamFromLocation(): "reels" | "feed" | null {
   return normalizeViewParam(new URLSearchParams(window.location.search).get("view"));
 }
 
-/** Serialized query (no leading `?`), preserving unrelated keys. */
-export function menuSearchForPanel(
-  panel: number,
+/** Serialized query (no leading `?`). */
+export function menuSearchForState(
+  mainPanel: number,
+  discoverMode: DiscoverModeIndex,
   base = new URLSearchParams(window.location.search),
 ): string {
   const next = new URLSearchParams(base);
-  const view = viewParamFromMenuPanel(panel);
-  if (view) next.set("view", view);
-  else next.delete("view");
+  if (mainPanel === 0) {
+    next.delete("view");
+  } else {
+    next.set("view", viewParamFromDiscoverMode(discoverMode));
+  }
   return next.toString();
+}
+
+/** @deprecated Use mainPanelFromViewParam — kept for popstate helpers. */
+export function menuPanelFromViewParam(view: string | null): MainPanelIndex {
+  return mainPanelFromViewParam(view);
 }

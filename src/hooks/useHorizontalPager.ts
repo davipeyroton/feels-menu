@@ -40,6 +40,9 @@ export type PagerPreferVerticalHandler = (info: {
   panelIndex: number;
 }) => boolean;
 
+/** Return true to prevent programmatic panel changes (e.g. reels ↔ feed). */
+export type PagerTransitionBlock = (from: number, to: number) => boolean;
+
 function defaultPreferVertical(target: EventTarget | null): boolean {
   if (!(target instanceof Element)) return false;
   return Boolean(
@@ -56,6 +59,7 @@ export function useHorizontalPager(
   onCommitRef?: RefObject<PagerCommitHandler | undefined>,
   onDragRef?: RefObject<PagerDragHandler | undefined>,
   preferVerticalRef?: RefObject<PagerPreferVerticalHandler | undefined>,
+  blockTransitionRef?: RefObject<PagerTransitionBlock | undefined>,
 ) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(initialIndex);
@@ -180,7 +184,7 @@ export function useHorizontalPager(
       const dx = touch.clientX - gesture.x;
       const dy = touch.clientY - gesture.y;
 
-      if (gesture.locked === null) {
+        if (gesture.locked === null) {
         if (
           Math.abs(dx) < LOCK_THRESHOLD_PX &&
           Math.abs(dy) < LOCK_THRESHOLD_PX
@@ -189,6 +193,11 @@ export function useHorizontalPager(
         }
         const absDx = Math.abs(dx);
         const absDy = Math.abs(dy);
+        const at = indexRef.current;
+        if (at === 1 && dx < -LOCK_THRESHOLD_PX && absDx > absDy * 0.85) {
+          gesture.locked = "y";
+          return;
+        }
         const preferVerticalNow =
           preferVerticalRef?.current?.({
             target: event.target,
@@ -233,9 +242,12 @@ export function useHorizontalPager(
       }
     };
 
-    const applyCommit = (at: number, direction: PagerCommitDirection) => {
+    const applyCommit = (at: number, direction: PagerCommitDirection): boolean => {
       const custom = onCommitRef?.current?.(at, direction);
-      if (custom === "handled") return;
+      if (custom === "handled") {
+        setDragPx(0);
+        return false;
+      }
       const fallback =
         direction === "next"
           ? at < panelCount - 1
@@ -246,8 +258,15 @@ export function useHorizontalPager(
             : null;
       const target = typeof custom === "number" ? custom : fallback;
       if (target !== null && target !== at) {
+        if (blockTransitionRef?.current?.(at, target)) {
+          setDragPx(0);
+          return false;
+        }
         goTo(target);
+        return true;
       }
+      setDragPx(0);
+      return false;
     };
 
     const onTouchEnd = (event: TouchEvent) => {
@@ -283,13 +302,15 @@ export function useHorizontalPager(
         dx > commitPx ||
         (flingRight && dx > 0);
 
-      setAnimating(true);
-
       const finishCommit = (direction: PagerCommitDirection) => {
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
-            applyCommit(at, direction);
+            const moved = applyCommit(at, direction);
             el.style.setProperty("--pager-drag-fraction", "0");
+            if (!moved) {
+              clearAnimatingEnd();
+              setAnimating(false);
+            }
           });
         });
       };
@@ -346,6 +367,7 @@ export function useHorizontalPager(
     onCommitRef,
     onDragRef,
     preferVerticalRef,
+    blockTransitionRef,
     enabledRef,
     goTo,
     scheduleAnimatingEnd,
