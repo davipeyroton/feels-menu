@@ -22,6 +22,8 @@ export const ptBR = {
     close: "Fechar",
   },
   discover: {
+    wifiLabel: "Wi-Fi",
+    wifiOpenHub: "Abrir boas-vindas e Wi-Fi",
     viewMode: "Modo de visualização",
     viewReels: "Modo reels",
     viewFeed: "Modo feed",

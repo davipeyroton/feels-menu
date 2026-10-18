@@ -13,10 +13,14 @@ const categoryEmojiHex: Record<string, string> = {
   drinks: "1F964",
 };
 
+function openMojiBlackSvg(hex: string): string {
+  return `https://cdn.jsdelivr.net/npm/openmoji@${OPENMOJI_VERSION}/black/svg/${hex}.svg`;
+}
+
 export function categoryEmojiSrc(categoryId: string): string | undefined {
   const hex = categoryEmojiHex[categoryId];
   if (!hex) return undefined;
-  return `https://cdn.jsdelivr.net/npm/openmoji@${OPENMOJI_VERSION}/black/svg/${hex}.svg`;
+  return openMojiBlackSvg(hex);
 }
 
 export function CategoryEmoji({
