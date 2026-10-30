@@ -1,12 +1,18 @@
 import { Link } from "react-router-dom";
 import { useState } from "react";
+import GuestProgramSheet from "../components/GuestProgramSheet";
 import HubIntroVideo from "../components/HubIntroVideo";
-import WifiSheetModal from "../components/WifiSheetModal";
+import {
+  HubArrowIcon,
+  HubCashbackIcon,
+  HubLoyaltyIcon,
+} from "../components/icons";
 import { hub } from "../data/menu";
 import { ptBR } from "../i18n/pt-BR";
+import type { GuestProgram } from "../loyalty/guestEnrollment";
 
 export default function HubPage() {
-  const [wifiOpen, setWifiOpen] = useState(false);
+  const [program, setProgram] = useState<GuestProgram | null>(null);
 
   return (
     <main className="hub">
@@ -24,38 +30,40 @@ export default function HubPage() {
         </header>
 
         <nav className="hub__nav">
-          <Link className="btn btn--primary" to="/discover?from=hub">
-            {ptBR.hub.exploreMenu} <span aria-hidden>→</span>
+          <Link className="btn btn--primary btn--hub-icon-trail" to="/discover?from=hub">
+            <span className="btn__label">{ptBR.hub.exploreMenu}</span>
+            <span className="btn__trail-icon">
+              <HubArrowIcon />
+            </span>
           </Link>
-          {hub.google_review_url && (
-            <a
-              className="btn btn--glass"
-              href={hub.google_review_url}
-              target="_blank"
-              rel="noreferrer"
-            >
-              {ptBR.hub.googleReview} <span aria-hidden>↗</span>
-            </a>
-          )}
-          {hub.wifi && (
-            <button
-              type="button"
-              className="btn btn--glass"
-              onClick={() => setWifiOpen(true)}
-            >
-              {ptBR.hub.wifi} <span aria-hidden>›</span>
-            </button>
-          )}
+          <button
+            type="button"
+            className="btn btn--glass btn--hub-icon-trail"
+            onClick={() => setProgram("cashback")}
+          >
+            <span className="btn__label">{ptBR.hub.cashback}</span>
+            <span className="btn__trail-icon">
+              <HubCashbackIcon />
+            </span>
+          </button>
+          <button
+            type="button"
+            className="btn btn--glass btn--hub-icon-trail"
+            onClick={() => setProgram("loyalty")}
+          >
+            <span className="btn__label">{ptBR.hub.loyalty}</span>
+            <span className="btn__trail-icon">
+              <HubLoyaltyIcon />
+            </span>
+          </button>
         </nav>
       </div>
 
-      {hub.wifi && (
-        <WifiSheetModal
-          open={wifiOpen}
-          onClose={() => setWifiOpen(false)}
-          wifi={hub.wifi}
-        />
-      )}
+      <GuestProgramSheet
+        open={program !== null}
+        program={program}
+        onClose={() => setProgram(null)}
+      />
     </main>
   );
 }

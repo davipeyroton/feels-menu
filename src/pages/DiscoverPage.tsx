@@ -47,7 +47,6 @@ import {
 } from "../data/menu";
 import { ptBR } from "../i18n/pt-BR";
 import { CategoryEmoji } from "../openmoji/categoryEmoji";
-import { WifiIcon } from "../components/icons";
 import HubIntroVideo from "../components/HubIntroVideo";
 import ProductMediaPlaceholder from "../components/ProductMediaPlaceholder";
 import ThemeToggle from "../components/ThemeToggle";
@@ -494,20 +493,6 @@ function ReelsChrome({
             <button type="button" className="discover__brand-link" onClick={onHub}>
               {ptBR.discover.brandName}
             </button>
-            {hub.wifi && (
-              <>
-                <span className="discover__header-divider" aria-hidden />
-                <button
-                  type="button"
-                  className="discover__wifi-link"
-                  onClick={onHub}
-                  aria-label={ptBR.discover.wifiOpenHub}
-                >
-                  <WifiIcon />
-                  <span className="discover__wifi-label">{ptBR.discover.wifiLabel}</span>
-                </button>
-              </>
-            )}
           </div>
           {feedChrome && <ThemeToggle />}
         </div>

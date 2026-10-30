@@ -24,6 +24,34 @@ export function categoryEmojiSrc(categoryId: string): string | undefined {
   return openMojiBlackSvg(hex);
 }
 
+export const hubOpenMoji = {
+  explore: "27A1",
+  cashback: "1FA99",
+  loyalty: "1F3AB",
+} as const;
+
+export function OpenMojiIcon({
+  hex,
+  size = 22,
+  className = "",
+}: {
+  hex: string;
+  size?: number;
+  className?: string;
+}) {
+  return (
+    <img
+      className={className}
+      src={openMojiBlackSvg(hex)}
+      alt=""
+      width={size}
+      height={size}
+      decoding="async"
+      draggable={false}
+    />
+  );
+}
+
 export function CategoryEmoji({
   categoryId,
   size = 20,

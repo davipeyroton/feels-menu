@@ -1,3 +1,49 @@
+function SolidIcon({
+  size = 22,
+  viewBox = "0 0 256 256",
+  path,
+}: {
+  size?: number;
+  viewBox?: string;
+  path: string;
+}) {
+  return (
+    <svg viewBox={viewBox} width={size} height={size} aria-hidden>
+      <path fill="currentColor" d={path} />
+    </svg>
+  );
+}
+
+/** OpenMoji 27A1 “right arrow” (CC BY-SA 4.0), filled so it follows the button color. */
+export function HubArrowIcon({ size = 22 }: { size?: number }) {
+  return (
+    <svg viewBox="0 0 72 72" width={size} height={size} aria-hidden>
+      <polygon
+        fill="currentColor"
+        points="49.2124,51.5343 67,35.0363 49.2124,18.5382 45.4234,22.6138 55.8191,32.2554 5,32.2554 5,37.8171 55.8191,37.8171 45.4234,47.4587"
+      />
+    </svg>
+  );
+}
+
+export function HubCashbackIcon({ size = 22 }: { size?: number }) {
+  return (
+    <SolidIcon
+      size={size}
+      path="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm12,152h-4v8a8,8,0,0,1-16,0v-8H104a8,8,0,0,1,0-16h36a12,12,0,0,0,0-24H116a28,28,0,0,1,0-56h4V72a8,8,0,0,1,16,0v8h16a8,8,0,0,1,0,16H116a12,12,0,0,0,0,24h24a28,28,0,0,1,0,56Z"
+    />
+  );
+}
+
+export function HubLoyaltyIcon({ size = 22 }: { size?: number }) {
+  return (
+    <SolidIcon
+      size={size}
+      path="M240,102c0,70-103.79,126.66-108.21,129a8,8,0,0,1-7.58,0C119.79,228.66,16,172,16,102A62.07,62.07,0,0,1,78,40c20.65,0,38.73,8.88,50,23.89C139.27,48.88,157.35,40,178,40A62.07,62.07,0,0,1,240,102Z"
+    />
+  );
+}
+
 export function WifiIcon({ size = 18 }: { size?: number }) {
   return (
     <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden>
