@@ -1006,11 +1006,14 @@ body {
 .product-media-layered__video {
   z-index: 1;
   opacity: 0;
-  transition: opacity 0.2s ease;
 }
 
 .product-media-layered__video--ready {
   opacity: 1;
+}
+
+.discover__media-wrap .product-media-layered__video--ready {
+  transition: opacity 0.2s ease;
 }
 
 .hub__shade {
@@ -3399,8 +3402,9 @@ button {
   z-index: 0;
   overflow: hidden;
   pointer-events: none;
-  contain: layout paint;
+  contain: strict;
   transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .discover__media-tap {
@@ -3413,6 +3417,8 @@ button {
   background: transparent;
   cursor: default;
   pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .discover__media-wrap .discover__media {
@@ -3609,7 +3615,7 @@ button {
 .menu-pager--reels-mode .discover__copy .menu-price--reel,
 .discover.discover--reels .discover__copy .menu-price--reel {
   font-size: 19.6px;
-  padding: 0.25rem 0.57rem 0.28rem;
+  padding: 0.38rem 0.92rem 0.42rem;
 }
 
 /* Zoom out: full description + title ~30% below prior hero scale */
@@ -3637,7 +3643,7 @@ button {
 
 .menu-pager--reels-mode .menu-price--reel {
   font-size: 28px;
-  padding: 0.36rem 0.82rem 0.4rem;
+  padding: 0.48rem 1.12rem 0.52rem;
 }
 
 .menu-pager--reels-mode .discover__heart--reel-float {
@@ -3801,7 +3807,7 @@ button {
   gap: 0.22rem;
   font-size: 21px;
   font-weight: 600;
-  padding: 0.32rem 0.72rem 0.36rem;
+  padding: 0.44rem 1.02rem 0.48rem;
   border-radius: 999px;
   color: #fff;
   letter-spacing: 0.01em;

@@ -19,6 +19,7 @@ import {
 } from "../motion/instagramMotion";
 import {
   forwardRef,
+  memo,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -232,7 +233,7 @@ function CategoryDropdown({
   );
 }
 
-function ProductMedia({
+const ProductMedia = memo(function ProductMedia({
   slide,
   className,
   playVideo = false,
@@ -246,7 +247,8 @@ function ProductMedia({
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoFrames, setVideoFrames] = useState(false);
-  const mountVideo = Boolean(slide.video && playVideo);
+  /** Keep decoder mounted while warm — avoid poster flash on brief playIntent gaps. */
+  const mountVideo = Boolean(slide.video && (playVideo || warm));
   const showPoster = Boolean(slide.image);
   const imageEager = playVideo || warm || isMediaWarm(slide.image);
 
@@ -257,26 +259,33 @@ function ProductMedia({
   }, [warm, playVideo, slide.video, slide.image]);
 
   useEffect(() => {
+    if (!mountVideo) {
+      setVideoFrames(false);
+      return;
+    }
     const video = videoRef.current;
-    if (!video || !slide.video || !mountVideo) return;
+    if (!video || !slide.video) return;
+
     configureInlineVideo(video);
-    setVideoFrames(false);
 
     const onReady = () => setVideoFrames(true);
     if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
       onReady();
     } else {
+      setVideoFrames(false);
       video.addEventListener("loadeddata", onReady, { once: true });
     }
 
-    void video.play().catch(() => {});
+    if (playVideo) {
+      void video.play().catch(() => {});
+    } else {
+      video.pause();
+    }
 
     return () => {
       video.removeEventListener("loadeddata", onReady);
-      video.pause();
-      setVideoFrames(false);
     };
-  }, [mountVideo, slide.video]);
+  }, [mountVideo, playVideo, slide.video]);
 
   if (!showPoster && !slide.video) {
     return <ProductMediaPlaceholder className={className} />;
@@ -317,7 +326,7 @@ function ProductMedia({
       ) : null}
     </span>
   );
-}
+});
 
 const REEL_DESC_ZOOM_IN_MAX = 32;
 
@@ -402,9 +411,12 @@ function ProductReel({
     }
   }, [inView]);
 
-  const onMediaTap = useCallback(() => {
-    setCopyZoomedOut((zoomedOut) => (zoomedOut ? false : zoomedOut));
-  }, []);
+  const onMediaTap = useCallback((event: MouseEvent<HTMLButtonElement>) => {
+    if (copyZoomedOut) {
+      event.preventDefault();
+      setCopyZoomedOut(false);
+    }
+  }, [copyZoomedOut]);
 
   const onSeeMore = useCallback((event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
