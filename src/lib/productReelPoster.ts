@@ -23,3 +23,11 @@ export function productReelPoster(
   }
   return slide.image;
 }
+
+/** Feed / profile grid thumb — video frame for MP4 items, product photo otherwise. */
+export function feedGridThumbUrl(
+  slide: Pick<ProductSlide, "video" | "videoPoster" | "image">,
+): string | null {
+  if (slide.video) return productReelPoster(slide);
+  return slide.image;
+}

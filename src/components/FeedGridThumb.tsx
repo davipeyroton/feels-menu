@@ -2,6 +2,7 @@ import { Video } from "lucide-react";
 import { useEffect, useRef, type ReactNode } from "react";
 import type { ProductSlide } from "../data/menu";
 import { useNearViewport } from "../hooks/useNearViewport";
+import { feedGridThumbUrl } from "../lib/productReelPoster";
 import {
   imageLoadingForUrl,
   isMediaWarm,
@@ -20,8 +21,9 @@ function FeedGridVideoBadge() {
 export default function FeedGridThumb({ slide }: { slide: ProductSlide }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const nearView = useNearViewport(hostRef);
+  const thumbUrl = feedGridThumbUrl(slide);
   const mediaReady =
-    nearView || isMediaWarm(slide.video ?? slide.image);
+    nearView || isMediaWarm(thumbUrl) || isMediaWarm(slide.image);
 
   useEffect(() => {
     if (!nearView) return;
@@ -41,12 +43,13 @@ export default function FeedGridThumb({ slide }: { slide: ProductSlide }) {
     return wrap(<ProductMediaPlaceholder />);
   }
 
-  if (slide.image) {
+  if (thumbUrl) {
     return wrap(
       <img
-        src={slide.image}
+        className="feed-grid__thumb"
+        src={thumbUrl}
         alt=""
-        loading={imageLoadingForUrl(slide.image, nearView)}
+        loading={imageLoadingForUrl(thumbUrl, nearView)}
         decoding="async"
       />,
     );
