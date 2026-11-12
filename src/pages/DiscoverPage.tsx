@@ -287,6 +287,9 @@ const ProductMedia = memo(
         });
     }, [onPlaybackGateChange]);
 
+    const tryPlayRef = useRef(tryPlay);
+    tryPlayRef.current = tryPlay;
+
     useImperativeHandle(ref, () => ({ retryPlay: tryPlay }), [tryPlay]);
 
     useEffect(() => {
@@ -317,23 +320,35 @@ const ProductMedia = memo(
 
       configureInlineVideo(video);
 
-      const onCanShow = () => {
-        tryPlay();
-      };
+      const onReady = () => tryPlayRef.current();
+      const onError = () => onPlaybackGateChange?.(true);
 
       if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
-        onCanShow();
+        onReady();
       } else {
         setVideoPlaying(false);
-        video.addEventListener("loadeddata", onCanShow, { once: true });
+        video.addEventListener("loadeddata", onReady, { once: true });
+        video.addEventListener("canplay", onReady, { once: true });
       }
+      video.addEventListener("error", onError);
 
       return () => {
-        video.removeEventListener("loadeddata", onCanShow);
+        video.removeEventListener("loadeddata", onReady);
+        video.removeEventListener("canplay", onReady);
+        video.removeEventListener("error", onError);
         teardownVideoElement(video);
         setVideoPlaying(false);
       };
-    }, [mountVideo, playVideo, slide.video, tryPlay]);
+    }, [mountVideo, slide.video, onPlaybackGateChange]);
+
+    useEffect(() => {
+      if (!mountVideo || !playVideo) return;
+      const video = videoRef.current;
+      if (!video) return;
+      if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+        tryPlayRef.current();
+      }
+    }, [mountVideo, playVideo]);
 
     if (!showPoster && !slide.video) {
       return <ProductMediaPlaceholder className={className} />;
@@ -449,14 +464,14 @@ function ProductReel({
   }, []);
 
   useEffect(() => {
-    const wantPlay = playbackActive && inView && reelFocused;
+    const wantPlay = playbackActive && reelFocused;
     if (wantPlay) {
       setPlayIntent(true);
       return;
     }
     const timer = window.setTimeout(() => setPlayIntent(false), 120);
     return () => window.clearTimeout(timer);
-  }, [playbackActive, inView, reelFocused]);
+  }, [playbackActive, reelFocused]);
 
   useEffect(() => {
     if (!inView) {
@@ -491,7 +506,8 @@ function ProductReel({
     if (next?.image) prefetchImage(next.image);
   }, [allSlides, inView, playbackActive, reelIndex, slide]);
 
-  const shouldPlay = playIntent && reelFocused;
+  /** Scroll focus owns playback; IO is only for prefetch / copy UI. */
+  const shouldPlay = playbackActive && reelFocused && playIntent;
   const posterWarm =
     cacheMedia && (reelIndex === 0 || playIntent || inView || reelFocused);
   const description = slide.description?.trim() ?? "";
@@ -844,7 +860,9 @@ export default function DiscoverPage() {
   const reelsChromeDimmedRef = useRef(false);
   const reelsPrevScrollTopRef = useRef(0);
   const [focusedReelIndex, setFocusedReelIndex] = useState(0);
-  const [reelsPlaybackSettled, setReelsPlaybackSettled] = useState(false);
+  const [reelsPlaybackSettled, setReelsPlaybackSettled] = useState(
+    () => mainPanelFromViewParam(viewParam) === 1,
+  );
   const [reelsMediaCache, setReelsMediaCache] = useState(
     () => mainPanelFromViewParam(viewParam) === 1,
   );
