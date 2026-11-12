@@ -1,6 +1,8 @@
+import { Link } from "react-router-dom";
 import { useState } from "react";
 import GuestProgramSheet from "../components/GuestProgramSheet";
 import HubIntroVideo from "../components/HubIntroVideo";
+import { HubArrowIcon } from "../components/icons";
 import ProgramCta from "../components/ProgramCta";
 import { hub } from "../data/menu";
 import { ptBR } from "../i18n/pt-BR";
@@ -25,7 +27,13 @@ export default function HubPage() {
           </div>
         </header>
 
-        <nav className="hub__nav" aria-label={ptBR.hub.programHubAria}>
+        <nav className="hub__nav">
+          <Link className="btn btn--hub-cta" to="/discover?from=hub">
+            {ptBR.hub.exploreMenuCta}
+            <span className="btn--hub-cta__icon" aria-hidden>
+              <HubArrowIcon />
+            </span>
+          </Link>
           <ProgramCta
             variant="hub"
             sheetOpen={guestSheetOpen}

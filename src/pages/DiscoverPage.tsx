@@ -51,6 +51,7 @@ import {
 } from "../data/menu";
 import { ptBR } from "../i18n/pt-BR";
 import { CategoryEmoji } from "../openmoji/categoryEmoji";
+import FeedGridCaption from "../components/FeedGridCaption";
 import FeedPost from "../components/FeedPost";
 import MenuPrice from "../components/MenuPrice";
 import ProductMediaPlaceholder from "../components/ProductMediaPlaceholder";
@@ -743,10 +744,12 @@ function FeedProfileGrid({
   slides,
   onSelect,
   flyTargetProductId,
+  contextCategory,
 }: {
   slides: ProductSlide[];
   onSelect: (slide: ProductSlide, cell: HTMLElement) => void;
   flyTargetProductId: string | null;
+  contextCategory: string;
 }) {
   return (
     <section className="feed-grid" aria-label={ptBR.discover.profileGrid}>
@@ -766,13 +769,7 @@ function FeedProfileGrid({
           aria-label={ptBR.discover.viewProduct(slide.name)}
         >
           <FeedGridThumb slide={slide} />
-          <div className="feed-grid__caption">
-            <span className="discover__cat-label feed-grid__cat-label">
-              {categoryLabel(slide.category)}
-            </span>
-            <span className="feed-grid__title">{slide.name}</span>
-            <MenuPrice label={slide.price} variant="grid" />
-          </div>
+          <FeedGridCaption slide={slide} contextCategory={contextCategory} />
         </button>
       ))}
     </section>
@@ -935,11 +932,15 @@ export default function DiscoverPage() {
   );
 
   onMenuPagerCommitRef.current = (at, direction) => {
+    if (at === 0 && direction === "next") return "handled";
     if (at === 1) return "handled";
     return undefined;
   };
 
-  onMenuPagerDragRef.current = () => undefined;
+  onMenuPagerDragRef.current = (dx, at) => {
+    if (at === 0 && dx < 0) return 0;
+    return undefined;
+  };
 
   onPagerPreferVerticalRef.current = ({ target }) => {
     if (!(target instanceof Element)) return false;
@@ -1745,7 +1746,10 @@ export default function DiscoverPage() {
             .join(" ")}
           style={panelDepth(0)}
         >
-          <HubPanel mediaActive={hubIntroVideoActive} />
+          <HubPanel
+            mediaActive={hubIntroVideoActive}
+            onExploreMenu={() => navigateTabDestination(0)}
+          />
         </div>
 
         <div
@@ -1823,6 +1827,7 @@ export default function DiscoverPage() {
                   <FeedProfileGrid
                     slides={productSlides}
                     flyTargetProductId={flyTargetProductId}
+                    contextCategory={activeCat}
                     onSelect={openFeedTimeline}
                   />
                 </div>

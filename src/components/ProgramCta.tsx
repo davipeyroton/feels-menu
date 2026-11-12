@@ -16,7 +16,9 @@ export default function ProgramCta({
   const hint =
     variant === "hub" ? ptBR.hub.programHubHint : ptBR.hub.programUnifiedHint;
   const ariaLabel =
-    variant === "hub" ? ptBR.hub.programHubAria : ptBR.hub.programUnified;
+    variant === "hub"
+      ? ptBR.hub.programHubAria
+      : ptBR.hub.programUnifiedAria;
 
   return (
     <button
@@ -34,12 +36,14 @@ export default function ProgramCta({
         <span className="program-cta__title">{title}</span>
         <span className="program-cta__hint">{hint}</span>
       </span>
-      <ChevronRight
-        className="program-cta__chevron"
-        size={20}
-        strokeWidth={2}
-        aria-hidden
-      />
+      {variant === "profile" ? (
+        <ChevronRight
+          className="program-cta__chevron"
+          size={20}
+          strokeWidth={2}
+          aria-hidden
+        />
+      ) : null}
     </button>
   );
 }

@@ -10,11 +10,11 @@ import FeedMediaFlyOverlay, {
   readPostMediaRect,
   readThumbRect,
 } from "../components/FeedMediaFlyOverlay";
+import FeedGridCaption from "../components/FeedGridCaption";
 import FeedPost from "../components/FeedPost";
 import GuestProgramSheet from "../components/GuestProgramSheet";
 import ProgramCta from "../components/ProgramCta";
-import MenuPrice from "../components/MenuPrice";
-import { categoryLabel, hub, type ProductSlide } from "../data/menu";
+import { hub, type ProductSlide } from "../data/menu";
 import { useFavorites } from "../favorites/FavoritesContext";
 import { ptBR } from "../i18n/pt-BR";
 import type { ViewRect } from "../motion/feedGridMediaFly";
@@ -280,13 +280,7 @@ export default function CustomerProfilePane({
                       ) : (
                         <span className="feed-grid__placeholder" />
                       )}
-                      <div className="feed-grid__caption">
-                        <span className="discover__cat-label feed-grid__cat-label">
-                          {categoryLabel(slide.category)}
-                        </span>
-                        <span className="feed-grid__title">{slide.name}</span>
-                        <MenuPrice label={slide.price} variant="grid" />
-                      </div>
+                      <FeedGridCaption slide={slide} />
                     </button>
                   ))}
                 </section>
