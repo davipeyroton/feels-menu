@@ -3,8 +3,8 @@ import { configureInlineVideo } from "../lib/inlineVideo";
 const STORAGE_KEY_SESSION = "feels-menu:warm-media";
 const STORAGE_KEY_LOCAL = "feels-menu:warm-media:v1";
 const MAX_STORED_URLS = 96;
-/** Hidden off-screen primers (metadata only — full auto contends with visible reels on mobile). */
-const MAX_VIDEO_PRIMERS = 2;
+/** Hidden off-screen video primers disabled — Safari loads duplicate byte-ranges vs visible `<video>`. */
+const MAX_VIDEO_PRIMERS = 0;
 
 const warmUrls = new Set<string>(readStoredUrls());
 const prefetchedImages = new Set<string>();
@@ -93,10 +93,11 @@ export function prefetchImage(url: string | null | undefined): void {
 }
 
 export function prefetchVideoThumb(url: string | null | undefined): void {
-  if (!url || typeof document === "undefined") return;
+  if (!url) return;
+  markMediaWarm(url);
+  if (MAX_VIDEO_PRIMERS === 0 || typeof document === "undefined") return;
   const key = stripMediaFragment(url);
   if (videoPrimers.has(key)) return;
-  markMediaWarm(key);
 
   while (videoPrimers.size >= MAX_VIDEO_PRIMERS) {
     const oldest = videoPrimers.keys().next().value as string | undefined;
@@ -112,7 +113,7 @@ export function prefetchVideoThumb(url: string | null | undefined): void {
   video.setAttribute("aria-hidden", "true");
   video.style.cssText =
     "position:fixed;width:0;height:0;opacity:0;pointer-events:none";
-  video.src = url.includes("#") ? url : `${url}#t=0.05`;
+  video.src = stripMediaFragment(url);
   document.body.appendChild(video);
   videoPrimers.set(key, video);
 }
@@ -122,7 +123,7 @@ export function warmProductMedia(slide: {
   video: string | null;
 }): void {
   if (slide.image) prefetchImage(slide.image);
-  if (slide.video) prefetchVideoThumb(slide.video);
+  if (slide.video) markMediaWarm(slide.video);
 }
 
 /** Poster only — the visible hub `<video>` owns the decoder (avoids duplicate primers). */

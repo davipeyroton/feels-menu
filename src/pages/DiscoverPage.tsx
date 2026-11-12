@@ -48,7 +48,9 @@ import {
   markMediaWarm,
   pauseVideosWithin,
   warmHubIntroMedia,
+  prefetchImage,
   warmProductMedia,
+  releaseVideoPrimersExcept,
 } from "../media/mediaWarm";
 import {
   allProducts,
@@ -259,6 +261,11 @@ const ProductMedia = memo(function ProductMedia({
   }, [warm, playVideo, slide.video, slide.image]);
 
   useEffect(() => {
+    if (!playVideo || !slide.video) return;
+    releaseVideoPrimersExcept(slide.video);
+  }, [playVideo, slide.video]);
+
+  useEffect(() => {
     if (!mountVideo) {
       setVideoFrames(false);
       return;
@@ -316,7 +323,9 @@ const ProductMedia = memo(function ProductMedia({
           src={slide.video!}
           poster={slide.image ?? undefined}
           loop
-          preload="auto"
+          preload={
+            playVideo ? "auto" : warm ? "metadata" : "none"
+          }
           aria-hidden
           {...INLINE_VIDEO_PROPS}
         />
@@ -429,8 +438,8 @@ function ProductReel({
     warmProductMedia(slide);
     const prev = allSlides[reelIndex - 1];
     const next = allSlides[reelIndex + 1];
-    if (prev) warmProductMedia(prev);
-    if (next) warmProductMedia(next);
+    if (prev?.image) prefetchImage(prev.image);
+    if (next?.image) prefetchImage(next.image);
   }, [allSlides, inView, playbackActive, reelIndex, slide]);
 
   const shouldPlay = playIntent;

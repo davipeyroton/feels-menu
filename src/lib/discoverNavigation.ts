@@ -6,7 +6,6 @@ import {
   markMediaWarm,
   pauseVideosWithin,
   prefetchImage,
-  prefetchVideoThumb,
   releaseVideoPrimersExcept,
   suspendVideoDecoders,
 } from "../media/mediaWarm";
@@ -57,10 +56,7 @@ export function primeDiscoverReelsEntry(slide: {
     img.src = slide.image;
   }
   markMediaWarm(slide.image);
-  if (slide.video) {
-    markMediaWarm(slide.video);
-    prefetchVideoThumb(slide.video);
-  }
+  markMediaWarm(slide.video);
 }
 
 /** Free hub decoder budget and warm first reel before hub → cardápio (Safari/iOS). */
