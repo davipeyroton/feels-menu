@@ -1,5 +1,9 @@
 import { hub } from "../data/menu";
-import { pauseVideosWithin, releaseVideoPrimersExcept } from "../media/mediaWarm";
+import {
+  pauseVideosWithin,
+  releaseVideoPrimersExcept,
+  warmProductMedia,
+} from "../media/mediaWarm";
 
 /** Pause decoders under discover (reels + feed), not the hub panel. */
 export function pauseDiscoverMedia(
@@ -16,4 +20,20 @@ export function prepareReturnToHub(
 ): void {
   pauseDiscoverMedia(menuPagerRoot);
   releaseVideoPrimersExcept(hub.video);
+}
+
+/** Free hub decoders and warm first reel before hub → cardápio navigation. */
+export function prepareOpenDiscoverReels(
+  menuPagerRoot: HTMLElement | null | undefined,
+  firstSlide?: { image: string | null; video: string | null },
+): void {
+  if (menuPagerRoot) {
+    pauseVideosWithin(menuPagerRoot.querySelector(".hub"));
+  }
+  if (firstSlide) {
+    warmProductMedia(firstSlide);
+    releaseVideoPrimersExcept(firstSlide.video);
+    return;
+  }
+  releaseVideoPrimersExcept(null);
 }

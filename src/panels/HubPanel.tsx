@@ -8,9 +8,11 @@ import { ptBR } from "../i18n/pt-BR";
 
 export default function HubPanel({
   onExploreMenu,
+  onPrepareExploreMenu,
   mediaActive = true,
 }: {
   onExploreMenu: () => void;
+  onPrepareExploreMenu?: () => void;
   mediaActive?: boolean;
 }) {
   const [guestSheetOpen, setGuestSheetOpen] = useState(false);
@@ -36,6 +38,7 @@ export default function HubPanel({
           <button
             type="button"
             className="btn btn--hub-cta"
+            onPointerDown={() => onPrepareExploreMenu?.()}
             onClick={onExploreMenu}
           >
             {ptBR.hub.exploreMenuCta}

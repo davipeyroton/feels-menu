@@ -31,6 +31,7 @@ import { flushSync } from "react-dom";
 import { useNearViewport } from "../hooks/useNearViewport";
 import {
   pauseDiscoverMedia,
+  prepareOpenDiscoverReels,
   prepareReturnToHub,
 } from "../lib/discoverNavigation";
 import {
@@ -837,6 +838,8 @@ export default function DiscoverPage() {
   const feedSurfaceRef = useRef(feedSurface);
   feedSurfaceRef.current = feedSurface;
   const reelsFromHubScrollDoneRef = useRef(false);
+  const hubToReelsInstantRef = useRef(false);
+  const pendingReelsHomeScrollRef = useRef(false);
   const menuTransitionFromRef = useRef<number | null>(null);
   const hasVisitedReelsRef = useRef(mainPanelFromViewParam(viewParam) === 1);
   const onMenuPagerCommitRef = useRef<PagerCommitHandler | undefined>(undefined);
@@ -1002,9 +1005,38 @@ export default function DiscoverPage() {
       setReelsPlaybackSettled(false);
       return;
     }
+    if (hubToReelsInstantRef.current) {
+      hubToReelsInstantRef.current = false;
+      setReelsPlaybackSettled(true);
+      return;
+    }
     const timer = window.setTimeout(() => setReelsPlaybackSettled(true), 160);
     return () => window.clearTimeout(timer);
   }, [reelsPagerReady, menuIndex, discoverModeIndex]);
+
+  useEffect(() => {
+    if (menuIndex !== 0 || productSlides.length === 0) return;
+    const first = productSlides[0];
+    const run = () => warmProductMedia(first);
+    const id =
+      typeof requestIdleCallback !== "undefined"
+        ? requestIdleCallback(run, { timeout: 1800 })
+        : window.setTimeout(run, 600);
+    return () => {
+      if (typeof requestIdleCallback !== "undefined" && typeof id === "number") {
+        cancelIdleCallback(id);
+      } else {
+        clearTimeout(id as number);
+      }
+    };
+  }, [menuIndex, productSlides]);
+
+  useLayoutEffect(() => {
+    if (!pendingReelsHomeScrollRef.current) return;
+    if (menuIndex !== 1 || discoverModeIndex !== 0) return;
+    pendingReelsHomeScrollRef.current = false;
+    reelsRef.current?.scrollTo({ top: 0, behavior: "auto" });
+  }, [menuIndex, discoverModeIndex]);
 
   onModePagerCommitRef.current = (at, direction) => {
     const surface = feedSurfaceRef.current;
@@ -1504,6 +1536,16 @@ export default function DiscoverPage() {
         return;
       }
 
+      if (dest === 0 && menuIndexRef.current === 0) {
+        prepareOpenDiscoverReels(
+          menuPager.containerRef.current,
+          productSlides[0],
+        );
+        hasVisitedReelsRef.current = true;
+        hubToReelsInstantRef.current = true;
+        pendingReelsHomeScrollRef.current = true;
+      }
+
       clearFeedGridFly();
       setFeedGridDismissActive(false);
       hasVisitedReelsRef.current = true;
@@ -1525,7 +1567,7 @@ export default function DiscoverPage() {
         menuPager.goTo(1, instant);
       }
 
-      if (dest === 0) {
+      if (dest === 0 && menuIndexRef.current !== 0) {
         requestAnimationFrame(() =>
           reelsRef.current?.scrollTo({ top: 0, behavior: "auto" }),
         );
@@ -1551,9 +1593,17 @@ export default function DiscoverPage() {
       modePager.containerRef,
       modePager.goTo,
       modePager.index,
+      productSlides,
       replaceMenuSearch,
     ],
   );
+
+  const prepareExploreMenu = useCallback(() => {
+    prepareOpenDiscoverReels(
+      menuPager.containerRef.current,
+      productSlides[0],
+    );
+  }, [menuPager.containerRef, productSlides]);
 
   const tabBarDestination: TabBarDestination =
     menuIndex === 0 ? "hub" : discoverModeIndex;
@@ -1748,6 +1798,7 @@ export default function DiscoverPage() {
         >
           <HubPanel
             mediaActive={hubIntroVideoActive}
+            onPrepareExploreMenu={prepareExploreMenu}
             onExploreMenu={() => navigateTabDestination(0)}
           />
         </div>
