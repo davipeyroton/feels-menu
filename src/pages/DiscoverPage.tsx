@@ -278,8 +278,9 @@ function ProductMedia({
     return (
       <video
         ref={videoRef}
-        className={className}
+        className={`${className} discover__media--video`.trim()}
         src={slide.video}
+        poster={slide.image ?? undefined}
         loop
         preload={preload}
         aria-hidden

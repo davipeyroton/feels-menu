@@ -74,7 +74,7 @@
       "description": "",
       "price": "R$ 12,00",
       "image": "/menu/espresso-duplo.jpg",
-      "video": null
+      "video": "/menu/espresso-duplo.mp4"
     },
     {
       "kind": "product",
@@ -107,7 +107,7 @@
       "description": "",
       "price": "R$ 15,00",
       "image": "/menu/cappuccino.jpg",
-      "video": null
+      "video": "/menu/cappuccino.mp4"
     },
     {
       "kind": "product",

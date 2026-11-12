@@ -101,7 +101,9 @@ export default function FeedPost({
   const feedMediaContent = slide.video ? (
     <video
       ref={videoRef}
+      className="discover__media--video"
       src={slide.video}
+      poster={slide.image ?? undefined}
       loop
       preload={videoPreloadForUrl(slide.video, mediaActive && inView)}
       {...INLINE_VIDEO_PROPS}
