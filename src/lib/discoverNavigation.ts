@@ -1,9 +1,26 @@
 import { hub } from "../data/menu";
 import {
+  PAGER_SNAP_EASE_OUT,
+  pagerSnapDurationSeconds,
+} from "../motion/instagramMotion";
+import {
   pauseVideosWithin,
   releaseVideoPrimersExcept,
   warmProductMedia,
 } from "../media/mediaWarm";
+
+/** Snap the discover mode track; use instant when entering discover from the hub. */
+export function applyModePagerSnap(
+  modeViewport: HTMLElement | null | undefined,
+  instant = false,
+): void {
+  if (!modeViewport) return;
+  modeViewport.style.setProperty(
+    "--motion-duration-pager",
+    instant ? "0.001s" : `${pagerSnapDurationSeconds(0).toFixed(3)}s`,
+  );
+  modeViewport.style.setProperty("--motion-ease-pager", PAGER_SNAP_EASE_OUT);
+}
 
 /** Pause decoders under discover (reels + feed), not the hub panel. */
 export function pauseDiscoverMedia(

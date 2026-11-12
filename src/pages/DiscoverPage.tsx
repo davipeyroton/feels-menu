@@ -31,6 +31,7 @@ import {
 import { flushSync } from "react-dom";
 import { useNearViewport } from "../hooks/useNearViewport";
 import {
+  applyModePagerSnap,
   pauseDiscoverMedia,
   prepareOpenDiscoverReels,
   prepareReturnToHub,
@@ -1024,9 +1025,14 @@ export default function DiscoverPage() {
       setModeChromeVisual(0);
       return;
     }
-    if (modePager.dragging) return;
+    if (modePager.dragging || modePager.animating) return;
     setModeChromeVisual(discoverModeIndex);
-  }, [menuIndex, discoverModeIndex, modePager.dragging]);
+  }, [
+    menuIndex,
+    discoverModeIndex,
+    modePager.dragging,
+    modePager.animating,
+  ]);
 
   useEffect(() => {
     const el = menuPager.containerRef.current;
@@ -1280,16 +1286,8 @@ export default function DiscoverPage() {
         pauseVideosWithin(reelsRef.current);
       }
 
-      const modeViewport = modePager.containerRef.current;
-      if (modeViewport) {
-        modeViewport.style.setProperty("--motion-duration-pager", "0.34s");
-        modeViewport.style.setProperty(
-          "--motion-ease-pager",
-          "cubic-bezier(0.22, 1.18, 0.42, 1)",
-        );
-      }
-
-      modePager.goTo(mode);
+      applyModePagerSnap(modePager.containerRef.current, fromMain !== 1);
+      modePager.goTo(mode, fromMain !== 1 ? { instant: true } : undefined);
       replaceMenuSearch(1, mode);
     },
     [
@@ -1321,9 +1319,6 @@ export default function DiscoverPage() {
       setFeedGridDismissActive(false);
       hasVisitedReelsRef.current = true;
       setChromePanel(mode === 0 ? 1 : mode === 1 ? 2 : 3);
-      if (menuIndexRef.current === 1) {
-        setModeChromeVisual(mode);
-      }
 
       if (mode === 1 || mode === 2) {
         if (feedSurfaceRef.current === "timeline") {
@@ -1346,16 +1341,10 @@ export default function DiscoverPage() {
         setFeedSurface("grid");
       }
 
-      const modeViewport = modePager.containerRef.current;
-      if (modeViewport) {
-        modeViewport.style.setProperty("--motion-duration-pager", "0.34s");
-        modeViewport.style.setProperty(
-          "--motion-ease-pager",
-          "cubic-bezier(0.22, 1.18, 0.42, 1)",
-        );
-      }
-
-      modePager.goTo(mode, opts);
+      const modeInstant =
+        opts?.instant === true || menuIndexRef.current !== 1;
+      applyModePagerSnap(modePager.containerRef.current, modeInstant);
+      modePager.goTo(mode, modeInstant ? { instant: true } : undefined);
       replaceMenuSearch(1, mode);
     },
     [
@@ -1496,7 +1485,6 @@ export default function DiscoverPage() {
       setFeedGridDismissActive(false);
       hasVisitedReelsRef.current = true;
       setChromePanel(dest === 0 ? 1 : dest === 1 ? 2 : 3);
-      setModeChromeVisual(dest);
 
       if (dest === 1 || dest === 2) {
         if (feedSurfaceRef.current === "timeline") {
@@ -1509,26 +1497,19 @@ export default function DiscoverPage() {
         setFeedSurface("grid");
       }
 
-      if (menuIndexRef.current !== 1) {
+      const fromHub = menuIndexRef.current !== 1;
+      if (fromHub) {
         menuPager.goTo(1, instant);
       }
 
-      if (dest === 0 && menuIndexRef.current !== 0) {
+      if (dest === 0 && !fromHub) {
         requestAnimationFrame(() =>
           reelsRef.current?.scrollTo({ top: 0, behavior: "auto" }),
         );
       }
 
-      const modeViewport = modePager.containerRef.current;
-      if (modeViewport) {
-        modeViewport.style.setProperty("--motion-duration-pager", "0.001s");
-        modeViewport.style.setProperty(
-          "--motion-ease-pager",
-          "cubic-bezier(0.22, 1.18, 0.42, 1)",
-        );
-      }
-
-      modePager.goTo(dest, instant);
+      applyModePagerSnap(modePager.containerRef.current, fromHub);
+      modePager.goTo(dest, fromHub ? instant : undefined);
       replaceMenuSearch(1, dest);
     },
     [
@@ -1640,6 +1621,8 @@ export default function DiscoverPage() {
 
   const pagerInteracting = menuPager.dragging || menuPager.animating;
   const modePagerInteracting = modePager.dragging || modePager.animating;
+  const modePaneIsInactive = (pane: DiscoverModeIndex) =>
+    !modePagerInteracting && discoverModeIndex !== pane;
   const panelDepth = (idx: number): CSSProperties =>
     pagerInteracting ? panelDepthStyle(idx, fractionalIndex) : {};
   const chromeModeFraction =
@@ -1733,11 +1716,11 @@ export default function DiscoverPage() {
         onSelect={(mode) => navigateTabDestination(mode)}
         lightChrome={
           menuIndex === 1 &&
-          (discoverModeIndex === 1 || discoverModeIndex === 2)
+          (modeChromeVisual === 1 || modeChromeVisual === 2)
         }
-        reelsChrome={menuIndex === 1 && discoverModeIndex === 0}
+        reelsChrome={menuIndex === 1 && modeChromeVisual === 0}
         scrollImmersed={
-          menuIndex === 1 && discoverModeIndex === 0 && reelsChromeDimmed
+          menuIndex === 1 && modeChromeVisual === 0 && reelsChromeDimmed
         }
       />
 
@@ -1786,8 +1769,8 @@ export default function DiscoverPage() {
             >
               <div
                 className="discover-mode-pane discover-mode-pane--reels"
-                aria-hidden={discoverModeIndex !== 0}
-                inert={discoverModeIndex !== 0}
+                aria-hidden={modePaneIsInactive(0)}
+                inert={modePaneIsInactive(0)}
               >
           <div className="discover discover--reels">
             <div ref={reelsRef} className="discover__reels-scroller">
@@ -1816,8 +1799,8 @@ export default function DiscoverPage() {
               </div>
               <div
                 className="discover-mode-pane discover-mode-pane--feed"
-                aria-hidden={discoverModeIndex !== 1}
-                inert={discoverModeIndex !== 1}
+                aria-hidden={modePaneIsInactive(1)}
+                inert={modePaneIsInactive(1)}
               >
           <div className="discover discover--feed">
             <div
@@ -1870,8 +1853,8 @@ export default function DiscoverPage() {
               </div>
               <div
                 className="discover-mode-pane discover-mode-pane--profile"
-                aria-hidden={discoverModeIndex !== 2}
-                inert={discoverModeIndex !== 2}
+                aria-hidden={modePaneIsInactive(2)}
+                inert={modePaneIsInactive(2)}
               >
                 <CustomerProfilePane products={productSlides} />
               </div>

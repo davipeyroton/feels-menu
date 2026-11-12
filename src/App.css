@@ -277,15 +277,16 @@ body {
   display: flex;
   height: 100%;
   width: 100%;
-  will-change: transform;
   flex: 0 0 auto;
 }
 
 .menu-pager__track--dragging {
+  will-change: transform;
   transition: none;
 }
 
 .menu-pager__track--snap {
+  will-change: transform;
   -webkit-transition: -webkit-transform var(--motion-duration-pager)
     var(--motion-ease-pager);
   transition: transform var(--motion-duration-pager) var(--motion-ease-pager);
@@ -356,18 +357,19 @@ body {
   flex-direction: row;
   height: 100%;
   width: 300%;
-  will-change: transform;
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
 }
 
 .discover-mode-track--snap {
+  will-change: transform;
   -webkit-transition: -webkit-transform var(--motion-duration-pager)
     var(--motion-ease-pager);
   transition: transform var(--motion-duration-pager) var(--motion-ease-pager);
 }
 
 .discover-mode-track--dragging {
+  will-change: transform;
   transition: none;
 }
 
@@ -381,25 +383,35 @@ body {
   -webkit-backface-visibility: hidden;
 }
 
-.menu-pager--reels-mode .discover-mode-pane--feed,
-.menu-pager--reels-mode .discover-mode-pane--profile {
+.menu-pager--reels-mode:not(.menu-pager--mode-interacting)
+  .discover-mode-pane--feed,
+.menu-pager--reels-mode:not(.menu-pager--mode-interacting)
+  .discover-mode-pane--profile {
   pointer-events: none;
   content-visibility: hidden;
   contain: strict;
 }
 
-.menu-pager--feed-mode .discover-mode-pane--reels,
-.menu-pager--feed-mode .discover-mode-pane--profile {
+.menu-pager--feed-mode:not(.menu-pager--mode-interacting)
+  .discover-mode-pane--reels,
+.menu-pager--feed-mode:not(.menu-pager--mode-interacting)
+  .discover-mode-pane--profile {
   pointer-events: none;
   content-visibility: hidden;
   contain: strict;
 }
 
-.menu-pager--profile-mode .discover-mode-pane--reels,
-.menu-pager--profile-mode .discover-mode-pane--feed {
+.menu-pager--profile-mode:not(.menu-pager--mode-interacting)
+  .discover-mode-pane--reels,
+.menu-pager--profile-mode:not(.menu-pager--mode-interacting)
+  .discover-mode-pane--feed {
   pointer-events: none;
   content-visibility: hidden;
   contain: strict;
+}
+
+.menu-pager--mode-interacting .discover-mode-pane {
+  pointer-events: none;
 }
 
 .menu-pager--discover-open .discover__reels-scroller,
@@ -518,9 +530,9 @@ body {
   background: var(--tab-bar-thumb-bg);
   pointer-events: none;
   transition:
-    transform 0.48s cubic-bezier(0.32, 0.72, 0, 1),
-    width 0.48s cubic-bezier(0.32, 0.72, 0, 1),
-    height 0.48s cubic-bezier(0.32, 0.72, 0, 1),
+    transform 0.36s cubic-bezier(0.22, 1.18, 0.42, 1),
+    width 0.36s cubic-bezier(0.22, 1.18, 0.42, 1),
+    height 0.36s cubic-bezier(0.22, 1.18, 0.42, 1),
     background 0.25s ease;
   will-change: transform, width, height;
 }
@@ -3825,6 +3837,7 @@ button {
   }
 
   .menu-pager__track--snap,
+  .discover-mode-track--snap,
   .discover__progress > span,
   .discover__toolbar--feed-sticky,
   .discover-tab-bar,
