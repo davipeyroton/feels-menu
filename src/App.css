@@ -2734,8 +2734,23 @@ button {
 
 .feed-post__media--placeholder > .product-media-placeholder,
 .feed-grid__thumb-host > .product-media-placeholder {
-  padding: 10%;
+  padding: 12%;
   box-sizing: border-box;
+}
+
+.feed-grid__thumb-host > .product-media-placeholder .product-media-placeholder__frame {
+  width: 100%;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.feed-grid__thumb-host > .product-media-placeholder .product-media-placeholder__logo {
+  width: 72%;
+  height: auto;
+  max-width: 72%;
+  max-height: 48%;
+  object-fit: contain;
+  opacity: 0.95;
 }
 
 .feed-post__media img:not(.product-media-placeholder__logo),

@@ -11,6 +11,7 @@ import FeedMediaFlyOverlay, {
   readThumbRect,
 } from "../components/FeedMediaFlyOverlay";
 import FeedGridCaption from "../components/FeedGridCaption";
+import FeedGridThumb from "../components/FeedGridThumb";
 import FeedPost from "../components/FeedPost";
 import GuestProgramSheet from "../components/GuestProgramSheet";
 import ProgramCta from "../components/ProgramCta";
@@ -269,17 +270,7 @@ export default function CustomerProfilePane({
                       }
                       aria-label={ptBR.discover.viewProduct(slide.name)}
                     >
-                      {slide.image ? (
-                        <img
-                          className="feed-grid__thumb"
-                          src={slide.image}
-                          alt=""
-                          loading="lazy"
-                          decoding="async"
-                        />
-                      ) : (
-                        <span className="feed-grid__placeholder" />
-                      )}
+                      <FeedGridThumb slide={slide} />
                       <FeedGridCaption slide={slide} />
                     </button>
                   ))}
