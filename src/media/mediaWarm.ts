@@ -3,7 +3,8 @@ import { configureInlineVideo } from "../lib/inlineVideo";
 const STORAGE_KEY_SESSION = "feels-menu:warm-media";
 const STORAGE_KEY_LOCAL = "feels-menu:warm-media:v1";
 const MAX_STORED_URLS = 96;
-const MAX_VIDEO_PRIMERS = 3;
+/** Hidden off-screen primers (metadata only — full auto contends with visible reels on mobile). */
+const MAX_VIDEO_PRIMERS = 2;
 
 const warmUrls = new Set<string>(readStoredUrls());
 const prefetchedImages = new Set<string>();
@@ -107,7 +108,7 @@ export function prefetchVideoThumb(url: string | null | undefined): void {
 
   const video = document.createElement("video");
   configureInlineVideo(video);
-  video.preload = "auto";
+  video.preload = "metadata";
   video.setAttribute("aria-hidden", "true");
   video.style.cssText =
     "position:fixed;width:0;height:0;opacity:0;pointer-events:none";

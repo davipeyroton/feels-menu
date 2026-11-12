@@ -425,13 +425,13 @@ function ProductReel({
 
 
   useEffect(() => {
-    if (!inView) return;
+    if (!inView || !playbackActive) return;
     warmProductMedia(slide);
     const prev = allSlides[reelIndex - 1];
     const next = allSlides[reelIndex + 1];
     if (prev) warmProductMedia(prev);
     if (next) warmProductMedia(next);
-  }, [allSlides, inView, reelIndex, slide]);
+  }, [allSlides, inView, playbackActive, reelIndex, slide]);
 
   const shouldPlay = playIntent;
   const shouldWarm =

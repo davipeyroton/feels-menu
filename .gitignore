@@ -1,5 +1,7 @@
 node_modules/
 dist/
+mobile-audit-report.json
+mobile-audit-har/
 .rea-cache/
 .DS_Store
 *.local
