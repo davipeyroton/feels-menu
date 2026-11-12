@@ -1,5 +1,4 @@
-import { ChevronRight } from "lucide-react";
-import { HubLoyaltyIcon } from "./icons";
+import { ChevronRight, Stamp } from "lucide-react";
 import { ptBR } from "../i18n/pt-BR";
 
 export default function ProgramCta({
@@ -11,14 +10,9 @@ export default function ProgramCta({
   onClick: () => void;
   sheetOpen?: boolean;
 }) {
-  const title =
-    variant === "hub" ? ptBR.hub.programHubTitle : ptBR.hub.programUnified;
-  const hint =
-    variant === "hub" ? ptBR.hub.programHubHint : ptBR.hub.programUnifiedHint;
-  const ariaLabel =
-    variant === "hub"
-      ? ptBR.hub.programHubAria
-      : ptBR.hub.programUnifiedAria;
+  const title = ptBR.hub.programHubTitle;
+  const hint = ptBR.hub.programHubHint;
+  const ariaLabel = ptBR.hub.programHubAria;
 
   return (
     <button
@@ -30,7 +24,7 @@ export default function ProgramCta({
       aria-label={ariaLabel}
     >
       <span className="program-cta__icon" aria-hidden>
-        <HubLoyaltyIcon size={22} />
+        <Stamp size={22} strokeWidth={1.65} aria-hidden />
       </span>
       <span className="program-cta__copy">
         <span className="program-cta__title">{title}</span>

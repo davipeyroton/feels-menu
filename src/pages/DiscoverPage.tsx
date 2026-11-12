@@ -114,19 +114,25 @@ function CategoryDropdown({
   value,
   label,
   onChange,
+  onOpenChange,
 }: {
   categories: { id: string; label: string }[];
   value: string;
   label: string;
   onChange: (id: string) => void;
+  onOpenChange?: (open: boolean) => void;
 }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const current = items.find((item) => item.id === value);
 
   useEffect(() => {
+    onOpenChange?.(open);
+  }, [open, onOpenChange]);
+
+  useEffect(() => {
     if (!open) return;
-    const onPointerDown = (event: MouseEvent) => {
+    const onPointerDown = (event: PointerEvent) => {
       if (!rootRef.current?.contains(event.target as Node)) {
         setOpen(false);
       }
@@ -134,10 +140,10 @@ function CategoryDropdown({
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") setOpen(false);
     };
-    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("pointerdown", onPointerDown);
     document.addEventListener("keydown", onKeyDown);
     return () => {
-      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("pointerdown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
     };
   }, [open]);
@@ -158,7 +164,10 @@ function CategoryDropdown({
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={label}
-        onClick={() => setOpen((v) => !v)}
+        onClick={(event) => {
+          setOpen((v) => !v);
+          event.currentTarget.blur();
+        }}
       >
         <span className="discover__cat-dropdown-value">
           {current && (
@@ -449,6 +458,7 @@ const DiscoverToolbar = forwardRef<
     onReels: () => void;
     onFeedGrid: () => void;
     onCategory: (catId: string) => void;
+    onCategoryDropdownOpen?: (open: boolean) => void;
     onClose?: () => void;
     className?: string;
   }
@@ -459,6 +469,7 @@ const DiscoverToolbar = forwardRef<
     onReels,
     onFeedGrid,
     onCategory,
+    onCategoryDropdownOpen,
     onClose,
     className,
   },
@@ -501,6 +512,7 @@ const DiscoverToolbar = forwardRef<
         value={activeCat}
         label={ptBR.discover.categories}
         onChange={onCategory}
+        onOpenChange={onCategoryDropdownOpen}
       />
       {onClose && (
         <button
@@ -528,6 +540,8 @@ function ReelsChrome({
   onReels,
   onFeedGrid,
   onCategory,
+  onCategoryDropdownOpen,
+  chromeHeaderLit,
   onCloseImmersive,
   extraClassName,
 }: {
@@ -542,6 +556,8 @@ function ReelsChrome({
   onReels: () => void;
   onFeedGrid: () => void;
   onCategory: (catId: string) => void;
+  onCategoryDropdownOpen?: (open: boolean) => void;
+  chromeHeaderLit?: boolean;
   onCloseImmersive?: () => void;
   extraClassName?: string;
 }) {
@@ -562,7 +578,15 @@ function ReelsChrome({
     >
       <div className="discover-chrome-fade discover-chrome-fade--reels" aria-hidden />
       <div className="discover-chrome-fade discover-chrome-fade--feed" aria-hidden />
-      <header className="discover__header discover__header--pager">
+      <header
+        className={[
+          "discover__header",
+          "discover__header--pager",
+          chromeHeaderLit ? "discover__header--chrome-lit" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
         <div className="discover__header-row">
           <div className="discover__header-brand">
             <button type="button" className="discover__brand-link" onClick={onHub}>
@@ -580,6 +604,7 @@ function ReelsChrome({
             onReels={onReels}
             onFeedGrid={onFeedGrid}
             onCategory={onCategory}
+            onCategoryDropdownOpen={onCategoryDropdownOpen}
             onClose={onCloseImmersive}
           />
         )}
@@ -797,6 +822,7 @@ export default function DiscoverPage() {
   const [pagerChromeHeight, setPagerChromeHeight] = useState(0);
   const [activeCat, setActiveCat] = useState(categories[0]?.id ?? "quente");
   const [reelsChromeDimmed, setReelsChromeDimmed] = useState(false);
+  const [catDropdownOpen, setCatDropdownOpen] = useState(false);
   const reelsChromeDimmedRef = useRef(false);
   const [reelsPlaybackSettled, setReelsPlaybackSettled] = useState(false);
   const [feedSurface, setFeedSurface] = useState<"grid" | "timeline">("grid");
@@ -1195,6 +1221,19 @@ export default function DiscoverPage() {
       }
     }
   }, []);
+
+  const onCategoryDropdownOpen = useCallback(
+    (open: boolean) => {
+      setCatDropdownOpen(open);
+      if (open) {
+        reelsChromeDimmedRef.current = false;
+        setReelsChromeDimmed(false);
+        return;
+      }
+      syncReelsFromVertical();
+    },
+    [syncReelsFromVertical],
+  );
 
   const syncCategoryFromFeedScroll = useCallback((scroller: HTMLElement) => {
     const mid = scroller.scrollTop + scroller.clientHeight * 0.42;
@@ -1769,6 +1808,8 @@ export default function DiscoverPage() {
           onReels={() => goToDiscoverMode(0)}
           onFeedGrid={selectFeedGrid}
           onCategory={scrollToCategory}
+          onCategoryDropdownOpen={onCategoryDropdownOpen}
+          chromeHeaderLit={catDropdownOpen}
           extraClassName={
             menuIndex === 1 &&
             discoverModeIndex === 0 &&

@@ -2240,8 +2240,15 @@ button {
     box-shadow 0.2s ease;
 }
 
-.discover__cat-dropdown-trigger:hover {
-  filter: brightness(1.05);
+@media (hover: hover) and (pointer: fine) {
+  .discover__cat-dropdown-trigger:hover {
+    filter: brightness(1.05);
+  }
+}
+
+.discover__cat-dropdown-trigger:active {
+  opacity: 1;
+  filter: none;
 }
 
 .discover__cat-dropdown--open .discover__cat-dropdown-trigger {
@@ -2803,7 +2810,6 @@ button {
   color: #fff;
   text-align: right;
   white-space: nowrap;
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.85);
 }
 
 .menu-price--grid .menu-price__currency {
@@ -2835,6 +2841,8 @@ button {
 }
 
 .feed-grid__thumb-host {
+  position: relative;
+  z-index: 0;
   display: block;
   width: 100%;
   height: 100%;
@@ -2843,7 +2851,10 @@ button {
 .feed-grid__cell img:not(.product-media-placeholder__logo),
 .feed-grid__cell video,
 .feed-grid__thumb-host img:not(.product-media-placeholder__logo),
-.feed-grid__thumb-host video {
+.feed-grid__thumb-host video,
+.feed-grid__thumb {
+  position: relative;
+  z-index: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -2867,7 +2878,7 @@ button {
   left: 0.5rem;
   right: 0.5rem;
   bottom: 0.45rem;
-  z-index: 1;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -2894,7 +2905,6 @@ button {
   line-height: 1.15;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.78);
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9);
 }
 
 .feed-grid__cat-label--context {
@@ -2917,7 +2927,6 @@ button {
   line-height: 1.22;
   letter-spacing: 0.01em;
   color: #fff;
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.88);
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -2928,14 +2937,28 @@ button {
   content: "";
   position: absolute;
   inset: auto 0 0;
-  height: 50%;
+  z-index: 1;
+  height: 58%;
   background: linear-gradient(
     to top,
-    rgba(0, 0, 0, 0.64) 0%,
-    rgba(0, 0, 0, 0.38) 48%,
+    rgba(0, 0, 0, 0.78) 0%,
+    rgba(0, 0, 0, 0.52) 38%,
+    rgba(0, 0, 0, 0.22) 68%,
     transparent 100%
   );
   pointer-events: none;
+}
+
+.discover--feed .feed-grid__cell::after,
+.customer-profile__grid .feed-grid__cell::after {
+  height: 62%;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.82) 0%,
+    rgba(0, 0, 0, 0.55) 42%,
+    rgba(0, 0, 0, 0.18) 72%,
+    transparent 100%
+  );
 }
 
 .feed-back {
@@ -3294,7 +3317,11 @@ button {
 }
 
 .discover--pager-chrome--reels.discover--pager-chrome--reels-immersed
-  .discover__header:focus-within {
+  .discover__header:focus-within,
+.discover--pager-chrome--reels.discover--pager-chrome--reels-immersed
+  .discover__header:has(.discover__cat-dropdown--open),
+.discover--pager-chrome--reels.discover--pager-chrome--reels-immersed
+  .discover__header.discover__header--chrome-lit {
   opacity: 1;
 }
 
