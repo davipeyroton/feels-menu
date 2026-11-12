@@ -6,7 +6,9 @@ import {
   type PagerPreferVerticalHandler,
   useHorizontalPager,
 } from "../hooks/useHorizontalPager";
-import DiscoverTabBar from "../components/DiscoverTabBar";
+import DiscoverTabBar, {
+  type TabBarDestination,
+} from "../components/DiscoverTabBar";
 import CustomerProfilePane from "../panels/CustomerProfilePane";
 import { useFavorites } from "../favorites/FavoritesContext";
 import {
@@ -1478,22 +1480,82 @@ export default function DiscoverPage() {
     onFeedSurfaceChange("grid");
   }, [goToDiscoverMode, onFeedSurfaceChange]);
 
-  const onDiscoverTabSelect = useCallback(
-    (mode: DiscoverModeIndex) => {
-      if (mode === 1) {
-        if (discoverModeIndex !== 1 || feedSurface !== "grid") {
-          onFeedSurfaceChange("grid");
-        }
+  const navigateTabDestination = useCallback(
+    (dest: TabBarDestination) => {
+      const instant = { instant: true } as const;
+
+      if (dest === "hub") {
+        if (menuIndexRef.current === 0) return;
+        clearFeedGridFly();
+        setFeedGridDismissActive(false);
+        setChromePanel(0);
+        prepareReturnToHub(menuPager.containerRef.current);
+        replaceMenuSearch(0, modePager.index as DiscoverModeIndex);
+        menuPager.goTo(0, instant);
+        return;
       }
-      goToDiscoverMode(mode, { instant: true });
+
+      if (
+        menuIndexRef.current === 1 &&
+        discoverModeIndex === dest &&
+        (dest !== 1 || feedSurfaceRef.current === "grid")
+      ) {
+        return;
+      }
+
+      clearFeedGridFly();
+      setFeedGridDismissActive(false);
+      hasVisitedReelsRef.current = true;
+      setChromePanel(dest === 0 ? 1 : dest === 1 ? 2 : 3);
+      setModeChromeVisual(dest);
+
+      if (dest === 1 || dest === 2) {
+        if (feedSurfaceRef.current === "timeline") {
+          setFeedSurface("grid");
+        }
+        pauseVideosWithin(reelsRef.current);
+      }
+
+      if (dest === 1) {
+        setFeedSurface("grid");
+      }
+
+      if (menuIndexRef.current !== 1) {
+        menuPager.goTo(1, instant);
+      }
+
+      if (dest === 0) {
+        requestAnimationFrame(() =>
+          reelsRef.current?.scrollTo({ top: 0, behavior: "auto" }),
+        );
+      }
+
+      const modeViewport = modePager.containerRef.current;
+      if (modeViewport) {
+        modeViewport.style.setProperty("--motion-duration-pager", "0.001s");
+        modeViewport.style.setProperty(
+          "--motion-ease-pager",
+          "cubic-bezier(0.22, 1.18, 0.42, 1)",
+        );
+      }
+
+      modePager.goTo(dest, instant);
+      replaceMenuSearch(1, dest);
     },
     [
+      clearFeedGridFly,
       discoverModeIndex,
-      feedSurface,
-      goToDiscoverMode,
-      onFeedSurfaceChange,
+      menuPager.containerRef,
+      menuPager.goTo,
+      modePager.containerRef,
+      modePager.goTo,
+      modePager.index,
+      replaceMenuSearch,
     ],
   );
+
+  const tabBarDestination: TabBarDestination =
+    menuIndex === 0 ? "hub" : discoverModeIndex;
 
   // Browser back/forward only — never push panel from ?view= while the pager is driving navigation.
   useEffect(() => {
@@ -1667,9 +1729,9 @@ export default function DiscoverPage() {
       )}
 
       <DiscoverTabBar
-        visible={menuIndex === 1}
-        active={discoverModeIndex}
-        onSelect={onDiscoverTabSelect}
+        activeDestination={tabBarDestination}
+        onHome={() => navigateTabDestination("hub")}
+        onSelect={(mode) => navigateTabDestination(mode)}
       />
 
       <div className={trackClass} style={{ transform: trackTransform }}>
@@ -1683,10 +1745,7 @@ export default function DiscoverPage() {
             .join(" ")}
           style={panelDepth(0)}
         >
-          <HubPanel
-            mediaActive={hubIntroVideoActive}
-            onExploreMenu={() => goToMenuPanel(1)}
-          />
+          <HubPanel mediaActive={hubIntroVideoActive} />
         </div>
 
         <div

@@ -14,6 +14,10 @@ export const ptBR = {
     exploreMenuCta: "Ver cardápio",
     programUnified: "Cashback e recompensa",
     programUnifiedHint: "cartão fidelidade na sua carteira digital",
+    programHubTitle: "Na sua carteira digital",
+    programHubHint: "Adicione o programa de fidelidade",
+    programHubAria:
+      "Na sua carteira digital: adicionar programa de fidelidade",
     guestProgramPickTitle: "Como você quer participar?",
     guestProgramPickLead: "Escolha um programa para começar.",
     guestProgramPickLater: "Agora não",
@@ -78,6 +82,7 @@ export const ptBR = {
     viewReels: "Modo reels",
     viewFeed: "Modo feed",
     mainNav: "Navegação principal",
+    tabHome: "Voltar às boas-vindas",
     tabReels: "Reels",
     tabFeed: "Feed",
     tabProfile: "Perfil",

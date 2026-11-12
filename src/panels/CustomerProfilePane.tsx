@@ -12,6 +12,7 @@ import FeedMediaFlyOverlay, {
 } from "../components/FeedMediaFlyOverlay";
 import FeedPost from "../components/FeedPost";
 import GuestProgramSheet from "../components/GuestProgramSheet";
+import ProgramCta from "../components/ProgramCta";
 import MenuPrice from "../components/MenuPrice";
 import { categoryLabel, hub, type ProductSlide } from "../data/menu";
 import { useFavorites } from "../favorites/FavoritesContext";
@@ -230,18 +231,11 @@ export default function CustomerProfilePane({
 
             <p className="customer-profile__bio">{ptBR.profile.bio}</p>
 
-            <button
-              type="button"
-              className="customer-profile__program-btn"
+            <ProgramCta
+              variant="profile"
+              sheetOpen={guestOpen}
               onClick={() => setGuestOpen(true)}
-            >
-              <span className="customer-profile__program-title">
-                {ptBR.hub.programUnified}
-              </span>
-              <span className="customer-profile__program-hint">
-                {ptBR.hub.programUnifiedHint}
-              </span>
-            </button>
+            />
 
             <section
               className="customer-profile__grid-section"
