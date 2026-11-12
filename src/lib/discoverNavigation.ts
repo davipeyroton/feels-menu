@@ -6,6 +6,8 @@ import {
   markMediaWarm,
   pauseVideosWithin,
   prefetchImage,
+  prefetchVideoThumb,
+  releaseVideoPrimersExcept,
   suspendVideoDecoders,
 } from "../media/mediaWarm";
 
@@ -55,18 +57,21 @@ export function primeDiscoverReelsEntry(slide: {
     img.src = slide.image;
   }
   markMediaWarm(slide.image);
-  markMediaWarm(slide.video);
+  if (slide.video) {
+    markMediaWarm(slide.video);
+    prefetchVideoThumb(slide.video);
+  }
 }
 
-/** Free hub decoders and warm first reel before hub → cardápio navigation. */
+/** Free hub decoder budget and warm first reel before hub → cardápio (Safari/iOS). */
 export function prepareOpenDiscoverReels(
   menuPagerRoot: HTMLElement | null | undefined,
   firstSlide?: { image: string | null; video: string | null },
 ): void {
-  suspendVideoDecoders(
-    menuPagerRoot?.querySelector(".hub"),
-    menuPagerRoot?.querySelector(".discover-shell"),
-  );
+  pauseVideosWithin(menuPagerRoot?.querySelector(".hub"), "video", {
+    rewind: false,
+  });
+  releaseVideoPrimersExcept(null);
   if (firstSlide) {
     primeDiscoverReelsEntry(firstSlide);
   }

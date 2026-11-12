@@ -992,7 +992,8 @@ export default function DiscoverPage() {
 
   const hubIntroLeaving =
     menuPager.animating && menuTransitionFromRef.current === 0;
-  const hubIntroVideoActive = menuIndex === 0 || hubIntroLeaving;
+  const hubIntroVideoPlay = menuIndex === 0;
+  const hubIntroVideoShowLayer = menuIndex === 0 || hubIntroLeaving;
   const hubToDiscoverTransition =
     menuPager.animating &&
     (menuTransitionFromRef.current === 0 ||
@@ -1009,18 +1010,28 @@ export default function DiscoverPage() {
     !modePager.dragging &&
     ((discoverModeIndex === 0 && !modePager.animating) || leavingReelsMode);
   const reelsPagerReady = discoverReelsReady && reelsModeReady;
-  const reelsPlaybackActive = reelsPagerReady && reelsPlaybackSettled;
+  const earlyHubReelPlayback =
+    hubToDiscoverTransition &&
+    discoverModeIndex === 0 &&
+    menuIndex === 1;
+  const reelsPlaybackActive =
+    reelsPagerReady && (reelsPlaybackSettled || earlyHubReelPlayback);
 
   useLayoutEffect(() => {
-    if (!reelsPagerReady || menuPager.animating) {
+    if (!reelsPagerReady) {
+      setReelsPlaybackSettled(false);
+      return;
+    }
+    const leavingHub = menuPager.animating && hubToDiscoverTransition;
+    if (menuPager.animating && !leavingHub) {
       setReelsPlaybackSettled(false);
       return;
     }
     const startReelPlayback = () => {
       requestAnimationFrame(() => setReelsPlaybackSettled(true));
     };
-    if (hubToReelsInstantRef.current) {
-      hubToReelsInstantRef.current = false;
+    if (hubToReelsInstantRef.current || leavingHub) {
+      if (hubToReelsInstantRef.current) hubToReelsInstantRef.current = false;
       startReelPlayback();
       return;
     }
@@ -1031,6 +1042,7 @@ export default function DiscoverPage() {
     menuIndex,
     discoverModeIndex,
     menuPager.animating,
+    hubToDiscoverTransition,
     productSlides,
   ]);
 
@@ -1865,7 +1877,8 @@ export default function DiscoverPage() {
           style={panelDepth(0)}
         >
           <HubPanel
-            mediaActive={hubIntroVideoActive}
+            hubVideoPlay={hubIntroVideoPlay}
+            hubVideoShowLayer={hubIntroVideoShowLayer}
             onPrepareExploreMenu={prepareExploreMenu}
             onExploreMenu={() => navigateTabDestination(0)}
           />

@@ -9,11 +9,13 @@ import { ptBR } from "../i18n/pt-BR";
 export default function HubPanel({
   onExploreMenu,
   onPrepareExploreMenu,
-  mediaActive = true,
+  hubVideoPlay = true,
+  hubVideoShowLayer = true,
 }: {
   onExploreMenu: () => void;
   onPrepareExploreMenu?: () => void;
-  mediaActive?: boolean;
+  hubVideoPlay?: boolean;
+  hubVideoShowLayer?: boolean;
 }) {
   const [guestSheetOpen, setGuestSheetOpen] = useState(false);
 
@@ -21,7 +23,8 @@ export default function HubPanel({
     <main className="hub">
       <HubIntroVideo
         className="hub__video"
-        active={mediaActive && !guestSheetOpen}
+        play={hubVideoPlay && !guestSheetOpen}
+        showLayer={hubVideoShowLayer && !guestSheetOpen}
       />
       <div className="hub__shade" />
       <div className="hub__gradient" />

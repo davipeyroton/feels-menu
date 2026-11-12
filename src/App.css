@@ -976,6 +976,11 @@ body {
   opacity: 1;
 }
 
+.hub__video-layer[data-hold="true"] {
+  opacity: 1;
+  transition: none;
+}
+
 .product-media-layered {
   position: absolute;
   inset: 0;

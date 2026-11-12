@@ -1,20 +1,25 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { hub } from "../data/menu";
 import { configureInlineVideo, INLINE_VIDEO_PROPS } from "../lib/inlineVideo";
 import { markMediaWarm } from "../media/mediaWarm";
 
 /**
- * Poster stays mounted; video layers on top while active.
- * Avoids video ↔ img swap flashes when leaving the hub (Safari/iOS).
+ * Poster stays mounted; video layers on top while playing.
+ * `showLayer` keeps the last frame visible during hub → discover (no poster flash).
  */
 export default function HubIntroVideo({
   className,
-  active,
+  play,
+  showLayer = true,
 }: {
   className: string;
-  active: boolean;
+  /** Decode + play hub intro clip. */
+  play: boolean;
+  /** Keep the video layer visible (paused) while the menu pager leaves the hub. */
+  showLayer?: boolean;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [hasFrames, setHasFrames] = useState(false);
 
   useEffect(() => {
     markMediaWarm(hub.video);
@@ -25,7 +30,21 @@ export default function HubIntroVideo({
     const video = videoRef.current;
     if (!video) return;
 
-    if (!active) {
+    const onFrames = () => setHasFrames(true);
+    if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+      onFrames();
+    } else {
+      video.addEventListener("loadeddata", onFrames, { once: true });
+    }
+
+    return () => video.removeEventListener("loadeddata", onFrames);
+  }, []);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (!play) {
       video.pause();
       return;
     }
@@ -43,10 +62,12 @@ export default function HubIntroVideo({
 
     video.addEventListener("canplay", playWhenReady, { once: true });
     return () => video.removeEventListener("canplay", playWhenReady);
-  }, [active]);
+  }, [play]);
+
+  const layerVisible = showLayer && (play || hasFrames);
 
   return (
-  <span className="hub__media-stack" aria-hidden>
+    <span className="hub__media-stack" aria-hidden>
       <img
         className={[className, "hub__media-stack__poster"].join(" ")}
         src={hub.poster}
@@ -60,8 +81,9 @@ export default function HubIntroVideo({
         src={hub.video}
         poster={hub.poster}
         loop
-        preload={active ? "auto" : "none"}
-        data-active={active ? "true" : "false"}
+        preload={play ? "auto" : "none"}
+        data-active={layerVisible ? "true" : "false"}
+        data-hold={showLayer && !play && hasFrames ? "true" : "false"}
         {...INLINE_VIDEO_PROPS}
       />
     </span>
