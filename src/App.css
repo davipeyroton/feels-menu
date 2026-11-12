@@ -363,16 +363,22 @@ body {
 .menu-pager--reels-mode .discover-mode-pane--feed,
 .menu-pager--reels-mode .discover-mode-pane--profile {
   pointer-events: none;
+  content-visibility: hidden;
+  contain: strict;
 }
 
 .menu-pager--feed-mode .discover-mode-pane--reels,
 .menu-pager--feed-mode .discover-mode-pane--profile {
   pointer-events: none;
+  content-visibility: hidden;
+  contain: strict;
 }
 
 .menu-pager--profile-mode .discover-mode-pane--reels,
 .menu-pager--profile-mode .discover-mode-pane--feed {
   pointer-events: none;
+  content-visibility: hidden;
+  contain: strict;
 }
 
 .menu-pager--discover-open .discover__reels-scroller,

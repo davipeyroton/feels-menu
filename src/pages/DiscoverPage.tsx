@@ -1087,16 +1087,9 @@ export default function DiscoverPage() {
       setModeChromeVisual(0);
       return;
     }
-    if (modePager.animating) return;
+    if (modePager.dragging) return;
     setModeChromeVisual(discoverModeIndex);
-  }, [
-    menuIndex,
-    discoverModeIndex,
-    modePager.dragging,
-    modePager.animating,
-    modePager.dragPx,
-    modePagerWidth,
-  ]);
+  }, [menuIndex, discoverModeIndex, modePager.dragging]);
 
   useEffect(() => {
     const el = menuPager.containerRef.current;
@@ -1344,11 +1337,27 @@ export default function DiscoverPage() {
   );
 
   const goToDiscoverMode = useCallback(
-    (mode: DiscoverModeIndex) => {
+    (mode: DiscoverModeIndex, opts?: { instant?: boolean }) => {
+      if (
+        opts?.instant &&
+        menuIndexRef.current === 1 &&
+        modePager.index === mode
+      ) {
+        if (mode === 1 && feedSurfaceRef.current !== "grid") {
+          setFeedSurface("grid");
+          setFeedGridDismissActive(false);
+          clearFeedGridFly();
+        }
+        return;
+      }
+
       clearFeedGridFly();
       setFeedGridDismissActive(false);
       hasVisitedReelsRef.current = true;
       setChromePanel(mode === 0 ? 1 : mode === 1 ? 2 : 3);
+      if (menuIndexRef.current === 1) {
+        setModeChromeVisual(mode);
+      }
 
       if (mode === 1 || mode === 2) {
         if (feedSurfaceRef.current === "timeline") {
@@ -1380,7 +1389,7 @@ export default function DiscoverPage() {
         );
       }
 
-      modePager.goTo(mode);
+      modePager.goTo(mode, opts);
       replaceMenuSearch(1, mode);
     },
     [
@@ -1388,6 +1397,7 @@ export default function DiscoverPage() {
       menuPager.goTo,
       modePager.containerRef,
       modePager.goTo,
+      modePager.index,
       replaceMenuSearch,
     ],
   );
@@ -1471,11 +1481,18 @@ export default function DiscoverPage() {
   const onDiscoverTabSelect = useCallback(
     (mode: DiscoverModeIndex) => {
       if (mode === 1) {
-        onFeedSurfaceChange("grid");
+        if (discoverModeIndex !== 1 || feedSurface !== "grid") {
+          onFeedSurfaceChange("grid");
+        }
       }
-      goToDiscoverMode(mode);
+      goToDiscoverMode(mode, { instant: true });
     },
-    [goToDiscoverMode, onFeedSurfaceChange],
+    [
+      discoverModeIndex,
+      feedSurface,
+      goToDiscoverMode,
+      onFeedSurfaceChange,
+    ],
   );
 
   // Browser back/forward only — never push panel from ?view= while the pager is driving navigation.
@@ -1699,7 +1716,8 @@ export default function DiscoverPage() {
             >
               <div
                 className="discover-mode-pane discover-mode-pane--reels"
-                aria-hidden={modeChromeVisual !== 0}
+                aria-hidden={discoverModeIndex !== 0}
+                inert={discoverModeIndex !== 0}
               >
           <div className="discover discover--reels">
             <div ref={reelsRef} className="discover__reels-scroller">
@@ -1727,7 +1745,8 @@ export default function DiscoverPage() {
               </div>
               <div
                 className="discover-mode-pane discover-mode-pane--feed"
-                aria-hidden={modeChromeVisual !== 1}
+                aria-hidden={discoverModeIndex !== 1}
+                inert={discoverModeIndex !== 1}
               >
           <div className="discover discover--feed">
             <div
@@ -1779,7 +1798,8 @@ export default function DiscoverPage() {
               </div>
               <div
                 className="discover-mode-pane discover-mode-pane--profile"
-                aria-hidden={modeChromeVisual !== 2}
+                aria-hidden={discoverModeIndex !== 2}
+                inert={discoverModeIndex !== 2}
               >
                 <CustomerProfilePane products={productSlides} />
               </div>

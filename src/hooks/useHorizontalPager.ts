@@ -95,13 +95,13 @@ export function useHorizontalPager(
   const isEnabled = () => enabledRef?.current !== false;
 
   const goTo = useCallback(
-    (next: number) => {
+    (next: number, opts?: { instant?: boolean }) => {
       const clamped = Math.max(0, Math.min(panelCount - 1, next));
       if (indexRef.current === clamped) {
         setDragPx(0);
         return;
       }
-      setAnimating(true);
+      const instant = opts?.instant === true;
       setDragging(false);
       draggingRef.current = false;
       setIndex(clamped);
@@ -110,13 +110,27 @@ export function useHorizontalPager(
       if (root) {
         root.style.setProperty(
           "--motion-duration-pager",
-          `${pagerSnapDurationSeconds(0).toFixed(3)}s`,
+          instant
+            ? "0.001s"
+            : `${pagerSnapDurationSeconds(0).toFixed(3)}s`,
         );
         root.style.setProperty("--motion-ease-pager", PAGER_SNAP_EASE_OUT);
       }
+      if (instant) {
+        clearAnimatingEnd();
+        setAnimating(false);
+        requestAnimationFrame(() => {
+          root?.style.setProperty(
+            "--motion-duration-pager",
+            `${pagerSnapDurationSeconds(0).toFixed(3)}s`,
+          );
+        });
+        return;
+      }
+      setAnimating(true);
       scheduleAnimatingEnd();
     },
-    [panelCount, scheduleAnimatingEnd],
+    [clearAnimatingEnd, panelCount, scheduleAnimatingEnd],
   );
 
   useEffect(() => {
