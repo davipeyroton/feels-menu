@@ -1,4 +1,5 @@
-import { useEffect, useRef } from "react";
+import { Video } from "lucide-react";
+import { useEffect, useRef, type ReactNode } from "react";
 import type { ProductSlide } from "../data/menu";
 import { useNearViewport } from "../hooks/useNearViewport";
 import {
@@ -32,6 +33,14 @@ function primeVideoThumb(video: HTMLVideoElement) {
   video.addEventListener("seeked", pause, { once: true });
 }
 
+function FeedGridVideoBadge() {
+  return (
+    <span className="feed-grid__video-badge" aria-hidden>
+      <Video size={12} strokeWidth={2.1} />
+    </span>
+  );
+}
+
 export default function FeedGridThumb({ slide }: { slide: ProductSlide }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -45,56 +54,54 @@ export default function FeedGridThumb({ slide }: { slide: ProductSlide }) {
   }, [nearView, slide]);
 
   useEffect(() => {
-    if (!mediaReady || slide.image || !slide.video) return;
+    if (!mediaReady || !slide.video) return;
     const video = videoRef.current;
     if (!video) return;
     configureInlineVideo(video);
     primeVideoThumb(video);
-  }, [mediaReady, slide.image, slide.video]);
+  }, [mediaReady, slide.video]);
+
+  const showVideoBadge = Boolean(slide.video && mediaReady);
+
+  const wrap = (content: ReactNode) => (
+    <div ref={hostRef} className="feed-grid__thumb-host">
+      {content}
+      {showVideoBadge ? <FeedGridVideoBadge /> : null}
+    </div>
+  );
 
   if (!mediaReady) {
-    return (
-      <div ref={hostRef} className="feed-grid__thumb-host">
-        <ProductMediaPlaceholder />
-      </div>
-    );
+    return wrap(<ProductMediaPlaceholder />);
   }
 
-  if (slide.image) {
-    return (
-      <div ref={hostRef} className="feed-grid__thumb-host">
-        <img
-          src={slide.image}
-          alt=""
-          loading={imageLoadingForUrl(slide.image, nearView)}
-          decoding="async"
-        />
-      </div>
-    );
-  }
-
-  if (!slide.video) {
-    return (
-      <div ref={hostRef} className="feed-grid__thumb-host">
-        <ProductMediaPlaceholder />
-      </div>
-    );
-  }
-
-  const thumbSrc = slide.video.includes("#")
-    ? slide.video
-    : `${slide.video}#t=0.05`;
-  return (
-    <div ref={hostRef} className="feed-grid__thumb-host">
+  if (slide.video) {
+    const thumbSrc = slide.video.includes("#")
+      ? slide.video
+      : `${slide.video}#t=0.05`;
+    return wrap(
       <video
         ref={videoRef}
         className="feed-grid__video-thumb"
         src={thumbSrc}
+        poster={slide.image ?? undefined}
         preload={videoPreloadForUrl(slide.video, nearView)}
         {...INLINE_VIDEO_PROPS}
         aria-hidden
         onLoadedData={(event) => primeVideoThumb(event.currentTarget)}
-      />
-    </div>
-  );
+      />,
+    );
+  }
+
+  if (slide.image) {
+    return wrap(
+      <img
+        src={slide.image}
+        alt=""
+        loading={imageLoadingForUrl(slide.image, nearView)}
+        decoding="async"
+      />,
+    );
+  }
+
+  return wrap(<ProductMediaPlaceholder />);
 }

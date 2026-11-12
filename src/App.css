@@ -3050,6 +3050,30 @@ button {
   background: #111;
 }
 
+.feed-grid__video-badge {
+  position: absolute;
+  top: 0.38rem;
+  right: 0.38rem;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.48);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  pointer-events: none;
+  line-height: 0;
+}
+
+[data-theme="light"] .discover--feed .feed-grid__video-badge,
+[data-theme="light"] .customer-profile .feed-grid__video-badge {
+  background: rgba(0, 0, 0, 0.42);
+}
+
 .feed-grid__placeholder:not(.product-media-placeholder) {
   display: block;
   width: 100%;
