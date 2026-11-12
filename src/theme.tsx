@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { flushSync } from "react-dom";
 
 const STORAGE_KEY = "feels-menu-theme";
 
@@ -46,7 +47,16 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, [theme]);
 
   const toggleTheme = useCallback(() => {
-    setTheme((current) => (current === "dark" ? "light" : "dark"));
+    const apply = () => {
+      flushSync(() => {
+        setTheme((current) => (current === "dark" ? "light" : "dark"));
+      });
+    };
+    if (typeof document.startViewTransition === "function") {
+      document.startViewTransition(apply);
+      return;
+    }
+    apply();
   }, []);
 
   const value = useMemo(

@@ -139,9 +139,7 @@
   --dropdown-open-bg: rgba(36, 36, 36, 0.95);
   --reels-price-surface: rgba(12, 12, 12, 0.42);
   --reels-price-surface-strong: rgba(18, 18, 18, 0.5);
-  --reels-price-border: rgba(255, 255, 255, 0.22);
-  --reels-price-highlight: rgba(255, 255, 255, 0.28);
-  --reels-price-shadow: 0 10px 28px rgba(0, 0, 0, 0.32);
+  --reels-price-hairline: rgba(255, 255, 255, 0.22);
   --dropdown-open-border: rgba(255, 255, 255, 0.55);
   --dropdown-open-shadow: 0 12px 40px -18px rgba(0, 0, 0, 0.9);
   --dropdown-option-on-bg: #ffffff;
@@ -160,7 +158,6 @@
 .discover.discover--reels .menu-price--reel,
 .discover__immersive .menu-price--reel {
   background: var(--reels-price-surface);
-  border-color: var(--reels-price-border);
 }
 
 .discover--pager-chrome--reels .discover__view-switch,
@@ -188,6 +185,14 @@
   background: #000;
 }
 
+@supports (view-transition-name: none) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.42s;
+    animation-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+  }
+}
+
 * {
   box-sizing: border-box;
 }
@@ -208,8 +213,8 @@ body {
   overflow: hidden;
   overscroll-behavior: none;
   transition:
-    background 0.25s ease,
-    color 0.25s ease;
+    background-color 0.38s var(--motion-ease-out),
+    color 0.38s var(--motion-ease-out);
 }
 
 #root {
@@ -232,7 +237,9 @@ body {
   overscroll-behavior: none;
   touch-action: pan-y pinch-zoom;
   background: var(--app-bg);
-  transition: background 0.32s var(--motion-ease-out);
+  transition:
+    background-color 0.38s var(--motion-ease-out),
+    color 0.38s var(--motion-ease-out);
   -webkit-user-select: none;
   user-select: none;
   --discover-tab-bottom-gutter: 1rem;
@@ -492,9 +499,9 @@ body {
   -webkit-backdrop-filter: blur(22px) saturate(1.2);
   box-shadow: var(--tab-bar-pill-shadow);
   transition:
-    background 0.25s ease,
-    border-color 0.25s ease,
-    box-shadow 0.25s ease;
+    background-color 0.38s var(--motion-ease-out),
+    border-color 0.38s var(--motion-ease-out),
+    box-shadow 0.38s var(--motion-ease-out);
 }
 
 .discover-tab-bar--reels-chrome {
@@ -649,8 +656,8 @@ body {
   background: var(--feed-bg, #000);
   color: var(--app-fg, #fff);
   transition:
-    background 0.25s ease,
-    color 0.25s ease;
+    background-color 0.38s var(--motion-ease-out),
+    color 0.38s var(--motion-ease-out);
 }
 
 .profile-feed-surface {
@@ -2234,8 +2241,9 @@ button {
   cursor: pointer;
   transition:
     transform 0.15s ease,
-    background 0.2s ease,
-    border-color 0.2s ease;
+    background 0.32s var(--motion-ease-out),
+    border-color 0.32s var(--motion-ease-out),
+    color 0.32s var(--motion-ease-out);
 }
 
 .theme-toggle svg {
@@ -2712,8 +2720,8 @@ button {
   touch-action: pan-x pan-y;
   -webkit-overflow-scrolling: touch;
   transition:
-    background 0.25s ease,
-    color 0.25s ease;
+    background-color 0.38s var(--motion-ease-out),
+    color 0.38s var(--motion-ease-out);
 }
 
 .discover__feed::-webkit-scrollbar {
@@ -3431,6 +3439,11 @@ button {
   max-width: calc(100% - 3.5rem);
 }
 
+.discover.discover--reels .discover__copy .discover__cat-label,
+.menu-pager--reels-mode .discover__cat-label {
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.65);
+}
+
 .menu-pager--reels-mode .discover__title {
   font-size: clamp(1.7rem, 8.5vw, 3rem);
 }
@@ -3444,8 +3457,8 @@ button {
 }
 
 .menu-pager--reels-mode .menu-price--reel {
-  font-size: 23px;
-  padding: 0.34rem 0.78rem 0.38rem;
+  font-size: 28px;
+  padding: 0.36rem 0.82rem 0.4rem;
 }
 
 .menu-pager--reels-mode .discover__heart--reel-float {
@@ -3595,20 +3608,18 @@ button {
 .menu-price--reel {
   display: inline-flex;
   align-items: baseline;
-  gap: 0.3rem;
-  font-size: 25px;
+  gap: 0.22rem;
+  font-size: 21px;
   font-weight: 600;
-  padding: 0.4rem 0.88rem 0.44rem;
+  padding: 0.32rem 0.72rem 0.36rem;
   border-radius: 999px;
   color: #fff;
   letter-spacing: 0.01em;
   background: var(--reels-price-surface);
-  border: 0.5px solid var(--reels-price-border);
+  border: 0.5px solid var(--reels-price-hairline, rgba(255, 255, 255, 0.22));
   backdrop-filter: blur(22px) saturate(1.22);
   -webkit-backdrop-filter: blur(22px) saturate(1.22);
-  box-shadow:
-    var(--reels-price-shadow),
-    inset 0 1px 0 var(--reels-price-highlight);
+  box-shadow: none;
 }
 
 .menu-price--reel .menu-price__currency {
@@ -3741,7 +3752,8 @@ button {
 
   .menu-price--reel {
     background: rgba(12, 12, 12, 0.88);
-    border-color: rgba(255, 255, 255, 0.18);
+    border: 0.5px solid rgba(255, 255, 255, 0.2);
+    box-shadow: none;
   }
 
   .discover-tab-bar__pill {
@@ -3754,10 +3766,16 @@ button {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.01ms !important;
+  }
+
   .menu-pager__track--snap,
   .discover__progress > span,
   .discover__toolbar--feed-sticky,
   .discover-tab-bar,
+  .theme-toggle,
   body {
     transition-duration: 0.01ms !important;
   }
