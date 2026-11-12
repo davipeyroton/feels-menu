@@ -39,6 +39,24 @@ export function prepareReturnToHub(
   releaseVideoPrimersExcept(hub.video);
 }
 
+/** Decode-first poster + video primer before hub → reels (reduces black flash). */
+export function primeDiscoverReelsEntry(slide: {
+  image: string | null;
+  video: string | null;
+}): void {
+  warmProductMedia(slide);
+  if (slide.image) {
+    const img = new Image();
+    img.decoding = "async";
+    if ("fetchPriority" in img) {
+      (img as HTMLImageElement & { fetchPriority: string }).fetchPriority =
+        "high";
+    }
+    img.src = slide.image;
+  }
+  releaseVideoPrimersExcept(slide.video);
+}
+
 /** Free hub decoders and warm first reel before hub → cardápio navigation. */
 export function prepareOpenDiscoverReels(
   menuPagerRoot: HTMLElement | null | undefined,
@@ -48,8 +66,7 @@ export function prepareOpenDiscoverReels(
     pauseVideosWithin(menuPagerRoot.querySelector(".hub"));
   }
   if (firstSlide) {
-    warmProductMedia(firstSlide);
-    releaseVideoPrimersExcept(firstSlide.video);
+    primeDiscoverReelsEntry(firstSlide);
     return;
   }
   releaseVideoPrimersExcept(null);

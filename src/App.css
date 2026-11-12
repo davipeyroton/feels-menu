@@ -3367,6 +3367,7 @@ button {
   min-height: 100%;
   object-fit: cover;
   object-position: center;
+  background-color: #000;
 }
 
 .discover__media--product.product-media-placeholder {
