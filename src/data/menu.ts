@@ -1,4 +1,9 @@
 import rawSnapshot from "../../data/menu-snapshot.json";
+import {
+  resolveBrandAsset,
+  resolveProductImage,
+  resolveProductVideo,
+} from "../lib/mediaUrl";
 import { priceInBrl, ptBR } from "../i18n/pt-BR";
 import { isVeganProduct } from "./veganProducts";
 
@@ -24,8 +29,8 @@ function decodeHtml(text: string): string {
 
 function normalizeProductMedia(image: string | null, video: string | null) {
   return {
-    image: image?.startsWith("/menu/") ? image : null,
-    video: video?.startsWith("/menu/") ? video : null,
+    image: resolveProductImage(image),
+    video: resolveProductVideo(video),
   };
 }
 
@@ -34,6 +39,9 @@ const snapshot = {
   hub: {
     ...rawSnapshot.hub,
     tagline: ptBR.hub.tagline,
+    video: resolveBrandAsset(rawSnapshot.hub.video),
+    poster: resolveBrandAsset(rawSnapshot.hub.poster),
+    wordmark: resolveBrandAsset(rawSnapshot.hub.wordmark),
   },
   categories: rawSnapshot.categories.map((cat) => ({
     ...cat,

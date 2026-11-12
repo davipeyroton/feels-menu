@@ -4,7 +4,8 @@
   "observed_at": "2026-10-17T08:10:09.209Z",
   "stack_notes": {
     "router": "TanStack Router",
-    "hosting": "sipfloweb.com / Lovable __l5e assets",
+    "hosting": "Vercel + Cloudflare R2 media",
+    "media_origin": "https://pub-be112af91ac14243a02460c769b4037c.r2.dev",
     "fonts": "Instrument Serif + Inter (Google Fonts)"
   },
   "hub": {

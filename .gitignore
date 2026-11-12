@@ -1,5 +1,8 @@
 node_modules/
 dist/
+.env
+.env.local
+.env.*.local
 mobile-audit-report.json
 mobile-audit-har/
 .rea-cache/
