@@ -43,7 +43,6 @@ import { createScrollRafHandler } from "../lib/scrollRaf";
 import {
   imageLoadingForUrl,
   isMediaWarm,
-  isMediaWarm,
   markMediaWarm,
   pauseVideosWithin,
   videoPreloadForUrl,
