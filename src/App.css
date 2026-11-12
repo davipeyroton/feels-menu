@@ -176,6 +176,11 @@
   color: var(--app-fg);
 }
 
+[data-theme="light"] .discover.discover--profile.customer-profile {
+  background: var(--feed-bg);
+  color: var(--app-fg);
+}
+
 [data-theme="light"] .menu-pager--reels-view {
   background: #000;
 }
@@ -535,6 +540,9 @@ body {
   min-height: 0;
   background: var(--feed-bg, #000);
   color: var(--app-fg, #fff);
+  transition:
+    background 0.25s ease,
+    color 0.25s ease;
 }
 
 .profile-feed-surface {
@@ -594,9 +602,9 @@ body {
   font-size: 1.1rem;
   font-weight: 600;
   letter-spacing: 0.06em;
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.08);
+  color: var(--app-fg);
+  border: 1px solid var(--border-subtle);
+  background: var(--control-surface);
 }
 
 .customer-profile__name {
@@ -632,7 +640,7 @@ body {
   font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--text-muted);
 }
 
 .customer-profile__stat dd {
@@ -647,7 +655,7 @@ body {
   font-family: var(--paragraph);
   font-size: 0.88rem;
   line-height: 1.45;
-  color: rgba(255, 255, 255, 0.78);
+  color: var(--text-muted);
 }
 
 .customer-profile__grid-section {
@@ -661,7 +669,7 @@ body {
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--text-muted);
 }
 
 .customer-profile__empty {
@@ -670,7 +678,7 @@ body {
   font-family: var(--paragraph);
   font-size: 0.88rem;
   line-height: 1.5;
-  color: rgba(255, 255, 255, 0.65);
+  color: var(--text-muted);
 }
 
 .customer-profile__grid {
@@ -1024,6 +1032,28 @@ body {
 
 .program-cta--profile {
   margin-top: 1.15rem;
+}
+
+.customer-profile .program-cta {
+  border-color: var(--border-subtle);
+  background: var(--control-surface);
+  color: var(--app-fg);
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.customer-profile .program-cta__icon {
+  background: var(--border-subtle);
+  color: var(--app-fg);
+}
+
+.customer-profile .program-cta__hint {
+  color: var(--text-muted);
+}
+
+.customer-profile .program-cta__chevron {
+  color: var(--text-muted);
 }
 
 .program-cta__icon {
@@ -3029,7 +3059,7 @@ button {
 .feed-post--outro p {
   margin: 0.5rem 0 0;
   font-family: var(--paragraph);
-  color: rgba(255, 255, 255, 0.65);
+  color: var(--text-muted);
 }
 
 .discover__progress {

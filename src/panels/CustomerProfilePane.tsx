@@ -201,7 +201,7 @@ export default function CustomerProfilePane({
   }, [activeProductId, scrollPostToProduct, surface]);
 
   return (
-    <div className="customer-profile discover discover--profile">
+    <div className="customer-profile discover discover--feed discover--profile">
       <div className="profile-feed-surface">
         <div
           className={[
