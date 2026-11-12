@@ -2951,6 +2951,12 @@ button {
   transition: padding-top 0.28s cubic-bezier(0.25, 1, 0.45, 1);
 }
 
+@supports (-webkit-touch-callout: none) {
+  .menu-pager--reels-mode .discover__slide-inner {
+    transition: none;
+  }
+}
+
 .discover__slide-inner > * {
   pointer-events: auto;
 }

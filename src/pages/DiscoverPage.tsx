@@ -244,17 +244,12 @@ function ProductMedia({
       return;
     }
     video.pause();
-    try {
-      if (video.currentTime > 0) video.currentTime = 0;
-    } catch {
-      /* ignore */
-    }
   }, [playVideo, slide.video]);
 
   if (slide.video) {
     const preload = videoPreloadForUrl(
       slide.video,
-      playVideo || (buffered && warm),
+      buffered || playVideo || warm,
     );
     return (
       <video
@@ -302,19 +297,46 @@ function ProductReel({
   const interested = isFavorite(slide.id);
   const [descOpen, setDescOpen] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
+  const inViewRef = useRef(false);
   const [inView, setInView] = useState(false);
   const [everInView, setEverInView] = useState(false);
+  const [playIntent, setPlayIntent] = useState(false);
 
   useEffect(() => {
     const node = sectionRef.current;
     if (!node) return;
+    const root = node.closest<HTMLElement>(".discover__reels-scroller");
     const observer = new IntersectionObserver(
-      ([entry]) => setInView(entry.isIntersecting && entry.intersectionRatio >= 0.55),
-      { threshold: [0, 0.55, 0.85] },
+      ([entry]) => {
+        const ratio = entry.intersectionRatio;
+        let next = inViewRef.current;
+        if (!next && entry.isIntersecting && ratio >= 0.52) {
+          next = true;
+        } else if (next && (!entry.isIntersecting || ratio < 0.38)) {
+          next = false;
+        }
+        if (next === inViewRef.current) return;
+        inViewRef.current = next;
+        setInView(next);
+      },
+      {
+        root,
+        threshold: [0, 0.38, 0.52, 0.72],
+      },
     );
     observer.observe(node);
     return () => observer.disconnect();
   }, []);
+
+  useEffect(() => {
+    const wantPlay = playbackActive && inView;
+    if (wantPlay) {
+      setPlayIntent(true);
+      return;
+    }
+    const timer = window.setTimeout(() => setPlayIntent(false), 200);
+    return () => window.clearTimeout(timer);
+  }, [playbackActive, inView]);
 
   useEffect(() => {
     if (inView) setEverInView(true);
@@ -333,8 +355,8 @@ function ProductReel({
     if (next) warmProductMedia(next);
   }, [allSlides, inView, reelIndex, slide]);
 
-  const shouldPlay = playbackActive && inView;
-  const shouldWarm = cacheMedia && (everInView || shouldPlay);
+  const shouldPlay = playIntent;
+  const shouldWarm = cacheMedia && (everInView || playIntent || inView);
 
   return (
     <section
@@ -775,6 +797,8 @@ export default function DiscoverPage() {
   const [pagerChromeHeight, setPagerChromeHeight] = useState(0);
   const [activeCat, setActiveCat] = useState(categories[0]?.id ?? "quente");
   const [reelsChromeDimmed, setReelsChromeDimmed] = useState(false);
+  const reelsChromeDimmedRef = useRef(false);
+  const [reelsPlaybackSettled, setReelsPlaybackSettled] = useState(false);
   const [feedSurface, setFeedSurface] = useState<"grid" | "timeline">("grid");
   const [feedTimelineEver, setFeedTimelineEver] = useState(false);
   const [feedScrollToId, setFeedScrollToId] = useState<string | null>(null);
@@ -967,7 +991,17 @@ export default function DiscoverPage() {
     discoverModeIndex === 0 &&
     !modePager.animating &&
     !modePager.dragging;
-  const reelsPlaybackActive = discoverReelsReady && reelsModeReady;
+  const reelsPagerReady = discoverReelsReady && reelsModeReady;
+  const reelsPlaybackActive = reelsPagerReady && reelsPlaybackSettled;
+
+  useEffect(() => {
+    if (!reelsPagerReady) {
+      setReelsPlaybackSettled(false);
+      return;
+    }
+    const timer = window.setTimeout(() => setReelsPlaybackSettled(true), 160);
+    return () => window.clearTimeout(timer);
+  }, [reelsPagerReady, menuIndex, discoverModeIndex]);
 
   onModePagerCommitRef.current = (at, direction) => {
     const surface = feedSurfaceRef.current;
@@ -1110,7 +1144,14 @@ export default function DiscoverPage() {
     const el = reelsRef.current;
     if (!el) return;
 
-    setReelsChromeDimmed(el.scrollTop > 56);
+    const scrollTop = el.scrollTop;
+    let dimmed = reelsChromeDimmedRef.current;
+    if (!dimmed && scrollTop > 72) dimmed = true;
+    if (dimmed && scrollTop < 36) dimmed = false;
+    if (dimmed !== reelsChromeDimmedRef.current) {
+      reelsChromeDimmedRef.current = dimmed;
+      setReelsChromeDimmed(dimmed);
+    }
 
     const mid = el.scrollTop + el.clientHeight * 0.45;
     const slides = el.querySelectorAll<HTMLElement>(
