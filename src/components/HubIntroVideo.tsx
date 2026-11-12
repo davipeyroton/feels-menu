@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { hub } from "../data/menu";
+import { configureInlineVideo, INLINE_VIDEO_PROPS } from "../lib/inlineVideo";
 import { markMediaWarm } from "../media/mediaWarm";
 
 /** Single intro clip — mount `<video>` only while `active` (Safari/iOS memory). */
@@ -21,6 +22,7 @@ export default function HubIntroVideo({
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !active) return;
+    configureInlineVideo(video);
 
     const playWhenReady = () => {
       void video.play().catch(() => {});
@@ -53,10 +55,9 @@ export default function HubIntroVideo({
       className={className}
       src={hub.video}
       poster={hub.poster}
-      muted
       loop
-      playsInline
       preload="auto"
+      {...INLINE_VIDEO_PROPS}
     />
   );
 }

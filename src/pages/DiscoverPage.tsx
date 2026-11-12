@@ -35,6 +35,9 @@ import {
   prepareOpenDiscoverReels,
   prepareReturnToHub,
 } from "../lib/discoverNavigation";
+import { configureInlineVideo, INLINE_VIDEO_PROPS } from "../lib/inlineVideo";
+import { scrollBehaviorForDevice } from "../lib/scrollBehavior";
+import { createScrollRafHandler } from "../lib/scrollRaf";
 import {
   imageLoadingForUrl,
   isMediaWarm,
@@ -254,6 +257,12 @@ function ProductMedia({
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !slide.video) return;
+    configureInlineVideo(video);
+  }, [slide.video, buffered]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !slide.video) return;
     if (playVideo) {
       void video.play().catch(() => {});
       return;
@@ -271,11 +280,10 @@ function ProductMedia({
         ref={videoRef}
         className={className}
         src={slide.video}
-        muted
         loop
-        playsInline
         preload={preload}
         aria-hidden
+        {...INLINE_VIDEO_PROPS}
       />
     );
   }
@@ -701,6 +709,7 @@ export default function DiscoverPage() {
   const [reelsChromeDimmed, setReelsChromeDimmed] = useState(false);
   const [catDropdownOpen, setCatDropdownOpen] = useState(false);
   const reelsChromeDimmedRef = useRef(false);
+  const reelsPrevScrollTopRef = useRef(0);
   const [reelsPlaybackSettled, setReelsPlaybackSettled] = useState(false);
   const [feedSurface, setFeedSurface] = useState<"grid" | "timeline">("grid");
   const [feedTimelineEver, setFeedTimelineEver] = useState(false);
@@ -1076,9 +1085,19 @@ export default function DiscoverPage() {
     if (!el) return;
 
     const scrollTop = el.scrollTop;
+    const delta = scrollTop - reelsPrevScrollTopRef.current;
     let dimmed = reelsChromeDimmedRef.current;
-    if (!dimmed && scrollTop > 72) dimmed = true;
-    if (dimmed && scrollTop < 36) dimmed = false;
+
+    if (scrollTop <= 4) {
+      dimmed = false;
+    } else if (delta > 1) {
+      dimmed = true;
+    } else if (delta < -1) {
+      dimmed = false;
+    }
+
+    reelsPrevScrollTopRef.current = scrollTop;
+
     if (dimmed !== reelsChromeDimmedRef.current) {
       reelsChromeDimmedRef.current = dimmed;
       setReelsChromeDimmed(dimmed);
@@ -1127,7 +1146,7 @@ export default function DiscoverPage() {
   }, []);
 
   const scrollFeedToProduct = useCallback(
-    (productId: string, behavior: ScrollBehavior = "smooth") => {
+    (productId: string, behavior: ScrollBehavior = scrollBehaviorForDevice()) => {
       const scroller = feedRef.current;
       if (!scroller) return;
       const target = scroller.querySelector<HTMLElement>(
@@ -1186,7 +1205,10 @@ export default function DiscoverPage() {
         const target = scroller?.querySelector(
           `.discover__slide[data-category="${catId}"]`,
         );
-        target?.scrollIntoView({ behavior: "smooth", block: "start" });
+        target?.scrollIntoView({
+          behavior: scrollBehaviorForDevice(),
+          block: "start",
+        });
         return;
       }
 
@@ -1197,7 +1219,10 @@ export default function DiscoverPage() {
         const gridTarget = scroller.querySelector<HTMLElement>(
           `.feed-grid__cell[data-category="${catId}"]`,
         );
-        gridTarget?.scrollIntoView({ behavior: "smooth", block: "center" });
+        gridTarget?.scrollIntoView({
+          behavior: scrollBehaviorForDevice(),
+          block: "center",
+        });
         return;
       }
 
@@ -1205,7 +1230,7 @@ export default function DiscoverPage() {
         `.feed-post[data-category="${catId}"]`,
       );
       if (target?.dataset.productId) {
-        scrollFeedToProduct(target.dataset.productId, "smooth");
+        scrollFeedToProduct(target.dataset.productId);
       }
     },
     [menuIndex, discoverModeIndex, feedSurface, scrollFeedToProduct],
@@ -1364,12 +1389,22 @@ export default function DiscoverPage() {
   }, [menuIndex, discoverModeIndex]);
 
   useEffect(() => {
+    if (menuIndex !== 1 || discoverModeIndex !== 0) {
+      reelsPrevScrollTopRef.current = 0;
+      reelsChromeDimmedRef.current = false;
+      setReelsChromeDimmed(false);
+      return;
+    }
     const el = reelsRef.current;
-    if (!el || menuIndex !== 1 || discoverModeIndex !== 0) return;
-    const onScroll = () => syncReelsFromVertical();
+    if (!el) return;
+    reelsPrevScrollTopRef.current = el.scrollTop;
+    const onScroll = createScrollRafHandler(() => syncReelsFromVertical());
     el.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
-    return () => el.removeEventListener("scroll", onScroll);
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      onScroll.cancel();
+    };
   }, [syncReelsFromVertical, menuIndex, discoverModeIndex]);
 
   useEffect(() => {
@@ -1395,10 +1430,15 @@ export default function DiscoverPage() {
       feedSurface !== "timeline"
     )
       return;
-    const onScroll = () => syncCategoryFromFeedScroll(scroller);
+    const onScroll = createScrollRafHandler(() =>
+      syncCategoryFromFeedScroll(scroller),
+    );
     scroller.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
-    return () => scroller.removeEventListener("scroll", onScroll);
+    return () => {
+      scroller.removeEventListener("scroll", onScroll);
+      onScroll.cancel();
+    };
   }, [syncCategoryFromFeedScroll, menuIndex, discoverModeIndex, feedSurface]);
 
   const backToFeedGrid = useCallback(() => {
@@ -1701,6 +1741,14 @@ export default function DiscoverPage() {
         activeDestination={tabBarDestination}
         onHome={() => navigateTabDestination("hub")}
         onSelect={(mode) => navigateTabDestination(mode)}
+        lightChrome={
+          menuIndex === 1 &&
+          (discoverModeIndex === 1 || discoverModeIndex === 2)
+        }
+        reelsChrome={menuIndex === 1 && discoverModeIndex === 0}
+        scrollImmersed={
+          menuIndex === 1 && discoverModeIndex === 0 && reelsChromeDimmed
+        }
       />
 
       <div className={trackClass} style={{ transform: trackTransform }}>

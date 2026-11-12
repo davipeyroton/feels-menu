@@ -7,6 +7,7 @@ import {
 import { categoryLabel, type ProductSlide } from "../data/menu";
 import { useFavorites } from "../favorites/FavoritesContext";
 import { useFeedPostSwipeDismiss } from "../hooks/useFeedPostSwipeDismiss";
+import { configureInlineVideo, INLINE_VIDEO_PROPS } from "../lib/inlineVideo";
 import {
   imageLoadingForUrl,
   markMediaWarm,
@@ -83,6 +84,7 @@ export default function FeedPost({
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !slide.video) return;
+    configureInlineVideo(video);
     if (mediaActive && inView) {
       markMediaWarm(slide.video);
       void video.play().catch(() => {});
@@ -100,10 +102,9 @@ export default function FeedPost({
     <video
       ref={videoRef}
       src={slide.video}
-      muted
       loop
-      playsInline
       preload={videoPreloadForUrl(slide.video, mediaActive && inView)}
+      {...INLINE_VIDEO_PROPS}
     />
   ) : slide.image ? (
     <img

@@ -7,6 +7,7 @@ import {
   videoPreloadForUrl,
   warmProductMedia,
 } from "../media/mediaWarm";
+import { configureInlineVideo, INLINE_VIDEO_PROPS } from "../lib/inlineVideo";
 import ProductMediaPlaceholder from "./ProductMediaPlaceholder";
 
 function primeVideoThumb(video: HTMLVideoElement) {
@@ -47,6 +48,7 @@ export default function FeedGridThumb({ slide }: { slide: ProductSlide }) {
     if (!mediaReady || slide.image || !slide.video) return;
     const video = videoRef.current;
     if (!video) return;
+    configureInlineVideo(video);
     primeVideoThumb(video);
   }, [mediaReady, slide.image, slide.video]);
 
@@ -88,9 +90,8 @@ export default function FeedGridThumb({ slide }: { slide: ProductSlide }) {
         ref={videoRef}
         className="feed-grid__video-thumb"
         src={thumbSrc}
-        muted
-        playsInline
         preload={videoPreloadForUrl(slide.video, nearView)}
+        {...INLINE_VIDEO_PROPS}
         aria-hidden
         onLoadedData={(event) => primeVideoThumb(event.currentTarget)}
       />

@@ -1,3 +1,5 @@
+import { configureInlineVideo } from "../lib/inlineVideo";
+
 const STORAGE_KEY_SESSION = "feels-menu:warm-media";
 const STORAGE_KEY_LOCAL = "feels-menu:warm-media:v1";
 const MAX_STORED_URLS = 96;
@@ -104,8 +106,7 @@ export function prefetchVideoThumb(url: string | null | undefined): void {
   }
 
   const video = document.createElement("video");
-  video.muted = true;
-  video.playsInline = true;
+  configureInlineVideo(video);
   video.preload = "auto";
   video.setAttribute("aria-hidden", "true");
   video.style.cssText =
