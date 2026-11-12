@@ -999,20 +999,29 @@ body {
 }
 
 .product-media-layered__poster {
-  z-index: 0;
+  z-index: 1;
+  object-fit: cover;
+  transition: opacity 0.22s ease;
 }
 
-.product-media-layered__video {
-  z-index: 1;
+.product-media-layered__poster--hidden {
   opacity: 0;
 }
 
-.product-media-layered__video--ready {
+.product-media-layered__video {
+  z-index: 0;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+
+.product-media-layered__video--playing {
+  z-index: 2;
   opacity: 1;
 }
 
-.discover__media-wrap .product-media-layered__video--ready {
-  transition: opacity 0.2s ease;
+.discover__media-wrap .discover__media--product {
+  object-fit: cover;
 }
 
 .hub__shade {

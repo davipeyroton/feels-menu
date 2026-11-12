@@ -1,0 +1,20 @@
+{
+  "generatedAt": "2026-11-12T22:34:22.600Z",
+  "items": [
+    {
+      "video": "/brand/intro-menu.mp4",
+      "poster": "/brand/intro-menu-poster.jpg",
+      "seek": 0.75
+    },
+    {
+      "video": "/menu/espresso-duplo.mp4",
+      "poster": "/menu/espresso-duplo-video-poster.jpg",
+      "seek": 0.75
+    },
+    {
+      "video": "/menu/cappuccino.mp4",
+      "poster": "/menu/cappuccino-video-poster.jpg",
+      "seek": 0.75
+    }
+  ]
+}

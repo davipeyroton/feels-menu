@@ -4,6 +4,7 @@ import {
   resolveProductImage,
   resolveProductVideo,
 } from "../lib/mediaUrl";
+import { defaultVideoPosterPath } from "../lib/productReelPoster";
 import { priceInBrl, ptBR } from "../i18n/pt-BR";
 import { isVeganProduct } from "./veganProducts";
 
@@ -17,6 +18,7 @@ type RawProductSlide = {
   price: string | null;
   image: string | null;
   video: string | null;
+  videoPoster?: string | null;
   vegan?: boolean;
 };
 
@@ -27,10 +29,22 @@ function decodeHtml(text: string): string {
     .replaceAll("&amp;", "&");
 }
 
-function normalizeProductMedia(image: string | null, video: string | null) {
+function normalizeProductMedia(
+  image: string | null,
+  video: string | null,
+  videoPoster?: string | null,
+) {
+  const resolvedVideo = resolveProductVideo(video);
+  const posterPath =
+    videoPoster?.trim() ||
+    (video ? defaultVideoPosterPath(video) : null) ||
+    null;
   return {
     image: resolveProductImage(image),
-    video: resolveProductVideo(video),
+    video: resolvedVideo,
+    videoPoster: resolvedVideo
+      ? resolveProductImage(posterPath)
+      : resolveProductImage(videoPoster ?? null),
   };
 }
 
@@ -54,7 +68,11 @@ const snapshot = {
       ? decodeHtml(product.description)
       : "";
     const tr = ptBR.products[product.id];
-    const media = normalizeProductMedia(product.image, product.video);
+    const media = normalizeProductMedia(
+      product.image,
+      product.video,
+      product.videoPoster,
+    );
     return {
       ...product,
       ...media,
@@ -76,6 +94,8 @@ export type ProductSlide = {
   price: string | null;
   image: string | null;
   video: string | null;
+  /** Frame extracted from `video` (reels); grid still uses `image`. */
+  videoPoster: string | null;
   vegan: boolean;
 };
 

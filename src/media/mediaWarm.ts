@@ -1,4 +1,5 @@
 import { configureInlineVideo } from "../lib/inlineVideo";
+import { productReelPoster } from "../lib/productReelPoster";
 
 const STORAGE_KEY_SESSION = "feels-menu:warm-media";
 const STORAGE_KEY_LOCAL = "feels-menu:warm-media:v1";
@@ -67,9 +68,9 @@ export function isMediaWarm(url: string | null | undefined): boolean {
 export function videoPreloadForUrl(
   url: string | null | undefined,
   wantFull: boolean,
-): "auto" | "metadata" | "none" {
+): "metadata" | "none" {
   if (!url) return "none";
-  if (wantFull) return "auto";
+  if (wantFull) return "metadata";
   if (isMediaWarm(url)) return "metadata";
   return "none";
 }
@@ -121,9 +122,15 @@ export function prefetchVideoThumb(url: string | null | undefined): void {
 export function warmProductMedia(slide: {
   image: string | null;
   video: string | null;
+  videoPoster?: string | null;
 }): void {
   if (slide.image) prefetchImage(slide.image);
-  if (slide.video) markMediaWarm(slide.video);
+  if (slide.video) {
+    const poster = productReelPoster(slide);
+    if (poster) prefetchImage(poster);
+    markMediaWarm(slide.video);
+    if (poster) markMediaWarm(poster);
+  }
 }
 
 /** Poster only — the visible hub `<video>` owns the decoder (avoids duplicate primers). */
@@ -165,6 +172,31 @@ export function pauseVideosWithin(
       /* ignore */
     }
   });
+}
+
+/** Release decoder + network handles (Safari/iOS memory budget). */
+export function teardownVideoElement(video: HTMLVideoElement): void {
+  video.pause();
+  try {
+    if (video.currentTime > 0) video.currentTime = 0;
+  } catch {
+    /* ignore */
+  }
+  video.removeAttribute("src");
+  video.querySelectorAll("source").forEach((source) => source.remove());
+  try {
+    video.load();
+  } catch {
+    /* ignore */
+  }
+}
+
+export function teardownVideosWithin(
+  root: ParentNode | null | undefined,
+  selector = "video",
+): void {
+  if (!root) return;
+  root.querySelectorAll<HTMLVideoElement>(selector).forEach(teardownVideoElement);
 }
 
 export function releaseVideoPrimersExcept(keepUrl?: string | null): void {

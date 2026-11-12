@@ -8,7 +8,9 @@ import {
   prefetchImage,
   releaseVideoPrimersExcept,
   suspendVideoDecoders,
+  teardownVideosWithin,
 } from "../media/mediaWarm";
+import { productReelPoster } from "./productReelPoster";
 
 /** Snap the discover mode track; use instant when entering discover from the hub. */
 export function applyModePagerSnap(
@@ -44,16 +46,19 @@ export function prepareReturnToHub(
 export function primeDiscoverReelsEntry(slide: {
   image: string | null;
   video: string | null;
+  videoPoster?: string | null;
 }): void {
-  if (slide.image) {
-    prefetchImage(slide.image);
+  const cover = productReelPoster(slide);
+  if (cover) {
+    prefetchImage(cover);
     const img = new Image();
     img.decoding = "async";
     if ("fetchPriority" in img) {
       (img as HTMLImageElement & { fetchPriority: string }).fetchPriority =
         "high";
     }
-    img.src = slide.image;
+    img.src = cover;
+    markMediaWarm(cover);
   }
   markMediaWarm(slide.image);
   markMediaWarm(slide.video);
@@ -64,9 +69,9 @@ export function prepareOpenDiscoverReels(
   menuPagerRoot: HTMLElement | null | undefined,
   firstSlide?: { image: string | null; video: string | null },
 ): void {
-  pauseVideosWithin(menuPagerRoot?.querySelector(".hub"), "video", {
-    rewind: false,
-  });
+  const hub = menuPagerRoot?.querySelector(".hub");
+  pauseVideosWithin(hub, "video", { rewind: false });
+  teardownVideosWithin(hub, "video");
   releaseVideoPrimersExcept(null);
   if (firstSlide) {
     primeDiscoverReelsEntry(firstSlide);

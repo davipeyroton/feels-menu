@@ -1,22 +1,21 @@
 import { useEffect, useRef, useState } from "react";
 import { hub } from "../data/menu";
 import { configureInlineVideo, INLINE_VIDEO_PROPS } from "../lib/inlineVideo";
-import { markMediaWarm } from "../media/mediaWarm";
+import { markMediaWarm, teardownVideoElement } from "../media/mediaWarm";
 
 /**
- * Poster stays mounted; video layers on top while playing.
- * `showLayer` keeps the last frame visible during hub → discover (no poster flash).
+ * Hub hero — poster always visible; `<video>` mounts only while on the hub panel.
  */
 export default function HubIntroVideo({
   className,
   play,
-  showLayer = true,
+  mountVideo = true,
 }: {
   className: string;
-  /** Decode + play hub intro clip. */
+  /** Decode + play hub intro clip (only when `mountVideo`). */
   play: boolean;
-  /** Keep the video layer visible (paused) while the menu pager leaves the hub. */
-  showLayer?: boolean;
+  /** Unmount decoder when leaving home (Safari/iOS). */
+  mountVideo?: boolean;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [hasFrames, setHasFrames] = useState(false);
@@ -27,6 +26,10 @@ export default function HubIntroVideo({
   }, []);
 
   useEffect(() => {
+    if (!mountVideo) {
+      setHasFrames(false);
+      return;
+    }
     const video = videoRef.current;
     if (!video) return;
 
@@ -38,9 +41,10 @@ export default function HubIntroVideo({
     }
 
     return () => video.removeEventListener("loadeddata", onFrames);
-  }, []);
+  }, [mountVideo]);
 
   useEffect(() => {
+    if (!mountVideo) return;
     const video = videoRef.current;
     if (!video) return;
 
@@ -62,9 +66,15 @@ export default function HubIntroVideo({
 
     video.addEventListener("canplay", playWhenReady, { once: true });
     return () => video.removeEventListener("canplay", playWhenReady);
-  }, [play]);
+  }, [mountVideo, play]);
 
-  const layerVisible = showLayer && (play || hasFrames);
+  useEffect(() => {
+    if (mountVideo) return;
+    const video = videoRef.current;
+    if (video) teardownVideoElement(video);
+  }, [mountVideo]);
+
+  const showVideoLayer = mountVideo && (play || hasFrames);
 
   return (
     <span className="hub__media-stack" aria-hidden>
@@ -75,17 +85,18 @@ export default function HubIntroVideo({
         decoding="async"
         fetchPriority="high"
       />
-      <video
-        ref={videoRef}
-        className={[className, "hub__video-layer"].join(" ")}
-        src={hub.video}
-        poster={hub.poster}
-        loop
-        preload={play ? "auto" : "none"}
-        data-active={layerVisible ? "true" : "false"}
-        data-hold={showLayer && !play && hasFrames ? "true" : "false"}
-        {...INLINE_VIDEO_PROPS}
-      />
+      {mountVideo ? (
+        <video
+          ref={videoRef}
+          className={[className, "hub__video-layer"].join(" ")}
+          src={hub.video}
+          poster={hub.poster}
+          loop
+          preload={play ? "metadata" : "none"}
+          data-active={showVideoLayer ? "true" : "false"}
+          {...INLINE_VIDEO_PROPS}
+        />
+      ) : null}
     </span>
   );
 }

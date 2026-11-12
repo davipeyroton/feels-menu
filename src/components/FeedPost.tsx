@@ -8,10 +8,11 @@ import { categoryLabel, type ProductSlide } from "../data/menu";
 import { useFavorites } from "../favorites/FavoritesContext";
 import { useFeedPostSwipeDismiss } from "../hooks/useFeedPostSwipeDismiss";
 import { configureInlineVideo, INLINE_VIDEO_PROPS } from "../lib/inlineVideo";
+import { productReelPoster } from "../lib/productReelPoster";
 import {
   imageLoadingForUrl,
   markMediaWarm,
-  videoPreloadForUrl,
+  teardownVideoElement,
   warmProductMedia,
 } from "../media/mediaWarm";
 import type { ViewRect } from "../motion/feedGridMediaFly";
@@ -81,38 +82,38 @@ export default function FeedPost({
     return () => observer.disconnect();
   }, [mediaActive]);
 
+  const playVideo = Boolean(mediaActive && inView && slide.video);
+  const reelCover = productReelPoster(slide);
+
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !slide.video) return;
+    if (!video || !playVideo) return;
     configureInlineVideo(video);
-    if (mediaActive && inView) {
-      markMediaWarm(slide.video);
-      void video.play().catch(() => {});
-    } else {
-      video.pause();
-    }
-  }, [mediaActive, inView, slide.video]);
+    markMediaWarm(slide.video);
+    void video.play().catch(() => {});
+    return () => teardownVideoElement(video);
+  }, [playVideo, slide.video]);
 
   useEffect(() => {
     if (!mediaActive || !inView) return;
     warmProductMedia(slide);
   }, [mediaActive, inView, slide]);
 
-  const feedMediaContent = slide.video ? (
+  const feedMediaContent = playVideo ? (
     <video
       ref={videoRef}
       className="discover__media--video"
-      src={slide.video}
-      poster={slide.image ?? undefined}
+      src={slide.video!}
+      poster={reelCover ?? undefined}
       loop
-      preload={videoPreloadForUrl(slide.video, mediaActive && inView)}
+      preload="metadata"
       {...INLINE_VIDEO_PROPS}
     />
-  ) : slide.image ? (
+  ) : reelCover ? (
     <img
-      src={slide.image}
+      src={reelCover}
       alt=""
-      loading={imageLoadingForUrl(slide.image, mediaActive && inView)}
+      loading={imageLoadingForUrl(reelCover, mediaActive && inView)}
       decoding="async"
     />
   ) : (

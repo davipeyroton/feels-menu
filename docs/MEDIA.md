@@ -23,9 +23,23 @@ brand/intro-menu.mp4
 brand/intro-menu-poster.jpg
 brand/coffee-feelings-logo.png
 menu/espresso-duplo.mp4
+menu/espresso-duplo-video-poster.jpg
 menu/cappuccino.mp4
+menu/cappuccino-video-poster.jpg
 menu/*.jpg
 ```
+
+## Video frame posters (reels)
+
+Reels use **frame posters** (`videoPoster` in `menu-snapshot.json`), not the illustrative product photo. The feed grid keeps `image`.
+
+Generate posters before deploy (requires **ffmpeg**), from R2 or `public/`:
+
+```bash
+VITE_MEDIA_ORIGIN=https://your-bucket.r2.dev npm run media:posters
+```
+
+Upload the new `*-video-poster.jpg` files to R2 with the MP4s. Re-run when a video file changes.
 
 ## CORS (required for video from another origin)
 

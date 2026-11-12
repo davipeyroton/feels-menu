@@ -22,6 +22,7 @@ import {
   memo,
   useCallback,
   useEffect,
+  useImperativeHandle,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -40,6 +41,7 @@ import {
   primeDiscoverReelsEntry,
 } from "../lib/discoverNavigation";
 import { configureInlineVideo, INLINE_VIDEO_PROPS } from "../lib/inlineVideo";
+import { productReelPoster } from "../lib/productReelPoster";
 import { scrollBehaviorForDevice } from "../lib/scrollBehavior";
 import { createScrollRafHandler } from "../lib/scrollRaf";
 import {
@@ -51,6 +53,8 @@ import {
   prefetchImage,
   warmProductMedia,
   releaseVideoPrimersExcept,
+  teardownVideoElement,
+  teardownVideosWithin,
 } from "../media/mediaWarm";
 import {
   allProducts,
@@ -235,107 +239,149 @@ function CategoryDropdown({
   );
 }
 
-const ProductMedia = memo(function ProductMedia({
-  slide,
-  className,
-  playVideo = false,
-  warm = false,
-}: {
-  slide: ProductSlide;
-  className: string;
-  playVideo?: boolean;
-  /** Keep decode buffer after first view (panel switch feed ↔ reels). */
-  warm?: boolean;
-}) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [videoFrames, setVideoFrames] = useState(false);
-  /** Keep decoder mounted while warm — avoid poster flash on brief playIntent gaps. */
-  const mountVideo = Boolean(slide.video && (playVideo || warm));
-  const showPoster = Boolean(slide.image);
-  const imageEager = playVideo || warm || isMediaWarm(slide.image);
+export type ProductMediaHandle = {
+  retryPlay: () => void;
+};
 
-  useEffect(() => {
-    if (!warm && !playVideo) return;
-    markMediaWarm(slide.video);
-    markMediaWarm(slide.image);
-  }, [warm, playVideo, slide.video, slide.image]);
-
-  useEffect(() => {
-    if (!playVideo || !slide.video) return;
-    releaseVideoPrimersExcept(slide.video);
-  }, [playVideo, slide.video]);
-
-  useEffect(() => {
-    if (!mountVideo) {
-      setVideoFrames(false);
-      return;
+const ProductMedia = memo(
+  forwardRef<
+    ProductMediaHandle,
+    {
+      slide: ProductSlide;
+      className: string;
+      playVideo?: boolean;
+      /** Prefetch/decode priority for frame poster (never mounts `<video>`). */
+      warm?: boolean;
+      onPlaybackGateChange?: (needsTapToPlay: boolean) => void;
     }
-    const video = videoRef.current;
-    if (!video || !slide.video) return;
+  >(function ProductMedia(
+    {
+      slide,
+      className,
+      playVideo = false,
+      warm = false,
+      onPlaybackGateChange,
+    },
+    ref,
+  ) {
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const [videoPlaying, setVideoPlaying] = useState(false);
+    const mountVideo = Boolean(slide.video && playVideo);
+    const posterUrl = productReelPoster(slide);
+    const showPoster = Boolean(posterUrl);
+    const imageEager =
+      playVideo || warm || isMediaWarm(posterUrl) || isMediaWarm(slide.video);
 
-    configureInlineVideo(video);
+    const tryPlay = useCallback(() => {
+      const video = videoRef.current;
+      if (!video) return;
+      void video
+        .play()
+        .then(() => {
+          setVideoPlaying(true);
+          onPlaybackGateChange?.(false);
+        })
+        .catch(() => {
+          setVideoPlaying(false);
+          onPlaybackGateChange?.(true);
+        });
+    }, [onPlaybackGateChange]);
 
-    const onReady = () => setVideoFrames(true);
-    if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
-      onReady();
-    } else {
-      setVideoFrames(false);
-      video.addEventListener("loadeddata", onReady, { once: true });
+    useImperativeHandle(ref, () => ({ retryPlay: tryPlay }), [tryPlay]);
+
+    useEffect(() => {
+      if (!warm && !playVideo) return;
+      if (posterUrl) markMediaWarm(posterUrl);
+      markMediaWarm(slide.video);
+    }, [warm, playVideo, posterUrl, slide.video]);
+
+    useEffect(() => {
+      if (!playVideo || !slide.video) return;
+      releaseVideoPrimersExcept(slide.video);
+    }, [playVideo, slide.video]);
+
+    useEffect(() => {
+      if (!playVideo) {
+        setVideoPlaying(false);
+        onPlaybackGateChange?.(false);
+      }
+    }, [onPlaybackGateChange, playVideo]);
+
+    useEffect(() => {
+      if (!mountVideo) {
+        setVideoPlaying(false);
+        return;
+      }
+      const video = videoRef.current;
+      if (!video || !slide.video) return;
+
+      configureInlineVideo(video);
+
+      const onCanShow = () => {
+        tryPlay();
+      };
+
+      if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+        onCanShow();
+      } else {
+        setVideoPlaying(false);
+        video.addEventListener("loadeddata", onCanShow, { once: true });
+      }
+
+      return () => {
+        video.removeEventListener("loadeddata", onCanShow);
+        teardownVideoElement(video);
+        setVideoPlaying(false);
+      };
+    }, [mountVideo, playVideo, slide.video, tryPlay]);
+
+    if (!showPoster && !slide.video) {
+      return <ProductMediaPlaceholder className={className} />;
     }
 
-    if (playVideo) {
-      void video.play().catch(() => {});
-    } else {
-      video.pause();
-    }
-
-    return () => {
-      video.removeEventListener("loadeddata", onReady);
-    };
-  }, [mountVideo, playVideo, slide.video]);
-
-  if (!showPoster && !slide.video) {
-    return <ProductMediaPlaceholder className={className} />;
-  }
-
-  return (
-    <span className="product-media-layered" aria-hidden>
-      {showPoster ? (
-        <img
-          className={`${className} product-media-layered__poster`.trim()}
-          src={slide.image!}
-          alt=""
-          loading={imageLoadingForUrl(slide.image, imageEager)}
-          decoding="async"
-        />
-      ) : null}
-      {mountVideo ? (
-        <video
-          ref={videoRef}
-          className={[
-            className,
-            "discover__media--video",
-            "product-media-layered__video",
-            videoFrames ? "product-media-layered__video--ready" : "",
-          ]
-            .filter(Boolean)
-            .join(" ")}
-          src={slide.video!}
-          poster={slide.image ?? undefined}
-          loop
-          preload={
-            playVideo ? "auto" : warm ? "metadata" : "none"
-          }
-          aria-hidden
-          {...INLINE_VIDEO_PROPS}
-        />
-      ) : null}
-      {!showPoster && !mountVideo && slide.video ? (
-        <ProductMediaPlaceholder className={className} />
-      ) : null}
-    </span>
-  );
-});
+    return (
+      <span className="product-media-layered" aria-hidden>
+        {showPoster ? (
+          <img
+            className={[
+              className,
+              "product-media-layered__poster",
+              videoPlaying ? "product-media-layered__poster--hidden" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            src={posterUrl!}
+            alt=""
+            loading={imageLoadingForUrl(posterUrl, imageEager)}
+            decoding="async"
+          />
+        ) : null}
+        {mountVideo ? (
+          <video
+            ref={videoRef}
+            className={[
+              className,
+              "discover__media--video",
+              "product-media-layered__video",
+              videoPlaying ? "product-media-layered__video--playing" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            src={slide.video!}
+            poster={posterUrl ?? undefined}
+            loop
+            preload={playVideo ? "metadata" : "none"}
+            aria-hidden
+            {...INLINE_VIDEO_PROPS}
+          />
+        ) : null}
+        {!showPoster && !mountVideo && slide.video ? (
+          <ProductMediaPlaceholder className={className} />
+        ) : null}
+      </span>
+    );
+  }),
+);
 
 const REEL_DESC_ZOOM_IN_MAX = 32;
 
@@ -345,14 +391,16 @@ function ProductReel({
   allSlides,
   playbackActive = false,
   cacheMedia = false,
+  reelFocused = false,
 }: {
   slide: ProductSlide;
   reelIndex: number;
   allSlides: ProductSlide[];
   /** Play when slide is in view and reels panel is focused. */
   playbackActive?: boolean;
-  /** Keep slide buffers after leaving reels (feed ↔ reels swipe). */
+  /** Poster prefetch hints after the first reels visit. */
   cacheMedia?: boolean;
+  reelFocused?: boolean;
 }) {
   const { isFavorite, toggleFavorite } = useFavorites();
   const interested = isFavorite(slide.id);
@@ -360,8 +408,9 @@ function ProductReel({
   const sectionRef = useRef<HTMLElement>(null);
   const inViewRef = useRef(false);
   const [inView, setInView] = useState(false);
-  const [everInView, setEverInView] = useState(false);
   const [playIntent, setPlayIntent] = useState(false);
+  const [needsVideoTap, setNeedsVideoTap] = useState(false);
+  const productMediaRef = useRef<ProductMediaHandle>(null);
 
   useLayoutEffect(() => {
     if (reelIndex !== 0 || !cacheMedia) return;
@@ -371,7 +420,6 @@ function ProductReel({
     if (!root || root.scrollTop > 12) return;
     inViewRef.current = true;
     setInView(true);
-    setEverInView(true);
   }, [cacheMedia, reelIndex]);
 
   useEffect(() => {
@@ -401,18 +449,14 @@ function ProductReel({
   }, []);
 
   useEffect(() => {
-    const wantPlay = playbackActive && inView;
+    const wantPlay = playbackActive && inView && reelFocused;
     if (wantPlay) {
       setPlayIntent(true);
       return;
     }
-    const timer = window.setTimeout(() => setPlayIntent(false), 200);
+    const timer = window.setTimeout(() => setPlayIntent(false), 120);
     return () => window.clearTimeout(timer);
-  }, [playbackActive, inView]);
-
-  useEffect(() => {
-    if (inView) setEverInView(true);
-  }, [inView]);
+  }, [playbackActive, inView, reelFocused]);
 
   useEffect(() => {
     if (!inView) {
@@ -421,11 +465,16 @@ function ProductReel({
   }, [inView]);
 
   const onMediaTap = useCallback((event: MouseEvent<HTMLButtonElement>) => {
+    if (needsVideoTap) {
+      event.preventDefault();
+      productMediaRef.current?.retryPlay();
+      return;
+    }
     if (copyZoomedOut) {
       event.preventDefault();
       setCopyZoomedOut(false);
     }
-  }, [copyZoomedOut]);
+  }, [copyZoomedOut, needsVideoTap]);
 
   const onSeeMore = useCallback((event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
@@ -442,9 +491,9 @@ function ProductReel({
     if (next?.image) prefetchImage(next.image);
   }, [allSlides, inView, playbackActive, reelIndex, slide]);
 
-  const shouldPlay = playIntent;
-  const shouldWarm =
-    cacheMedia && (reelIndex === 0 || everInView || playIntent || inView);
+  const shouldPlay = playIntent && reelFocused;
+  const posterWarm =
+    cacheMedia && (reelIndex === 0 || playIntent || inView || reelFocused);
   const description = slide.description?.trim() ?? "";
   const descTruncatedInZoom =
     !copyZoomedOut && description.length > REEL_DESC_ZOOM_IN_MAX;
@@ -461,10 +510,12 @@ function ProductReel({
     >
       <div className="discover__media-wrap" aria-hidden>
         <ProductMedia
+          ref={productMediaRef}
           slide={slide}
           className="discover__media discover__media--product"
           playVideo={shouldPlay}
-          warm={shouldWarm}
+          warm={posterWarm}
+          onPlaybackGateChange={setNeedsVideoTap}
         />
       </div>
       <button
@@ -792,6 +843,7 @@ export default function DiscoverPage() {
   const [catDropdownOpen, setCatDropdownOpen] = useState(false);
   const reelsChromeDimmedRef = useRef(false);
   const reelsPrevScrollTopRef = useRef(0);
+  const [focusedReelIndex, setFocusedReelIndex] = useState(0);
   const [reelsPlaybackSettled, setReelsPlaybackSettled] = useState(false);
   const [reelsMediaCache, setReelsMediaCache] = useState(
     () => mainPanelFromViewParam(viewParam) === 1,
@@ -999,10 +1051,8 @@ export default function DiscoverPage() {
     menuTransitionFromRef.current = null;
   }, [menuPager.animating, menuIndex]);
 
-  const hubIntroLeaving =
-    menuPager.animating && menuTransitionFromRef.current === 0;
   const hubIntroVideoPlay = menuIndex === 0;
-  const hubIntroVideoShowLayer = menuIndex === 0 || hubIntroLeaving;
+  const hubIntroVideoMounted = menuIndex === 0;
   const hubToDiscoverTransition =
     menuPager.animating &&
     (menuTransitionFromRef.current === 0 ||
@@ -1242,10 +1292,12 @@ export default function DiscoverPage() {
     const slides = el.querySelectorAll<HTMLElement>(
       ".discover__slide[data-category]",
     );
-    for (const node of slides) {
+    for (let index = 0; index < slides.length; index++) {
+      const node = slides[index]!;
       const top = node.offsetTop;
       const bottom = top + node.offsetHeight;
       if (mid >= top && mid < bottom) {
+        setFocusedReelIndex(index);
         const found = node.dataset.category;
         if (found) setActiveCat(found);
         break;
@@ -1500,8 +1552,16 @@ export default function DiscoverPage() {
 
   useEffect(() => {
     if (menuIndex !== 1 || discoverModeIndex === 0) return;
-    pauseVideosWithin(reelsRef.current, "video", { rewind: false });
+    teardownVideosWithin(reelsRef.current, "video");
   }, [menuIndex, discoverModeIndex]);
+
+  useEffect(() => {
+    if (menuIndex === 1 && discoverModeIndex === 0) return;
+    teardownVideosWithin(
+      menuPager.containerRef.current?.querySelector(".discover-shell"),
+      "video",
+    );
+  }, [menuIndex, discoverModeIndex, menuPager.containerRef]);
 
   useEffect(() => {
     if (menuIndex !== 1 || discoverModeIndex !== 0) {
@@ -1887,7 +1947,7 @@ export default function DiscoverPage() {
         >
           <HubPanel
             hubVideoPlay={hubIntroVideoPlay}
-            hubVideoShowLayer={hubIntroVideoShowLayer}
+            hubVideoMounted={hubIntroVideoMounted}
             onPrepareExploreMenu={prepareExploreMenu}
             onExploreMenu={() => navigateTabDestination(0)}
           />
@@ -1933,6 +1993,7 @@ export default function DiscoverPage() {
                   allSlides={productSlides}
                   playbackActive={reelsPlaybackActive}
                   cacheMedia={reelsCacheMedia}
+                  reelFocused={focusedReelIndex === index}
                 />
               ))}
 

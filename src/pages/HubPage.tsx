@@ -14,6 +14,7 @@ export default function HubPage() {
     <main className="hub">
       <HubIntroVideo
         className="hub__video"
+        mountVideo={!guestSheetOpen}
         play={!guestSheetOpen}
       />
       <div className="hub__shade" />

@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "snapshot": "node scripts/parse-discover.mjs",
-    "audit:mobile": "node scripts/mobile-audit.mjs"
+    "audit:mobile": "node scripts/mobile-audit.mjs",
+    "media:posters": "node scripts/extract-video-posters.mjs"
   },
   "dependencies": {
     "lucide-react": "^1.64.0",

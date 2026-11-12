@@ -10,12 +10,12 @@ export default function HubPanel({
   onExploreMenu,
   onPrepareExploreMenu,
   hubVideoPlay = true,
-  hubVideoShowLayer = true,
+  hubVideoMounted = true,
 }: {
   onExploreMenu: () => void;
   onPrepareExploreMenu?: () => void;
   hubVideoPlay?: boolean;
-  hubVideoShowLayer?: boolean;
+  hubVideoMounted?: boolean;
 }) {
   const [guestSheetOpen, setGuestSheetOpen] = useState(false);
 
@@ -23,8 +23,8 @@ export default function HubPanel({
     <main className="hub">
       <HubIntroVideo
         className="hub__video"
+        mountVideo={hubVideoMounted && !guestSheetOpen}
         play={hubVideoPlay && !guestSheetOpen}
-        showLayer={hubVideoShowLayer && !guestSheetOpen}
       />
       <div className="hub__shade" />
       <div className="hub__gradient" />

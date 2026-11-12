@@ -8,19 +8,6 @@ import {
 } from "../motion/feedGridMediaFly";
 
 function FlyMedia({ slide }: { slide: ProductSlide }) {
-  if (slide.video) {
-    return (
-      <video
-        src={slide.video}
-        className="feed-media-fly__media"
-        muted
-        playsInline
-        autoPlay
-        loop
-        aria-hidden
-      />
-    );
-  }
   if (slide.image) {
     return (
       <img
