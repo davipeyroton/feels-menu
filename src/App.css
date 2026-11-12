@@ -3022,14 +3022,25 @@ button {
   background: #111;
   content-visibility: auto;
   contain-intrinsic-size: auto 160px;
+  isolation: isolate;
+}
+
+.feed-grid__cell-stack {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  isolation: isolate;
 }
 
 .feed-grid__thumb-host {
-  position: relative;
+  position: absolute;
+  inset: 0;
   z-index: 0;
   display: block;
   width: 100%;
   height: 100%;
+  overflow: hidden;
+  transform: translateZ(0);
 }
 
 .feed-grid__cell img:not(.product-media-placeholder__logo),
@@ -3037,17 +3048,20 @@ button {
 .feed-grid__thumb-host img:not(.product-media-placeholder__logo),
 .feed-grid__thumb-host video,
 .feed-grid__thumb {
-  position: relative;
+  position: absolute;
+  inset: 0;
   z-index: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
+  transform: translateZ(0);
 }
 
 .feed-grid__video-thumb {
   pointer-events: none;
   background: #111;
+  -webkit-transform: translateZ(0);
 }
 
 .feed-grid__video-badge {
@@ -3055,6 +3069,7 @@ button {
   top: 0.38rem;
   right: 0.38rem;
   z-index: 2;
+  transform: translate3d(0, 0, 1px);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -3086,13 +3101,15 @@ button {
   left: 0.5rem;
   right: 0.5rem;
   bottom: 0.45rem;
-  z-index: 2;
+  z-index: 4;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   gap: 0.18rem;
   pointer-events: none;
   text-align: left;
+  transform: translate3d(0, 0, 3px);
+  -webkit-transform: translate3d(0, 0, 3px);
 }
 
 .feed-grid__meta-row {
@@ -3139,13 +3156,23 @@ button {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.55);
 }
 
-.feed-grid__cell::after {
+.feed-grid__caption .feed-grid__cat-label,
+.feed-grid__caption .discover__cat-label {
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.55);
+}
+
+.menu-price--grid {
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.55);
+}
+
+.feed-grid__cell-stack::after {
   content: "";
   position: absolute;
   inset: auto 0 0;
-  z-index: 1;
+  z-index: 3;
   height: 58%;
   background: linear-gradient(
     to top,
@@ -3155,10 +3182,11 @@ button {
     transparent 100%
   );
   pointer-events: none;
+  transform: translate3d(0, 0, 2px);
 }
 
-.discover--feed .feed-grid__cell::after,
-.customer-profile__grid .feed-grid__cell::after {
+.discover--feed .feed-grid__cell-stack::after,
+.customer-profile__grid .feed-grid__cell-stack::after {
   height: 62%;
   background: linear-gradient(
     to top,

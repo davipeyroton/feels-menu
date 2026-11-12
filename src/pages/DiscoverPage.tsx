@@ -56,8 +56,7 @@ import {
 } from "../data/menu";
 import { ptBR } from "../i18n/pt-BR";
 import { CategoryEmoji } from "../openmoji/categoryEmoji";
-import FeedGridCaption from "../components/FeedGridCaption";
-import FeedGridThumb from "../components/FeedGridThumb";
+import FeedGridCell from "../components/FeedGridCell";
 import FeedPost from "../components/FeedPost";
 import MenuPrice from "../components/MenuPrice";
 import ProductMediaPlaceholder from "../components/ProductMediaPlaceholder";
@@ -666,23 +665,13 @@ function FeedProfileGrid({
   return (
     <section className="feed-grid" aria-label={ptBR.discover.profileGrid}>
       {slides.map((slide) => (
-        <button
+        <FeedGridCell
           key={slide.id}
-          type="button"
-          className={[
-            "feed-grid__cell",
-            flyTargetProductId === slide.id ? "feed-grid__cell--fly-target" : "",
-          ]
-            .filter(Boolean)
-            .join(" ")}
-          data-product-id={slide.id}
-          data-category={slide.category}
-          onClick={(event) => onSelect(slide, event.currentTarget)}
-          aria-label={ptBR.discover.viewProduct(slide.name)}
-        >
-          <FeedGridThumb slide={slide} />
-          <FeedGridCaption slide={slide} contextCategory={contextCategory} />
-        </button>
+          slide={slide}
+          contextCategory={contextCategory}
+          flyTarget={flyTargetProductId === slide.id}
+          onSelect={onSelect}
+        />
       ))}
     </section>
   );

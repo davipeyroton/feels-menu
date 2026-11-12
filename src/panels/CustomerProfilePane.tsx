@@ -10,8 +10,7 @@ import FeedMediaFlyOverlay, {
   readPostMediaRect,
   readThumbRect,
 } from "../components/FeedMediaFlyOverlay";
-import FeedGridCaption from "../components/FeedGridCaption";
-import FeedGridThumb from "../components/FeedGridThumb";
+import FeedGridCell from "../components/FeedGridCell";
 import FeedPost from "../components/FeedPost";
 import GuestProgramSheet from "../components/GuestProgramSheet";
 import ProgramCta from "../components/ProgramCta";
@@ -252,27 +251,13 @@ export default function CustomerProfilePane({
               ) : (
                 <section className="feed-grid customer-profile__grid">
                   {favorites.map((slide) => (
-                    <button
+                    <FeedGridCell
                       key={slide.id}
-                      type="button"
-                      className={[
-                        "feed-grid__cell",
-                        "customer-profile__cell",
-                        flyTargetProductId === slide.id
-                          ? "feed-grid__cell--fly-target"
-                          : "",
-                      ]
-                        .filter(Boolean)
-                        .join(" ")}
-                      data-product-id={slide.id}
-                      onClick={(event) =>
-                        openFavorite(slide, event.currentTarget)
-                      }
-                      aria-label={ptBR.discover.viewProduct(slide.name)}
-                    >
-                      <FeedGridThumb slide={slide} />
-                      <FeedGridCaption slide={slide} />
-                    </button>
+                      slide={slide}
+                      className="customer-profile__cell"
+                      flyTarget={flyTargetProductId === slide.id}
+                      onSelect={(product, cell) => openFavorite(product, cell)}
+                    />
                   ))}
                 </section>
               )}
