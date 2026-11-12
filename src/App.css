@@ -568,11 +568,12 @@ body {
 }
 
 .customer-profile__scroll {
+  --profile-inset-x: 1.25rem;
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior-y: contain;
-  padding: calc(var(--discover-chrome-h, 3.5rem) + 0.5rem) 1.25rem
+  padding: calc(var(--discover-chrome-h, 3.5rem) + 0.5rem) var(--profile-inset-x)
     calc(var(--discover-tab-h, 5.25rem) + env(safe-area-inset-bottom, 0px) + 1rem);
 }
 
@@ -673,6 +674,10 @@ body {
 }
 
 .customer-profile__grid {
+  width: calc(100% + 2 * var(--profile-inset-x, 1.25rem));
+  max-width: none;
+  margin-left: calc(-1 * var(--profile-inset-x, 1.25rem));
+  margin-right: calc(-1 * var(--profile-inset-x, 1.25rem));
   padding-bottom: 0.5rem;
 }
 
@@ -3219,11 +3224,6 @@ button {
   height: 2.65rem;
 }
 
-.menu-pager--reels-mode .discover__vegan-mark {
-  width: 2.15rem;
-  height: 2.15rem;
-}
-
 .discover__shade {
   position: absolute;
   inset: 0;
@@ -3260,7 +3260,36 @@ button {
   font-weight: 400;
 }
 
-.discover__cat-label + .discover__title {
+.discover__title-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  max-width: 100%;
+}
+
+.discover__title-row .discover__title {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin: 0;
+}
+
+.discover__vegan-inline {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #86efac;
+  line-height: 0;
+}
+
+.discover__vegan-leaf {
+  width: clamp(1.05rem, 4.1vw, 1.35rem);
+  height: clamp(1.05rem, 4.1vw, 1.35rem);
+  filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.5));
+}
+
+.discover__cat-label + .discover__title-row {
   margin-top: 0.35rem;
 }
 
@@ -3390,23 +3419,6 @@ button {
   flex-direction: column;
   align-items: center;
   gap: 0.4rem;
-}
-
-.discover__vegan-mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.35rem;
-  height: 2.35rem;
-  border-radius: 999px;
-  border: 1px solid rgba(134, 239, 172, 0.28);
-  background: rgba(0, 0, 0, 0.42);
-  color: #86efac;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.4);
-  line-height: 0;
-  pointer-events: none;
 }
 
 .discover__heart--reel-float {

@@ -1,3 +1,4 @@
+import { Leaf } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import HubPanel from "../panels/HubPanel";
 import {
@@ -390,15 +391,6 @@ function ProductReel({
       <div className="discover__bottom-fade" />
       <div className="discover__slide-inner">
         <div className="discover__reel-rail">
-          {slide.vegan ? (
-            <span
-              className="discover__vegan-mark"
-              aria-label={ptBR.discover.veganProduct}
-              title={ptBR.discover.veganProduct}
-            >
-              <LeafIcon />
-            </span>
-          ) : null}
           <button
             type="button"
             className={[
@@ -417,7 +409,22 @@ function ProductReel({
         </div>
         <div className="discover__copy">
           <p className="discover__cat-label">{categoryLabel(slide.category)}</p>
-          <h2 className="discover__title">{slide.name}</h2>
+          <div className="discover__title-row">
+            <h2 className="discover__title">{slide.name}</h2>
+            {slide.vegan ? (
+              <span
+                className="discover__vegan-inline"
+                aria-label={ptBR.discover.veganProduct}
+                title={ptBR.discover.veganProduct}
+              >
+                <Leaf
+                  className="discover__vegan-leaf"
+                  strokeWidth={1.85}
+                  aria-hidden
+                />
+              </span>
+            ) : null}
+          </div>
           {slide.description ? (
             <div className="discover__desc-block">
               <p
@@ -610,39 +617,6 @@ function ReelsChrome({
         )}
       </header>
     </div>
-  );
-}
-
-function LeafIcon() {
-  return (
-    <svg
-      className="leaf-icon"
-      viewBox="0 0 24 24"
-      width="20"
-      height="20"
-      aria-hidden
-    >
-      <path
-        d="M11 20C6.58 17.84 4 14.43 4 10.5 4 7.08 6.5 4 11 4c5 0 9 4.5 9 9 0 4.5-3.5 8-9 7Z"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M11 20V10"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-      <path
-        d="M11 10C9.5 7.5 7 6 5 6"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-    </svg>
   );
 }
 
