@@ -1,11 +1,15 @@
 /** Main pager: 0 = hub, 1 = discover (reels + feed). */
 export type MainPanelIndex = 0 | 1;
 
-/** Inner discover track: 0 = reels, 1 = feed. */
-export type DiscoverModeIndex = 0 | 1;
+/** Inner discover track: 0 = reels, 1 = feed, 2 = profile. */
+export type DiscoverModeIndex = 0 | 1 | 2;
 
-export function normalizeViewParam(view: string | null): "reels" | "feed" | null {
-  if (view === "feed" || view === "reels") return view;
+export const DISCOVER_MODE_COUNT = 3;
+
+export type ViewParam = "reels" | "feed" | "profile";
+
+export function normalizeViewParam(view: string | null): ViewParam | null {
+  if (view === "feed" || view === "reels" || view === "profile") return view;
   return null;
 }
 
@@ -15,11 +19,15 @@ export function mainPanelFromViewParam(view: string | null): MainPanelIndex {
 }
 
 export function discoverModeFromViewParam(view: string | null): DiscoverModeIndex {
-  return view === "feed" ? 1 : 0;
+  if (view === "feed") return 1;
+  if (view === "profile") return 2;
+  return 0;
 }
 
-export function viewParamFromDiscoverMode(mode: DiscoverModeIndex): "reels" | "feed" {
-  return mode === 1 ? "feed" : "reels";
+export function viewParamFromDiscoverMode(mode: DiscoverModeIndex): ViewParam {
+  if (mode === 1) return "feed";
+  if (mode === 2) return "profile";
+  return "reels";
 }
 
 export function readViewParamFromLocation(): "reels" | "feed" | null {

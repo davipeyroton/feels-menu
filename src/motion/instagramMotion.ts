@@ -17,9 +17,6 @@ export function pagerRubberBandFactor(
 ): number {
   if (atIndex === 0 && dx > 0) return 0.28;
   if (atIndex === panelCount - 1 && dx < 0) return 0.28;
-  // Reels (1) and feed (2) are decoupled — no horizontal drag between them.
-  if (atIndex === 1 && dx < 0) return 0;
-  if (atIndex === 2 && dx > 0) return 0;
   return 1;
 }
 
@@ -34,12 +31,14 @@ export function panelDepthStyle(
   };
 }
 
-/** Horizontal discover track is 200% wide; each pane is 50% of the track. */
+/** Horizontal discover track: N panes × 100% viewport each. */
 export function discoverModeTrackTransform(
   modeIndex: number,
   dragPx: number,
+  panelCount = 3,
 ): string {
-  return `translate3d(calc(${-modeIndex * 50}% + ${dragPx}px), 0, 0)`;
+  const step = 100 / panelCount;
+  return `translate3d(calc(${-modeIndex * step}% + ${dragPx}px), 0, 0)`;
 }
 
 export function discoverModeFractionalIndex(
@@ -47,9 +46,11 @@ export function discoverModeFractionalIndex(
   dragPx: number,
   trackWidth: number,
   dragging: boolean,
+  panelCount = 3,
 ): number {
   if (trackWidth > 0 && dragging) {
-    return Math.max(0, Math.min(1, modeIndex - dragPx / trackWidth));
+    const max = panelCount - 1;
+    return Math.max(0, Math.min(max, modeIndex - dragPx / trackWidth));
   }
   return modeIndex;
 }

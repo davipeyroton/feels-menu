@@ -1,14 +1,9 @@
 import { useState } from "react";
 import GuestProgramSheet from "../components/GuestProgramSheet";
 import HubIntroVideo from "../components/HubIntroVideo";
-import {
-  HubArrowIcon,
-  HubCashbackIcon,
-  HubLoyaltyIcon,
-} from "../components/icons";
+import { HubArrowIcon } from "../components/icons";
 import { hub } from "../data/menu";
 import { ptBR } from "../i18n/pt-BR";
-import type { GuestProgram } from "../loyalty/guestEnrollment";
 
 export default function HubPanel({
   onExploreMenu,
@@ -17,7 +12,7 @@ export default function HubPanel({
   onExploreMenu: () => void;
   mediaActive?: boolean;
 }) {
-  const [program, setProgram] = useState<GuestProgram | null>(null);
+  const [guestSheetOpen, setGuestSheetOpen] = useState(false);
 
   return (
     <main className="hub">
@@ -27,51 +22,38 @@ export default function HubPanel({
 
       <div className="hub__inner">
         <header className="hub__hero">
-          <span className="hub__location">{hub.location}</span>
-          <h1 className="hub__title">
-            <img src={hub.wordmark} alt={ptBR.hub.logoAlt} className="hub__wordmark" />
-          </h1>
-          <p className="hub__tagline">{hub.tagline}</p>
+          <div className="hub__hero-top">
+            <span className="hub__location hub__hero-brand">{ptBR.hub.brandName}</span>
+            <span className="hub__location hub__hero-place">{hub.location}</span>
+          </div>
         </header>
 
         <nav className="hub__nav">
           <button
             type="button"
-            className="btn btn--primary btn--hub-icon-trail"
+            className="btn btn--hub-cta"
             onClick={onExploreMenu}
           >
-            <span className="btn__label">{ptBR.hub.exploreMenu}</span>
-            <span className="btn__trail-icon">
+            {ptBR.hub.exploreMenuCta}
+            <span className="btn--hub-cta__icon" aria-hidden>
               <HubArrowIcon />
             </span>
           </button>
           <button
             type="button"
-            className="btn btn--glass btn--hub-icon-trail"
-            onClick={() => setProgram("cashback")}
+            className="hub__program-link"
+            onClick={() => setGuestSheetOpen(true)}
           >
-            <span className="btn__label">{ptBR.hub.cashback}</span>
-            <span className="btn__trail-icon">
-              <HubCashbackIcon />
-            </span>
-          </button>
-          <button
-            type="button"
-            className="btn btn--glass btn--hub-icon-trail"
-            onClick={() => setProgram("loyalty")}
-          >
-            <span className="btn__label">{ptBR.hub.loyalty}</span>
-            <span className="btn__trail-icon">
-              <HubLoyaltyIcon />
-            </span>
+            <span className="hub__program-link__title">{ptBR.hub.programUnified}</span>
+            <span className="hub__program-link__hint">{ptBR.hub.programUnifiedHint}</span>
           </button>
         </nav>
       </div>
 
       <GuestProgramSheet
-        open={program !== null}
-        program={program}
-        onClose={() => setProgram(null)}
+        open={guestSheetOpen}
+        program={null}
+        onClose={() => setGuestSheetOpen(false)}
       />
     </main>
   );

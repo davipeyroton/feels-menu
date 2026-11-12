@@ -9,7 +9,12 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { ptBR } from "../i18n/pt-BR";
-import { HubArrowIcon } from "../components/icons";
+import {
+  HubArrowIcon,
+  HubBackIcon,
+  HubCashbackIcon,
+  HubLoyaltyIcon,
+} from "../components/icons";
 import {
   requestLoyaltyWalletCard,
   submitGuestEnrollment,
@@ -344,10 +349,11 @@ export default function GuestProgramSheet({
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [codeConfirmed, setCodeConfirmed] = useState(false);
-  const [sessionProgram, setSessionProgram] = useState(program);
+  const [sessionProgram, setSessionProgram] = useState<GuestProgram | null>(
+    program,
+  );
 
-  if (program !== sessionProgram) {
-    setSessionProgram(program);
+  const resetForm = () => {
     setName("");
     setPhone("");
     setBirthDate("");
@@ -356,7 +362,16 @@ export default function GuestProgramSheet({
     setSubmitting(false);
     setCodeConfirmed(false);
     setDragY(0);
-  }
+  };
+
+  useEffect(() => {
+    if (!open) {
+      setSessionProgram(null);
+      resetForm();
+      return;
+    }
+    if (program) setSessionProgram(program);
+  }, [open, program]);
 
   useEffect(() => {
     if (!open) return;
@@ -366,17 +381,6 @@ export default function GuestProgramSheet({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
-
-  if (!open || !program || typeof document === "undefined") return null;
-
-  const title =
-    program === "cashback"
-      ? ptBR.hub.guestCashbackTitle
-      : ptBR.hub.guestLoyaltyTitle;
-  const reward =
-    program === "cashback"
-      ? ptBR.hub.guestCashbackReward
-      : ptBR.hub.guestLoyaltyReward;
 
   const onPanelPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.button !== 0) return;
@@ -411,7 +415,7 @@ export default function GuestProgramSheet({
     setSubmitting(true);
     try {
       await submitGuestEnrollment({
-        program,
+        program: sessionProgram!,
         name: name.trim(),
         phone: digitsOnly(phone),
         birthDate,
@@ -421,6 +425,158 @@ export default function GuestProgramSheet({
       setSubmitting(false);
     }
   };
+
+  if (!open || typeof document === "undefined") return null;
+
+  const activeProgram = sessionProgram;
+  const panelClass = [
+    "wifi-sheet__panel guest-sheet",
+    dragY > 0 ? "guest-sheet--dragging" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const panelStyle =
+    dragY > 0 ? { transform: `translateY(${dragY}px)` } : undefined;
+
+  const grabHandle = (
+    <div
+      className="guest-sheet__grab"
+      onPointerDown={onPanelPointerDown}
+      onPointerMove={onPanelPointerMove}
+      onPointerUp={onPanelPointerUp}
+      onPointerCancel={onPanelPointerUp}
+    >
+      <div className="wifi-sheet__handle" aria-hidden />
+    </div>
+  );
+
+  if (!activeProgram) {
+    return createPortal(
+      <div
+        className="wifi-sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-label={ptBR.hub.guestProgramPickTitle}
+      >
+        <button
+          type="button"
+          className="wifi-sheet__backdrop"
+          aria-label={ptBR.hub.close}
+          onClick={onClose}
+        />
+        <div
+          className={`${panelClass} guest-sheet--pick`}
+          style={panelStyle}
+        >
+          {grabHandle}
+          <div className="guest-sheet__body guest-sheet__body--pick">
+            <header className="guest-program-pick__header">
+              <p className="guest-program-pick__eyebrow">{ptBR.hub.guestJoin}</p>
+              <h2 className="guest-program-pick__title">
+                {ptBR.hub.guestProgramPickTitle}
+              </h2>
+              <p className="guest-program-pick__lead">
+                {ptBR.hub.guestProgramPickLead}
+              </p>
+            </header>
+            <ul className="guest-program-picker">
+              <li>
+              <button
+                type="button"
+                className="guest-program-picker__option"
+                onClick={() => {
+                  resetForm();
+                  setSessionProgram("cashback");
+                }}
+              >
+                <span
+                  className="guest-program-picker__icon guest-program-picker__icon--cashback"
+                  aria-hidden
+                >
+                  <HubCashbackIcon size={22} />
+                </span>
+                <span className="guest-program-picker__copy">
+                  <span className="guest-program-picker__title">
+                    {ptBR.hub.guestPickCashbackTitle}
+                  </span>
+                  <span className="guest-program-picker__desc">
+                    {ptBR.hub.guestPickCashbackDesc}
+                  </span>
+                </span>
+                <span className="guest-program-picker__chevron" aria-hidden>
+                  <HubArrowIcon size={18} />
+                </span>
+              </button>
+              </li>
+              <li>
+              <button
+                type="button"
+                className="guest-program-picker__option"
+                onClick={() => {
+                  resetForm();
+                  setSessionProgram("loyalty");
+                }}
+              >
+                <span
+                  className="guest-program-picker__icon guest-program-picker__icon--loyalty"
+                  aria-hidden
+                >
+                  <HubLoyaltyIcon size={22} />
+                </span>
+                <span className="guest-program-picker__copy">
+                  <span className="guest-program-picker__title">
+                    {ptBR.hub.guestPickLoyaltyTitle}
+                  </span>
+                  <span className="guest-program-picker__desc">
+                    {ptBR.hub.guestPickLoyaltyDesc}
+                  </span>
+                </span>
+                <span className="guest-program-picker__chevron" aria-hidden>
+                  <HubArrowIcon size={18} />
+                </span>
+              </button>
+              </li>
+            </ul>
+            <button
+              type="button"
+              className="guest-program-pick__later"
+              onClick={onClose}
+            >
+              {ptBR.hub.guestProgramPickLater}
+            </button>
+          </div>
+        </div>
+      </div>,
+      document.body,
+    );
+  }
+
+  const title =
+    activeProgram === "cashback"
+      ? ptBR.hub.guestCashbackTitle
+      : ptBR.hub.guestLoyaltyTitle;
+  const reward =
+    activeProgram === "cashback"
+      ? ptBR.hub.guestCashbackReward
+      : ptBR.hub.guestLoyaltyReward;
+
+  const backToProgramPick = () => {
+    resetForm();
+    setSessionProgram(null);
+  };
+
+  const programBackBar = program === null ? (
+    <div className="guest-sheet__toolbar">
+      <button
+        type="button"
+        className="guest-sheet__back"
+        aria-label={ptBR.hub.backToProgramPick}
+        onClick={backToProgramPick}
+      >
+        <HubBackIcon size={20} />
+      </button>
+    </div>
+  ) : null;
 
   return createPortal(
     <div
@@ -435,25 +591,10 @@ export default function GuestProgramSheet({
         aria-label={ptBR.hub.close}
         onClick={onClose}
       />
-      <div
-        className={[
-          "wifi-sheet__panel guest-sheet",
-          dragY > 0 ? "guest-sheet--dragging" : "",
-        ]
-          .filter(Boolean)
-          .join(" ")}
-        style={dragY > 0 ? { transform: `translateY(${dragY}px)` } : undefined}
-      >
-        <div
-          className="guest-sheet__grab"
-          onPointerDown={onPanelPointerDown}
-          onPointerMove={onPanelPointerMove}
-          onPointerUp={onPanelPointerUp}
-          onPointerCancel={onPanelPointerUp}
-        >
-          <div className="wifi-sheet__handle" aria-hidden />
-        </div>
-        {submitted && program === "loyalty" && codeConfirmed ? (
+      <div className={panelClass} style={panelStyle}>
+        {grabHandle}
+        {programBackBar}
+        {submitted && activeProgram === "loyalty" && codeConfirmed ? (
           <div className="guest-sheet__body guest-sheet__body--pass">
             <p className="wifi-sheet__eyebrow">{title}</p>
             <LoyaltyPointsCard holder={name} />
@@ -462,7 +603,7 @@ export default function GuestProgramSheet({
               className="guest-wallet__button"
               onClick={() => {
                 const enrollment: GuestEnrollment = {
-                  program,
+                  program: activeProgram,
                   name: name.trim(),
                   phone: digitsOnly(phone),
                   birthDate,
@@ -475,6 +616,19 @@ export default function GuestProgramSheet({
               <WalletIcon />
               {ptBR.hub.guestAddToWallet}
             </button>
+          </div>
+        ) : submitted && activeProgram === "cashback" && codeConfirmed ? (
+          <div className="guest-sheet__body guest-sheet__body--cashback-done">
+            <p className="wifi-sheet__eyebrow">{title}</p>
+            <div
+              className="guest-sheet__success guest-sheet__success--complete"
+              role="status"
+            >
+              <p className="guest-sheet__success-title">
+                {ptBR.hub.guestCashbackDoneTitle}
+              </p>
+              <p className="guest-sheet__lead">{ptBR.hub.guestCashbackDoneBody}</p>
+            </div>
           </div>
         ) : submitted ? (
           <div className="guest-sheet__body">

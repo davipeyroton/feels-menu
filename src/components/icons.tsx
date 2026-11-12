@@ -26,6 +26,23 @@ export function HubArrowIcon({ size = 22 }: { size?: number }) {
   );
 }
 
+export function HubBackIcon({ size = 22 }: { size?: number }) {
+  return (
+    <svg
+      viewBox="0 0 72 72"
+      width={size}
+      height={size}
+      aria-hidden
+      className="hub-back-icon"
+    >
+      <polygon
+        fill="currentColor"
+        points="49.2124,51.5343 67,35.0363 49.2124,18.5382 45.4234,22.6138 55.8191,32.2554 5,32.2554 5,37.8171 55.8191,37.8171 45.4234,47.4587"
+      />
+    </svg>
+  );
+}
+
 export function HubCashbackIcon({ size = 22 }: { size?: number }) {
   return (
     <SolidIcon

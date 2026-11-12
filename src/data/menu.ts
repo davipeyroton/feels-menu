@@ -1,5 +1,19 @@
 import rawSnapshot from "../../data/menu-snapshot.json";
 import { priceInBrl, ptBR } from "../i18n/pt-BR";
+import { isVeganProduct } from "./veganProducts";
+
+type RawProductSlide = {
+  kind: "product";
+  index: number;
+  id: string;
+  category: string;
+  name: string;
+  description: string;
+  price: string | null;
+  image: string | null;
+  video: string | null;
+  vegan?: boolean;
+};
 
 function decodeHtml(text: string): string {
   return text
@@ -27,17 +41,19 @@ const snapshot = {
   })),
   slides: rawSnapshot.slides.map((slide) => {
     if (slide.kind !== "product") return slide;
-    const description = slide.description
-      ? decodeHtml(slide.description)
+    const product = slide as RawProductSlide;
+    const description = product.description
+      ? decodeHtml(product.description)
       : "";
-    const tr = ptBR.products[slide.id];
-    const media = normalizeProductMedia(slide.image, slide.video);
+    const tr = ptBR.products[product.id];
+    const media = normalizeProductMedia(product.image, product.video);
     return {
-      ...slide,
+      ...product,
       ...media,
-      name: tr?.name ?? slide.name,
+      name: tr?.name ?? product.name,
       description: tr?.description ?? description,
-      price: priceInBrl(slide.price),
+      price: priceInBrl(product.price),
+      vegan: isVeganProduct(product.id, product.vegan),
     };
   }),
 };
@@ -52,6 +68,7 @@ export type ProductSlide = {
   price: string | null;
   image: string | null;
   video: string | null;
+  vegan: boolean;
 };
 
 export type WelcomeSlide = { kind: "welcome"; index: number };
