@@ -388,8 +388,6 @@ body {
 .menu-pager--reels-mode:not(.menu-pager--mode-interacting)
   .discover-mode-pane--profile {
   pointer-events: none;
-  content-visibility: hidden;
-  contain: strict;
 }
 
 .menu-pager--feed-mode:not(.menu-pager--mode-interacting)
@@ -397,8 +395,6 @@ body {
 .menu-pager--feed-mode:not(.menu-pager--mode-interacting)
   .discover-mode-pane--profile {
   pointer-events: none;
-  content-visibility: hidden;
-  contain: strict;
 }
 
 .menu-pager--profile-mode:not(.menu-pager--mode-interacting)
@@ -406,8 +402,6 @@ body {
 .menu-pager--profile-mode:not(.menu-pager--mode-interacting)
   .discover-mode-pane--feed {
   pointer-events: none;
-  content-visibility: hidden;
-  contain: strict;
 }
 
 .menu-pager--mode-interacting .discover-mode-pane {

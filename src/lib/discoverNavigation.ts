@@ -28,7 +28,7 @@ export function pauseDiscoverMedia(
 ): void {
   if (!menuPagerRoot) return;
   const shell = menuPagerRoot.querySelector(".discover-shell");
-  pauseVideosWithin(shell);
+  pauseVideosWithin(shell, "video", { rewind: true });
 }
 
 /** Run before animating back to the welcome hub (Safari/iOS). */

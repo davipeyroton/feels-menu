@@ -136,19 +136,27 @@ export function suspendVideoDecoders(
   ...roots: (ParentNode | null | undefined)[]
 ): void {
   for (const root of roots) {
-    pauseVideosWithin(root);
+    pauseVideosWithin(root, "video", { rewind: true });
   }
   releaseVideoPrimersExcept(null);
 }
+
+export type PauseVideosOptions = {
+  /** Rewind to the first frame (hub exit / decoder release). Off by default for tab switches. */
+  rewind?: boolean;
+};
 
 /** Pause decoders before hub transition (Safari/iOS). */
 export function pauseVideosWithin(
   root: ParentNode | null | undefined,
   selector = "video",
+  options?: PauseVideosOptions,
 ): void {
   if (!root) return;
+  const rewind = options?.rewind === true;
   root.querySelectorAll<HTMLVideoElement>(selector).forEach((video) => {
     video.pause();
+    if (!rewind) return;
     try {
       if (video.currentTime > 0) video.currentTime = 0;
     } catch {

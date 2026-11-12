@@ -829,6 +829,8 @@ export default function DiscoverPage() {
   const hubToReelsInstantRef = useRef(false);
   const pendingReelsHomeScrollRef = useRef(false);
   const menuTransitionFromRef = useRef<number | null>(null);
+  const modeTransitionFromRef = useRef<DiscoverModeIndex | null>(null);
+  const discoverModeIndexRef = useRef<DiscoverModeIndex>(initialDiscoverMode);
   const hasVisitedReelsRef = useRef(mainPanelFromViewParam(viewParam) === 1);
   const onMenuPagerCommitRef = useRef<PagerCommitHandler | undefined>(undefined);
   const onMenuPagerDragRef = useRef<PagerDragHandler | undefined>(undefined);
@@ -963,6 +965,20 @@ export default function DiscoverPage() {
     onModePagerPreferVerticalRef,
   );
   const discoverModeIndex = modePager.index as DiscoverModeIndex;
+  discoverModeIndexRef.current = discoverModeIndex;
+
+  const commitModePagerGoTo = useCallback(
+    (mode: DiscoverModeIndex, opts?: { instant?: boolean }) => {
+      modeTransitionFromRef.current = discoverModeIndexRef.current;
+      modePager.goTo(mode, opts);
+    },
+    [modePager.goTo],
+  );
+
+  useEffect(() => {
+    if (modePager.animating) return;
+    modeTransitionFromRef.current = null;
+  }, [modePager.animating, discoverModeIndex]);
 
   useLayoutEffect(() => {
     if (menuPager.animating) {
@@ -985,10 +1001,13 @@ export default function DiscoverPage() {
   const discoverReelsReady =
     menuIndex === 1 &&
     (!menuPager.animating || hubToDiscoverTransition);
+  const leavingReelsMode =
+    modePager.animating &&
+    modeTransitionFromRef.current === 0 &&
+    discoverModeIndex !== 0;
   const reelsModeReady =
-    discoverModeIndex === 0 &&
-    !modePager.animating &&
-    !modePager.dragging;
+    !modePager.dragging &&
+    ((discoverModeIndex === 0 && !modePager.animating) || leavingReelsMode);
   const reelsPagerReady = discoverReelsReady && reelsModeReady;
   const reelsPlaybackActive = reelsPagerReady && reelsPlaybackSettled;
 
@@ -1382,20 +1401,16 @@ export default function DiscoverPage() {
         menuPager.goTo(1);
       }
 
-      if (mode === 1) {
-        pauseVideosWithin(reelsRef.current);
-      }
-
-      applyModePagerSnap(modePager.containerRef.current, fromMain !== 1);
-      modePager.goTo(mode, fromMain !== 1 ? { instant: true } : undefined);
+      applyModePagerSnap(modePager.containerRef.current, false);
+      commitModePagerGoTo(mode);
       replaceMenuSearch(1, mode);
     },
     [
       clearFeedGridFly,
+      commitModePagerGoTo,
       menuPager.containerRef,
       menuPager.goTo,
       modePager.containerRef,
-      modePager.goTo,
       replaceMenuSearch,
     ],
   );
@@ -1425,11 +1440,10 @@ export default function DiscoverPage() {
         if (feedSurfaceRef.current === "timeline") {
           setFeedSurface("grid");
         }
-        pauseVideosWithin(reelsRef.current);
       }
 
       if (menuIndexRef.current !== 1) {
-        menuPager.goTo(1, mode === 0 ? undefined : { instant: true });
+        menuPager.goTo(1);
       }
 
       if (mode === 0 && menuIndexRef.current !== 1) {
@@ -1443,17 +1457,16 @@ export default function DiscoverPage() {
         setFeedSurface("grid");
       }
 
-      const modeInstant =
-        opts?.instant === true || menuIndexRef.current !== 1;
+      const modeInstant = opts?.instant === true;
       applyModePagerSnap(modePager.containerRef.current, modeInstant);
-      modePager.goTo(mode, modeInstant ? { instant: true } : undefined);
+      commitModePagerGoTo(mode, modeInstant ? { instant: true } : undefined);
       replaceMenuSearch(1, mode);
     },
     [
       clearFeedGridFly,
+      commitModePagerGoTo,
       menuPager.goTo,
       modePager.containerRef,
-      modePager.goTo,
       modePager.index,
       replaceMenuSearch,
     ],
@@ -1466,7 +1479,7 @@ export default function DiscoverPage() {
 
   useEffect(() => {
     if (menuIndex !== 1 || discoverModeIndex === 0) return;
-    pauseVideosWithin(reelsRef.current);
+    pauseVideosWithin(reelsRef.current, "video", { rewind: false });
   }, [menuIndex, discoverModeIndex]);
 
   useEffect(() => {
@@ -1553,8 +1566,6 @@ export default function DiscoverPage() {
 
   const navigateTabDestination = useCallback(
     (dest: TabBarDestination) => {
-      const instant = { instant: true } as const;
-
       if (dest === "hub") {
         if (menuIndexRef.current === 0) return;
         clearFeedGridFly();
@@ -1562,7 +1573,7 @@ export default function DiscoverPage() {
         setChromePanel(0);
         prepareReturnToHub(menuPager.containerRef.current);
         replaceMenuSearch(0, modePager.index as DiscoverModeIndex);
-        menuPager.goTo(0, instant);
+        menuPager.goTo(0);
         return;
       }
 
@@ -1595,7 +1606,6 @@ export default function DiscoverPage() {
         if (feedSurfaceRef.current === "timeline") {
           setFeedSurface("grid");
         }
-        pauseVideosWithin(reelsRef.current);
       }
 
       if (dest === 1) {
@@ -1604,7 +1614,7 @@ export default function DiscoverPage() {
 
       const fromHub = menuIndexRef.current !== 1;
       if (fromHub) {
-        menuPager.goTo(1, dest === 0 ? undefined : instant);
+        menuPager.goTo(1);
       }
 
       if (dest === 0 && !fromHub) {
@@ -1613,17 +1623,17 @@ export default function DiscoverPage() {
         );
       }
 
-      applyModePagerSnap(modePager.containerRef.current, fromHub);
-      modePager.goTo(dest, fromHub ? instant : undefined);
+      applyModePagerSnap(modePager.containerRef.current, false);
+      commitModePagerGoTo(dest);
       replaceMenuSearch(1, dest);
     },
     [
       clearFeedGridFly,
+      commitModePagerGoTo,
       discoverModeIndex,
       menuPager.containerRef,
       menuPager.goTo,
       modePager.containerRef,
-      modePager.goTo,
       modePager.index,
       productSlides,
       replaceMenuSearch,
@@ -1655,7 +1665,7 @@ export default function DiscoverPage() {
         return;
       }
       const mode = discoverModeFromViewParam(view);
-      modePager.goTo(mode);
+      commitModePagerGoTo(mode);
       setChromePanel(mode === 1 ? 2 : mode === 2 ? 3 : 1);
       setFeedSurface("grid");
       clearFeedGridFly();
@@ -1665,7 +1675,12 @@ export default function DiscoverPage() {
     };
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
-  }, [clearFeedGridFly, menuPager.containerRef, menuPager.goTo, modePager.goTo]);
+  }, [
+    clearFeedGridFly,
+    commitModePagerGoTo,
+    menuPager.containerRef,
+    menuPager.goTo,
+  ]);
 
   useEffect(() => {
     if (
@@ -1727,6 +1742,9 @@ export default function DiscoverPage() {
 
   const pagerInteracting = menuPager.dragging || menuPager.animating;
   const modePagerInteracting = modePager.dragging || modePager.animating;
+  const discoverLayoutMode: DiscoverModeIndex = modePagerInteracting
+    ? modeChromeVisual
+    : discoverModeIndex;
   const modePaneIsInactive = (pane: DiscoverModeIndex) =>
     !modePagerInteracting && discoverModeIndex !== pane;
   const panelDepth = (idx: number): CSSProperties =>
@@ -1769,9 +1787,9 @@ export default function DiscoverPage() {
       className={[
         "menu-pager",
         menuIndex === 1 ? "menu-pager--discover-open" : "",
-        menuIndex === 1 && discoverModeIndex === 1 ? "menu-pager--feed-mode" : "",
-        menuIndex === 1 && discoverModeIndex === 0 ? "menu-pager--reels-mode" : "",
-        menuIndex === 1 && discoverModeIndex === 2
+        menuIndex === 1 && discoverLayoutMode === 1 ? "menu-pager--feed-mode" : "",
+        menuIndex === 1 && discoverLayoutMode === 0 ? "menu-pager--reels-mode" : "",
+        menuIndex === 1 && discoverLayoutMode === 2
           ? "menu-pager--profile-mode"
           : "",
         modePagerInteracting ? "menu-pager--mode-interacting" : "",
