@@ -397,8 +397,8 @@ function ProductReel({
           warm={shouldWarm}
         />
       </div>
-      <div className="discover__top-fade" />
-      <div className="discover__bottom-fade" />
+      <div className="discover__top-fade" aria-hidden />
+      <div className="discover__bottom-fade" aria-hidden />
       <div className="discover__slide-inner">
         <div className="discover__reel-rail">
           <button
@@ -1814,6 +1814,7 @@ export default function DiscoverPage() {
               ))}
 
               <section className="discover__slide discover__pane discover__pane--outro">
+                <div className="discover__bottom-fade" aria-hidden />
                 <div className="discover__slide-inner discover__slide-inner--center">
                   <h2 className="discover__title">{ptBR.discover.outroTitle}</h2>
                   <p className="discover__desc discover__desc--plain">

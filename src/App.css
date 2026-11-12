@@ -16,6 +16,7 @@
     var(--discover-tab-h) + var(--discover-tab-bottom-gutter) +
       env(safe-area-inset-bottom, 0px) + 0.35rem
   );
+  --discover-reels-info-fade: calc(var(--discover-footer-inset) + 11rem);
   --display: "Instrument Serif", Georgia, serif;
   --item-title: "Fraunces", Georgia, serif;
   --price: "Fraunces", Georgia, serif;
@@ -136,11 +137,11 @@
   --dropdown-option-hover: rgba(255, 255, 255, 0.1);
   --dropdown-option-bg: transparent;
   --dropdown-open-bg: rgba(36, 36, 36, 0.95);
-  --reels-price-surface: rgba(12, 12, 12, 0.52);
-  --reels-price-surface-strong: rgba(8, 8, 8, 0.68);
-  --reels-price-border: rgba(255, 255, 255, 0.16);
-  --reels-price-highlight: rgba(255, 255, 255, 0.09);
-  --reels-price-shadow: 0 10px 32px rgba(0, 0, 0, 0.36);
+  --reels-price-surface: rgba(12, 12, 12, 0.42);
+  --reels-price-surface-strong: rgba(18, 18, 18, 0.5);
+  --reels-price-border: rgba(255, 255, 255, 0.22);
+  --reels-price-highlight: rgba(255, 255, 255, 0.28);
+  --reels-price-shadow: 0 10px 28px rgba(0, 0, 0, 0.32);
   --dropdown-open-border: rgba(255, 255, 255, 0.55);
   --dropdown-open-shadow: 0 12px 40px -18px rgba(0, 0, 0, 0.9);
   --dropdown-option-on-bg: #ffffff;
@@ -158,8 +159,8 @@
 
 .discover.discover--reels .menu-price--reel,
 .discover__immersive .menu-price--reel {
-  background: var(--reels-price-surface-strong);
-  border-color: rgba(255, 255, 255, 0.19);
+  background: var(--reels-price-surface);
+  border-color: var(--reels-price-border);
 }
 
 .discover--pager-chrome--reels .discover__view-switch,
@@ -412,6 +413,7 @@ body {
     var(--discover-tab-h) + var(--discover-tab-bottom-gutter) +
       env(safe-area-inset-bottom, 0px) + 0.35rem
   );
+  --discover-reels-info-fade: calc(var(--discover-footer-inset) + 11rem);
 }
 
 .menu-pager--discover-open .discover__reels-scroller {
@@ -3264,6 +3266,7 @@ button {
   scroll-snap-stop: always;
   overflow: hidden;
   background: #000;
+  isolation: isolate;
 }
 
 .discover__media-wrap {
@@ -3273,6 +3276,7 @@ button {
   overflow: hidden;
   pointer-events: none;
   contain: layout paint;
+  transform: translateZ(0);
 }
 
 .discover__media-wrap .discover__media {
@@ -3298,6 +3302,7 @@ button {
 }
 
 .discover__slide-inner {
+  --discover-slide-gutter: 1.15rem;
   position: absolute;
   inset: 0;
   z-index: 10;
@@ -3308,7 +3313,8 @@ button {
       var(--discover-chrome-h, 3.75rem) - 1.75rem * var(--reels-chrome-dim, 0) +
         env(safe-area-inset-top, 0px)
     )
-    1.15rem var(--discover-footer-inset, calc(4.5rem + env(safe-area-inset-bottom, 0px)));
+    var(--discover-slide-gutter)
+    var(--discover-footer-inset, calc(4.5rem + env(safe-area-inset-bottom, 0px)));
   pointer-events: none;
   transform: translate3d(0, 0, 2px);
   transition: padding-top 0.28s cubic-bezier(0.25, 1, 0.45, 1);
@@ -3358,16 +3364,43 @@ button {
 
 .discover__bottom-fade {
   position: absolute;
-  inset: auto 0 0;
-  z-index: 1;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  z-index: 5;
   height: 46%;
-  background: linear-gradient(
+  min-height: 10rem;
+  pointer-events: none;
+  transform: translate3d(0, 0, 1px);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  background-color: transparent;
+  background-image: linear-gradient(
     to top,
     rgba(0, 0, 0, 0.9) 0%,
     rgba(0, 0, 0, 0.42) 42%,
     transparent 78%
   );
-  pointer-events: none;
+}
+
+.discover.discover--reels .discover__slide > .discover__bottom-fade,
+.menu-pager--reels-mode .discover__bottom-fade {
+  height: var(--discover-reels-info-fade);
+  max-height: 40%;
+  min-height: 10rem;
+  background-image: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.97) 0%,
+    rgba(0, 0, 0, 0.88) 10%,
+    rgba(0, 0, 0, 0.72) 24%,
+    rgba(0, 0, 0, 0.54) 38%,
+    rgba(0, 0, 0, 0.34) 52%,
+    rgba(0, 0, 0, 0.18) 66%,
+    rgba(0, 0, 0, 0.07) 80%,
+    rgba(0, 0, 0, 0.022) 91%,
+    transparent 100%
+  );
 }
 
 .menu-pager--reels-mode .discover__slide {
@@ -3392,19 +3425,6 @@ button {
     transform: scale(1.04);
     transform-origin: center center;
   }
-}
-
-.menu-pager--reels-mode .discover__bottom-fade {
-  height: 74%;
-  background: linear-gradient(
-    to top,
-    rgba(0, 0, 0, 0.96) 0%,
-    rgba(0, 0, 0, 0.82) 28%,
-    rgba(0, 0, 0, 0.52) 52%,
-    rgba(0, 0, 0, 0.22) 74%,
-    rgba(0, 0, 0, 0.06) 88%,
-    transparent 100%
-  );
 }
 
 .menu-pager--reels-mode .discover__copy {
@@ -3579,13 +3599,13 @@ button {
   font-size: 25px;
   font-weight: 600;
   padding: 0.4rem 0.88rem 0.44rem;
-  border-radius: var(--radius-control);
+  border-radius: 999px;
   color: #fff;
   letter-spacing: 0.01em;
   background: var(--reels-price-surface);
-  border: 1px solid var(--reels-price-border);
-  backdrop-filter: blur(18px) saturate(1.14);
-  -webkit-backdrop-filter: blur(18px) saturate(1.14);
+  border: 0.5px solid var(--reels-price-border);
+  backdrop-filter: blur(22px) saturate(1.22);
+  -webkit-backdrop-filter: blur(22px) saturate(1.22);
   box-shadow:
     var(--reels-price-shadow),
     inset 0 1px 0 var(--reels-price-highlight);
@@ -3717,6 +3737,11 @@ button {
   .menu-price--reel {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
+  }
+
+  .menu-price--reel {
+    background: rgba(12, 12, 12, 0.88);
+    border-color: rgba(255, 255, 255, 0.18);
   }
 
   .discover-tab-bar__pill {
