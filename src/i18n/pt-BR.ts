@@ -89,6 +89,7 @@ export const ptBR = {
     markInterested: "Marcar como interessado",
     veganProduct: "Produto vegano",
     seeMore: "Ver mais",
+    reelMediaTap: "Alternar zoom da legenda do produto",
     viewProduct: (name: string) => `Ver ${name}`,
     exploreMenu: "Explorar cardápio",
     outroTitle: "Tudo o que servimos.",

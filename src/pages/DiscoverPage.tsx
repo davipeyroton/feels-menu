@@ -26,6 +26,7 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type MouseEvent,
   type RefObject,
 } from "react";
 import { flushSync } from "react-dom";
@@ -45,7 +46,6 @@ import {
   isMediaWarm,
   markMediaWarm,
   pauseVideosWithin,
-  videoPreloadForUrl,
   warmHubIntroMedia,
   warmProductMedia,
 } from "../media/mediaWarm";
@@ -245,65 +245,81 @@ function ProductMedia({
   warm?: boolean;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [buffered, setBuffered] = useState(
-    () => isMediaWarm(slide.video) || isMediaWarm(slide.image),
-  );
+  const [videoFrames, setVideoFrames] = useState(false);
+  const mountVideo = Boolean(slide.video && playVideo);
+  const showPoster = Boolean(slide.image);
+  const imageEager = playVideo || warm || isMediaWarm(slide.image);
 
   useEffect(() => {
-    if (warm || playVideo || isMediaWarm(slide.video) || isMediaWarm(slide.image)) {
-      setBuffered(true);
-      markMediaWarm(slide.video);
-      markMediaWarm(slide.image);
-    }
+    if (!warm && !playVideo) return;
+    markMediaWarm(slide.video);
+    markMediaWarm(slide.image);
   }, [warm, playVideo, slide.video, slide.image]);
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !slide.video) return;
+    if (!video || !slide.video || !mountVideo) return;
     configureInlineVideo(video);
-  }, [slide.video, buffered]);
+    setVideoFrames(false);
 
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video || !slide.video) return;
-    if (playVideo) {
-      void video.play().catch(() => {});
-      return;
+    const onReady = () => setVideoFrames(true);
+    if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+      onReady();
+    } else {
+      video.addEventListener("loadeddata", onReady, { once: true });
     }
-    video.pause();
-  }, [playVideo, slide.video]);
 
-  if (slide.video) {
-    const preload = videoPreloadForUrl(
-      slide.video,
-      buffered || playVideo || warm,
-    );
-    return (
-      <video
-        ref={videoRef}
-        className={`${className} discover__media--video`.trim()}
-        src={slide.video}
-        poster={slide.image ?? undefined}
-        loop
-        preload={preload}
-        aria-hidden
-        {...INLINE_VIDEO_PROPS}
-      />
-    );
+    void video.play().catch(() => {});
+
+    return () => {
+      video.removeEventListener("loadeddata", onReady);
+      video.pause();
+      setVideoFrames(false);
+    };
+  }, [mountVideo, slide.video]);
+
+  if (!showPoster && !slide.video) {
+    return <ProductMediaPlaceholder className={className} />;
   }
-  if (slide.image) {
-    return (
-      <img
-        className={className}
-        src={slide.image}
-        alt=""
-        loading={imageLoadingForUrl(slide.image, playVideo || warm)}
-        decoding="async"
-      />
-    );
-  }
-  return <ProductMediaPlaceholder className={className} />;
+
+  return (
+    <span className="product-media-layered" aria-hidden>
+      {showPoster ? (
+        <img
+          className={`${className} product-media-layered__poster`.trim()}
+          src={slide.image!}
+          alt=""
+          loading={imageLoadingForUrl(slide.image, imageEager)}
+          decoding="async"
+        />
+      ) : null}
+      {mountVideo ? (
+        <video
+          ref={videoRef}
+          className={[
+            className,
+            "discover__media--video",
+            "product-media-layered__video",
+            videoFrames ? "product-media-layered__video--ready" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          src={slide.video!}
+          poster={slide.image ?? undefined}
+          loop
+          preload="auto"
+          aria-hidden
+          {...INLINE_VIDEO_PROPS}
+        />
+      ) : null}
+      {!showPoster && !mountVideo && slide.video ? (
+        <ProductMediaPlaceholder className={className} />
+      ) : null}
+    </span>
+  );
 }
+
+const REEL_DESC_ZOOM_IN_MAX = 32;
 
 function ProductReel({
   slide,
@@ -322,7 +338,7 @@ function ProductReel({
 }) {
   const { isFavorite, toggleFavorite } = useFavorites();
   const interested = isFavorite(slide.id);
-  const [descOpen, setDescOpen] = useState(false);
+  const [copyZoomedOut, setCopyZoomedOut] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
   const inViewRef = useRef(false);
   const [inView, setInView] = useState(false);
@@ -381,8 +397,20 @@ function ProductReel({
   }, [inView]);
 
   useEffect(() => {
-    if (!inView) setDescOpen(false);
+    if (!inView) {
+      setCopyZoomedOut(false);
+    }
   }, [inView]);
+
+  const onMediaTap = useCallback(() => {
+    setCopyZoomedOut((zoomedOut) => (zoomedOut ? false : zoomedOut));
+  }, []);
+
+  const onSeeMore = useCallback((event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    setCopyZoomedOut(true);
+  }, []);
+
 
   useEffect(() => {
     if (!inView) return;
@@ -396,6 +424,12 @@ function ProductReel({
   const shouldPlay = playIntent;
   const shouldWarm =
     cacheMedia && (reelIndex === 0 || everInView || playIntent || inView);
+  const description = slide.description?.trim() ?? "";
+  const descTruncatedInZoom =
+    !copyZoomedOut && description.length > REEL_DESC_ZOOM_IN_MAX;
+  const zoomInDescription = descTruncatedInZoom
+    ? description.slice(0, REEL_DESC_ZOOM_IN_MAX).trimEnd()
+    : description;
 
   return (
     <section
@@ -412,6 +446,12 @@ function ProductReel({
           warm={shouldWarm}
         />
       </div>
+      <button
+        type="button"
+        className="discover__media-tap"
+        aria-label={ptBR.discover.reelMediaTap}
+        onClick={onMediaTap}
+      />
       <div className="discover__top-fade" aria-hidden />
       <div className="discover__bottom-fade" aria-hidden />
       <div className="discover__slide-inner">
@@ -432,10 +472,19 @@ function ProductReel({
             <HeartIcon filled={interested} />
           </button>
         </div>
-        <div className="discover__copy">
+        <div
+          className={[
+            "discover__copy",
+            copyZoomedOut ? "discover__copy--zoomed-out" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          onClick={(event) => event.stopPropagation()}
+          onPointerDown={(event) => event.stopPropagation()}
+        >
           <p className="discover__cat-label">{categoryLabel(slide.category)}</p>
-          <div className="discover__title-row">
-            <h2 className="discover__title">{slide.name}</h2>
+          <h2 className="discover__title">
+            <span className="discover__title-text">{slide.name}</span>
             {slide.vegan ? (
               <span
                 className="discover__vegan-inline"
@@ -449,28 +498,34 @@ function ProductReel({
                 />
               </span>
             ) : null}
-          </div>
-          {slide.description ? (
+          </h2>
+          {description ? (
             <div className="discover__desc-block">
               <p
                 className={[
                   "discover__desc",
-                  descOpen ? "discover__desc--open" : "",
+                  copyZoomedOut ? "discover__desc--open" : "",
+                  descTruncatedInZoom ? "discover__desc--clamp-chars" : "",
                 ]
                   .filter(Boolean)
                   .join(" ")}
               >
-                {slide.description}
+                {copyZoomedOut ? description : zoomInDescription}
+                {descTruncatedInZoom ? (
+                  <>
+                    <span className="discover__desc-ellipsis" aria-hidden>
+                      ...
+                    </span>
+                    <button
+                      type="button"
+                      className="discover__desc-more"
+                      onClick={onSeeMore}
+                    >
+                      {ptBR.discover.seeMore}
+                    </button>
+                  </>
+                ) : null}
               </p>
-              {slide.description.length > 72 && !descOpen ? (
-                <button
-                  type="button"
-                  className="discover__desc-more"
-                  onClick={() => setDescOpen(true)}
-                >
-                  {ptBR.discover.seeMore}
-                </button>
-              ) : null}
             </div>
           ) : null}
           <div className="discover__row discover__row--price">
@@ -926,18 +981,27 @@ export default function DiscoverPage() {
   const reelsPlaybackActive = reelsPagerReady && reelsPlaybackSettled;
 
   useLayoutEffect(() => {
-    if (!reelsPagerReady) {
+    if (!reelsPagerReady || menuPager.animating) {
       setReelsPlaybackSettled(false);
       return;
     }
+    const startReelPlayback = () => {
+      requestAnimationFrame(() => setReelsPlaybackSettled(true));
+    };
     if (hubToReelsInstantRef.current) {
       hubToReelsInstantRef.current = false;
-      setReelsPlaybackSettled(true);
+      startReelPlayback();
       return;
     }
-    const timer = window.setTimeout(() => setReelsPlaybackSettled(true), 72);
+    const timer = window.setTimeout(startReelPlayback, 48);
     return () => window.clearTimeout(timer);
-  }, [reelsPagerReady, menuIndex, discoverModeIndex]);
+  }, [
+    reelsPagerReady,
+    menuIndex,
+    discoverModeIndex,
+    menuPager.animating,
+    productSlides,
+  ]);
 
   useEffect(() => {
     if (menuIndex !== 0 || productSlides.length === 0) return;
@@ -1357,7 +1421,7 @@ export default function DiscoverPage() {
       }
 
       if (mode === 0 && menuIndexRef.current !== 1) {
-        setReelsPlaybackSettled(true);
+        hubToReelsInstantRef.current = true;
         requestAnimationFrame(() =>
           reelsRef.current?.scrollTo({ top: 0, behavior: "auto" }),
         );
@@ -1507,7 +1571,6 @@ export default function DiscoverPage() {
         setReelsMediaCache(true);
         hubToReelsInstantRef.current = true;
         pendingReelsHomeScrollRef.current = true;
-        setReelsPlaybackSettled(true);
       }
 
       clearFeedGridFly();

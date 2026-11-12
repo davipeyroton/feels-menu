@@ -3,7 +3,10 @@ import { hub } from "../data/menu";
 import { configureInlineVideo, INLINE_VIDEO_PROPS } from "../lib/inlineVideo";
 import { markMediaWarm } from "../media/mediaWarm";
 
-/** Single intro clip — mount `<video>` only while `active` (Safari/iOS memory). */
+/**
+ * Poster stays mounted; video layers on top while active.
+ * Avoids video ↔ img swap flashes when leaving the hub (Safari/iOS).
+ */
 export default function HubIntroVideo({
   className,
   active,
@@ -14,14 +17,19 @@ export default function HubIntroVideo({
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    if (!active) return;
     markMediaWarm(hub.video);
     markMediaWarm(hub.poster);
-  }, [active]);
+  }, []);
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !active) return;
+    if (!video) return;
+
+    if (!active) {
+      video.pause();
+      return;
+    }
+
     configureInlineVideo(video);
 
     const playWhenReady = () => {
@@ -37,27 +45,25 @@ export default function HubIntroVideo({
     return () => video.removeEventListener("canplay", playWhenReady);
   }, [active]);
 
-  if (!active) {
-    return (
+  return (
+  <span className="hub__media-stack" aria-hidden>
       <img
-        className={className}
+        className={[className, "hub__media-stack__poster"].join(" ")}
         src={hub.poster}
         alt=""
         decoding="async"
         fetchPriority="high"
       />
-    );
-  }
-
-  return (
-    <video
-      ref={videoRef}
-      className={className}
-      src={hub.video}
-      poster={hub.poster}
-      loop
-      preload="auto"
-      {...INLINE_VIDEO_PROPS}
-    />
+      <video
+        ref={videoRef}
+        className={[className, "hub__video-layer"].join(" ")}
+        src={hub.video}
+        poster={hub.poster}
+        loop
+        preload={active ? "auto" : "none"}
+        data-active={active ? "true" : "false"}
+        {...INLINE_VIDEO_PROPS}
+      />
+    </span>
   );
 }

@@ -950,6 +950,17 @@ body {
   background: #000;
 }
 
+.hub__media-stack {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  overflow: hidden;
+  background: #000;
+}
+
+.hub__media-stack__poster,
+.hub__video-layer,
 .hub__video,
 .discover__media {
   position: absolute;
@@ -959,6 +970,47 @@ body {
   height: 100%;
   object-fit: cover;
   object-position: center;
+}
+
+.hub__video-layer {
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+
+.hub__video-layer[data-active="true"] {
+  opacity: 1;
+}
+
+.product-media-layered {
+  position: absolute;
+  inset: 0;
+  display: block;
+  overflow: hidden;
+  background-color: #000;
+}
+
+.discover__media-wrap .product-media-layered,
+.discover__media-wrap .product-media-layered__poster,
+.discover__media-wrap .product-media-layered__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.product-media-layered__poster {
+  z-index: 0;
+}
+
+.product-media-layered__video {
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.product-media-layered__video--ready {
+  opacity: 1;
 }
 
 .hub__shade {
@@ -3351,6 +3403,18 @@ button {
   transform: translateZ(0);
 }
 
+.discover__media-tap {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: default;
+  pointer-events: auto;
+}
+
 .discover__media-wrap .discover__media {
   pointer-events: none;
 }
@@ -3501,8 +3565,57 @@ button {
   }
 }
 
-.menu-pager--reels-mode .discover__copy {
+.menu-pager--reels-mode .discover__copy,
+.discover.discover--reels .discover__copy {
   max-width: calc(100% - 3.5rem);
+  overflow: visible;
+}
+
+.menu-pager--reels-mode .discover__copy .discover__title,
+.discover.discover--reels .discover__copy .discover__title,
+.menu-pager--reels-mode .discover__copy .menu-price--reel,
+.discover.discover--reels .discover__copy .menu-price--reel {
+  transition:
+    font-size 0.38s var(--motion-ease-emphasized),
+    padding 0.38s var(--motion-ease-emphasized);
+}
+
+/* Zoom in: smaller title + Ver mais (price fixed below) */
+.menu-pager--reels-mode
+  .discover__copy:not(.discover__copy--zoomed-out)
+  .discover__title,
+.discover.discover--reels
+  .discover__copy:not(.discover__copy--zoomed-out)
+  .discover__title {
+  font-size: clamp(1.19rem, 5.95vw, 2.1rem);
+}
+
+.menu-pager--reels-mode
+  .discover__copy:not(.discover__copy--zoomed-out)
+  .discover__vegan-leaf,
+.discover.discover--reels
+  .discover__copy:not(.discover__copy--zoomed-out)
+  .discover__vegan-leaf {
+  width: clamp(0.86rem, 3.35vw, 1.1rem);
+  height: clamp(0.86rem, 3.35vw, 1.1rem);
+}
+
+.menu-pager--reels-mode .discover__copy--zoomed-out .discover__vegan-leaf,
+.discover.discover--reels .discover__copy--zoomed-out .discover__vegan-leaf {
+  width: clamp(0.98rem, 3.85vw, 1.28rem);
+  height: clamp(0.98rem, 3.85vw, 1.28rem);
+}
+
+.menu-pager--reels-mode .discover__copy .menu-price--reel,
+.discover.discover--reels .discover__copy .menu-price--reel {
+  font-size: 19.6px;
+  padding: 0.25rem 0.57rem 0.28rem;
+}
+
+/* Zoom out: full description + title ~30% below prior hero scale */
+.menu-pager--reels-mode .discover__copy--zoomed-out .discover__title,
+.discover.discover--reels .discover__copy--zoomed-out .discover__title {
+  font-size: clamp(1.4rem, 7.35vw, 2.625rem);
 }
 
 .discover.discover--reels .discover__copy .discover__cat-label,
@@ -3569,27 +3682,19 @@ button {
   font-weight: 400;
 }
 
-.discover__title-row {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 0.5rem;
-  max-width: 100%;
-}
-
-.discover__title-row .discover__title {
-  flex: 0 1 auto;
-  min-width: 0;
-  margin: 0;
+.discover__title-text {
+  display: inline;
 }
 
 .discover__vegan-inline {
-  flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  margin-left: 0.32em;
+  vertical-align: middle;
   color: #86efac;
   line-height: 0;
+  white-space: nowrap;
 }
 
 .discover__vegan-leaf {
@@ -3598,12 +3703,14 @@ button {
   filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.5));
 }
 
-.discover__cat-label + .discover__title-row {
+.discover__cat-label + .discover__title {
   margin-top: 0.35rem;
 }
 
 .discover__desc-block {
   margin-top: 0.65rem;
+  position: relative;
+  z-index: 2;
 }
 
 .discover__desc {
@@ -3612,11 +3719,12 @@ button {
   font-size: 14px;
   line-height: 1.5;
   color: rgba(255, 255, 255, 0.85);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
   text-shadow: 0 1px 10px rgba(0, 0, 0, 0.65);
+}
+
+.discover__desc--clamp-chars {
+  display: block;
+  overflow: hidden;
 }
 
 .discover__desc--open {
@@ -3624,23 +3732,39 @@ button {
   -webkit-line-clamp: unset;
 }
 
+.discover__desc-ellipsis {
+  display: inline;
+  margin-left: 0.02em;
+  color: rgba(255, 255, 255, 0.85);
+}
+
 .discover__desc-more {
-  margin: 0.4rem 0 0;
+  display: inline;
+  margin: 0 0 0 0.28em;
   padding: 0;
   border: none;
   background: none;
-  font-family: var(--paragraph);
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  color: rgba(255, 255, 255, 0.72);
-  text-decoration: underline;
-  text-underline-offset: 0.2em;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: inherit;
+  letter-spacing: 0.01em;
+  color: rgba(255, 255, 255, 0.95);
+  text-decoration: none;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.75);
   cursor: pointer;
+  pointer-events: auto;
+  vertical-align: baseline;
+  white-space: nowrap;
 }
 
 .discover__desc-more:active {
   color: #fff;
+}
+
+.menu-pager--reels-mode .discover__desc-more,
+.discover.discover--reels .discover__desc-more {
+  font-size: 11px;
 }
 
 .discover__desc--plain {
@@ -3855,5 +3979,12 @@ button {
   .feed-surface__layer--timeline,
   .discover__cat-dropdown-menu {
     animation: none !important;
+  }
+
+  .menu-pager--reels-mode .discover__copy .discover__title,
+  .discover.discover--reels .discover__copy .discover__title,
+  .menu-pager--reels-mode .discover__copy .menu-price--reel,
+  .discover.discover--reels .discover__copy .menu-price--reel {
+    transition-duration: 0.01ms;
   }
 }

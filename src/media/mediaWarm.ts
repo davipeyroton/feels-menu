@@ -124,11 +124,21 @@ export function warmProductMedia(slide: {
   if (slide.video) prefetchVideoThumb(slide.video);
 }
 
+/** Poster only — the visible hub `<video>` owns the decoder (avoids duplicate primers). */
 export function warmHubIntroMedia(videoUrl: string, posterUrl: string): void {
   prefetchImage(posterUrl);
   markMediaWarm(videoUrl);
   markMediaWarm(posterUrl);
-  prefetchVideoThumb(videoUrl);
+}
+
+/** Drop hidden primers and pause in-tree video (iOS decoder budget). */
+export function suspendVideoDecoders(
+  ...roots: (ParentNode | null | undefined)[]
+): void {
+  for (const root of roots) {
+    pauseVideosWithin(root);
+  }
+  releaseVideoPrimersExcept(null);
 }
 
 /** Pause decoders before hub transition (Safari/iOS). */

@@ -1,12 +1,12 @@
-import { hub } from "../data/menu";
 import {
   PAGER_SNAP_EASE_OUT,
   pagerSnapDurationSeconds,
 } from "../motion/instagramMotion";
 import {
+  markMediaWarm,
   pauseVideosWithin,
-  releaseVideoPrimersExcept,
-  warmProductMedia,
+  prefetchImage,
+  suspendVideoDecoders,
 } from "../media/mediaWarm";
 
 /** Snap the discover mode track; use instant when entering discover from the hub. */
@@ -36,16 +36,16 @@ export function prepareReturnToHub(
   menuPagerRoot: HTMLElement | null | undefined,
 ): void {
   pauseDiscoverMedia(menuPagerRoot);
-  releaseVideoPrimersExcept(hub.video);
+  suspendVideoDecoders(menuPagerRoot?.querySelector(".hub"));
 }
 
-/** Decode-first poster + video primer before hub → reels (reduces black flash). */
+/** Image decode before navigation — no hidden video until hub releases the decoder. */
 export function primeDiscoverReelsEntry(slide: {
   image: string | null;
   video: string | null;
 }): void {
-  warmProductMedia(slide);
   if (slide.image) {
+    prefetchImage(slide.image);
     const img = new Image();
     img.decoding = "async";
     if ("fetchPriority" in img) {
@@ -54,7 +54,8 @@ export function primeDiscoverReelsEntry(slide: {
     }
     img.src = slide.image;
   }
-  releaseVideoPrimersExcept(slide.video);
+  markMediaWarm(slide.image);
+  markMediaWarm(slide.video);
 }
 
 /** Free hub decoders and warm first reel before hub → cardápio navigation. */
@@ -62,12 +63,11 @@ export function prepareOpenDiscoverReels(
   menuPagerRoot: HTMLElement | null | undefined,
   firstSlide?: { image: string | null; video: string | null },
 ): void {
-  if (menuPagerRoot) {
-    pauseVideosWithin(menuPagerRoot.querySelector(".hub"));
-  }
+  suspendVideoDecoders(
+    menuPagerRoot?.querySelector(".hub"),
+    menuPagerRoot?.querySelector(".discover-shell"),
+  );
   if (firstSlide) {
     primeDiscoverReelsEntry(firstSlide);
-    return;
   }
-  releaseVideoPrimersExcept(null);
 }
