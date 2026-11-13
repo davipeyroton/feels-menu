@@ -2816,7 +2816,7 @@ button {
   border-bottom: 1px solid var(--border-subtle);
   margin-bottom: 0.25rem;
   content-visibility: auto;
-  contain-intrinsic-size: auto 420px;
+  contain-intrinsic-size: auto calc(100vw * 4 / 3 + 11.5rem);
 }
 
 .feed-post__head {
