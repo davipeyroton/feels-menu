@@ -1,8 +1,12 @@
 # Feels Menu
 
+**Status:** o código em produção hoje é o cardápio de um restaurante (Studios Coffee). A direção do produto é um SaaS multi-restaurante. A referência vigente é o [Blueprint v0.5](docs/product/blueprint-v0.5.md). A [v0.4](docs/product/blueprint-v0.4.md) fica como histórico. Este README descreve como rodar o app atual. Ele não descreve backend, banco nem OpenDelivery, porque isso ainda não existe no código.
+
+Documentação de produto, arquitetura, operação e agentes: [AGENTS.md](AGENTS.md).
+
 **Cardápio digital para o restaurante usar no salão** — o cliente abre no celular (NFC, QR na mesa ou link) e navega pelo menu com uma experiência pensada para mobile: boas-vindas, destaques em vídeo, categorias e produtos com fotos e preços.
 
-Stack: Vite + React.
+Stack atual: Vite + React. Backend previsto para a V1, ainda não implementado: Supabase ([ADR 0002](docs/architecture/decisions/0002-supabase-backend.md)).
 
 ## O que o cliente vê
 
@@ -19,8 +23,10 @@ npm install
 npm run dev
 ```
 
-- `/` — hub
-- `/discover` — cardápio (hub → reels → feed)
+- `/` — no código atual, a experiência abre no hub quando não há `view`. A decisão aceita, ainda não migrada, é que `/` seja o cardápio padrão e `/hub` seja o hub
+- `/discover` — redireciona para a rota atual
+
+O detalhe do que já existe no código está em [docs/architecture/current-state.md](docs/architecture/current-state.md).
 
 ## Atualizar o cardápio
 
