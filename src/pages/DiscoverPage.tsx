@@ -683,7 +683,7 @@ function ProductReel({
     }
   }, [copyZoomedOut, needsVideoTap]);
 
-  const onSeeMore = useCallback((event: MouseEvent<HTMLButtonElement>) => {
+  const onSeeMore = useCallback((event: MouseEvent<HTMLElement>) => {
     event.stopPropagation();
     setCopyZoomedOut(true);
   }, []);
@@ -795,6 +795,7 @@ function ProductReel({
                 ]
                   .filter(Boolean)
                   .join(" ")}
+                onClick={descTruncatedInZoom ? onSeeMore : undefined}
               >
                 {copyZoomedOut ? description : zoomInDescription}
                 {descTruncatedInZoom ? (

@@ -3754,6 +3754,7 @@ button {
 .discover__desc--clamp-chars {
   display: block;
   overflow: hidden;
+  cursor: pointer;
 }
 
 .discover__desc--open {
