@@ -787,32 +787,30 @@ function ProductReel({
           </h2>
           {description ? (
             <div className="discover__desc-block">
-              <p
-                className={[
-                  "discover__desc",
-                  copyZoomedOut ? "discover__desc--open" : "",
-                  descTruncatedInZoom ? "discover__desc--clamp-chars" : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-                onClick={descTruncatedInZoom ? onSeeMore : undefined}
-              >
-                {copyZoomedOut ? description : zoomInDescription}
-                {descTruncatedInZoom ? (
-                  <>
-                    <span className="discover__desc-ellipsis" aria-hidden>
-                      ...
-                    </span>
-                    <button
-                      type="button"
-                      className="discover__desc-more"
-                      onClick={onSeeMore}
-                    >
-                      {ptBR.discover.seeMore}
-                    </button>
-                  </>
-                ) : null}
-              </p>
+              {descTruncatedInZoom ? (
+                <button
+                  type="button"
+                  className="discover__desc discover__desc--clamp-chars"
+                  onClick={onSeeMore}
+                >
+                  {zoomInDescription}
+                  <span className="discover__desc-ellipsis" aria-hidden>
+                    ...
+                  </span>
+                  <span className="discover__desc-more">{ptBR.discover.seeMore}</span>
+                </button>
+              ) : (
+                <p
+                  className={[
+                    "discover__desc",
+                    copyZoomedOut ? "discover__desc--open" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                >
+                  {description}
+                </p>
+              )}
             </div>
           ) : null}
           <div className="discover__row discover__row--price">

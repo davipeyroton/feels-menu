@@ -3751,10 +3751,18 @@ button {
   text-shadow: 0 1px 10px rgba(0, 0, 0, 0.65);
 }
 
-.discover__desc--clamp-chars {
+button.discover__desc--clamp-chars {
   display: block;
+  width: 100%;
   overflow: hidden;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .discover__desc--open {
