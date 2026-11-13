@@ -41,6 +41,42 @@ VITE_MEDIA_ORIGIN=https://your-bucket.r2.dev npm run media:posters
 
 Upload the new `*-video-poster.jpg` files to R2 with the MP4s. Re-run when a video file changes.
 
+## Fast Start (moov before mdat)
+
+Reels and hub videos should be **progressive MP4** with the `moov` atom before `mdat` so Safari can read metadata and start playback without downloading the full file.
+
+Inspection (Nov 2026, `public/menu/` and the same paths on R2):
+
+| File | `ftyp` @0 | `moov` @32 | Re-encode needed |
+|------|-----------|------------|------------------|
+| `espresso-duplo.mp4` | yes | yes | **No** |
+| `cappuccino.mp4` | yes | yes | **No** |
+| `brand/intro-menu.mp4` | yes | yes | **No** |
+
+Commands used:
+
+```bash
+ffprobe -v trace public/menu/espresso-duplo.mp4 2>&1 | rg "type:'moov'"
+```
+
+If a future upload fails fast-start checks, re-mux only (no quality change):
+
+```bash
+ffmpeg -i input.mp4 -c copy -movflags +faststart output.mp4
+```
+
+Do **not** re-process current production files unless a new asset is added.
+
+## R2 delivery headers (read-only checks)
+
+Run locally (no bucket changes):
+
+```bash
+node scripts/r2-media-headers-check.mjs
+```
+
+Output: `docs/performance/r2-headers-check.json` — records `Accept-Ranges`, `206` slice responses, and whether `Access-Control-Allow-Origin` appears on HEAD/GET with your site `Origin`. Configure missing CORS on the bucket manually if the report shows gaps.
+
 ## CORS (required for video from another origin)
 
 Allow your site origin(s), for example `https://your-menu.vercel.app`:

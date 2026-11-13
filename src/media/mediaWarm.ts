@@ -1,5 +1,8 @@
 import { configureInlineVideo } from "../lib/inlineVideo";
 import { productReelPoster } from "../lib/productReelPoster";
+import type { ProductSlide } from "../data/menu";
+
+type ReelMediaSource = Pick<ProductSlide, "image" | "video" | "videoPoster">;
 
 const STORAGE_KEY_SESSION = "feels-menu:warm-media";
 const STORAGE_KEY_LOCAL = "feels-menu:warm-media:v1";
@@ -130,6 +133,19 @@ export function warmProductMedia(slide: {
     if (poster) prefetchImage(poster);
     markMediaWarm(slide.video);
     if (poster) markMediaWarm(poster);
+  }
+}
+
+/** Reels: cover stills + frame posters for prev/next slides (deduped via prefetchImage). */
+export function prefetchReelNeighborMedia(
+  prev?: ReelMediaSource,
+  next?: ReelMediaSource,
+): void {
+  for (const neighbor of [prev, next]) {
+    if (!neighbor) continue;
+    if (neighbor.image) prefetchImage(neighbor.image);
+    const poster = productReelPoster(neighbor);
+    if (poster) prefetchImage(poster);
   }
 }
 

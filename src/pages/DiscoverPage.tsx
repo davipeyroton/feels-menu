@@ -45,12 +45,19 @@ import { productReelPoster } from "../lib/productReelPoster";
 import { scrollBehaviorForDevice } from "../lib/scrollBehavior";
 import { createScrollRafHandler } from "../lib/scrollRaf";
 import {
+  isVideoDiagEnabled,
+  isLegacyReelsPlaybackEnabled,
+  sanitizeMediaUrl,
+  videoDiagEvent,
+} from "../lib/videoDiagnostics";
+import {
+  prefetchImage,
   imageLoadingForUrl,
   isMediaWarm,
   markMediaWarm,
   pauseVideosWithin,
   warmHubIntroMedia,
-  prefetchImage,
+  prefetchReelNeighborMedia,
   warmProductMedia,
   releaseVideoPrimersExcept,
   teardownVideoElement,
@@ -250,6 +257,7 @@ const ProductMedia = memo(
       slide: ProductSlide;
       className: string;
       playVideo?: boolean;
+      videoEnabled?: boolean;
       /** Prefetch/decode priority for frame poster (never mounts `<video>`). */
       warm?: boolean;
       onPlaybackGateChange?: (needsTapToPlay: boolean) => void;
@@ -259,6 +267,7 @@ const ProductMedia = memo(
       slide,
       className,
       playVideo = false,
+      videoEnabled = true,
       warm = false,
       onPlaybackGateChange,
     },
@@ -266,52 +275,156 @@ const ProductMedia = memo(
   ) {
     const videoRef = useRef<HTMLVideoElement>(null);
     const [videoPlaying, setVideoPlaying] = useState(false);
-    const mountVideo = Boolean(slide.video && playVideo);
+    const isPlayingRef = useRef(false);
+    const playPromiseRef = useRef<Promise<void> | null>(null);
+    const posterRestoreTimerRef = useRef<number | null>(null);
+    const mountVideo = Boolean(videoEnabled && slide.video && playVideo);
     const posterUrl = productReelPoster(slide);
     const showPoster = Boolean(posterUrl);
+    const mediaUrl = sanitizeMediaUrl(slide.video);
     const imageEager =
       playVideo || warm || isMediaWarm(posterUrl) || isMediaWarm(slide.video);
+    const emitVideoState = useCallback(
+      (kind: string, extra?: Record<string, unknown>) => {
+        const video = videoRef.current;
+        videoDiagEvent(kind, {
+          slideId: slide.id,
+          videoUrl: mediaUrl,
+          readyState: video?.readyState ?? null,
+          networkState: video?.networkState ?? null,
+          currentTime: video ? Number(video.currentTime.toFixed(3)) : null,
+          paused: video?.paused ?? null,
+          errorCode: video?.error?.code ?? null,
+          errorMessage: video?.error?.message ?? null,
+          ...extra,
+        });
+      },
+      [mediaUrl, slide.id],
+    );
 
-    const tryPlay = useCallback(() => {
+    const clearPosterRestoreTimer = useCallback(() => {
+      if (posterRestoreTimerRef.current == null) return;
+      window.clearTimeout(posterRestoreTimerRef.current);
+      posterRestoreTimerRef.current = null;
+    }, []);
+
+    const schedulePosterVisible = useCallback(
+      (delayMs = 120) => {
+        clearPosterRestoreTimer();
+        posterRestoreTimerRef.current = window.setTimeout(() => {
+          setVideoPlaying(false);
+        }, delayMs);
+      },
+      [clearPosterRestoreTimer],
+    );
+
+    const classifyPlayError = useCallback((error: unknown) => {
+      const name =
+        typeof error === "object" && error && "name" in error
+          ? String((error as { name?: string }).name)
+          : "";
+      if (name === "AbortError") return "abort";
+      if (name === "NotAllowedError") return "not-allowed";
+      return "failure";
+    }, []);
+
+    const requestPlay = useCallback((reason: "auto" | "canplay" | "manual") => {
       const video = videoRef.current;
       if (!video) return;
-      void video
-        .play()
-        .then(() => {
-          setVideoPlaying(true);
-          onPlaybackGateChange?.(false);
-        })
-        .catch(() => {
-          setVideoPlaying(false);
-          onPlaybackGateChange?.(true);
+      if (isPlayingRef.current || !video.paused) {
+        emitVideoState("reel-play-skip", { reason, skip: "already-playing" });
+        return;
+      }
+      if (playPromiseRef.current) {
+        emitVideoState("reel-play-skip", { reason, skip: "pending-promise" });
+        return;
+      }
+      emitVideoState("reel-play-call", { reason });
+      try {
+        const pending = video.play();
+        playPromiseRef.current = pending;
+        void pending
+          .then(() => {
+            if (playPromiseRef.current === pending) {
+              playPromiseRef.current = null;
+            }
+            emitVideoState("reel-play-resolve", { reason });
+          })
+          .catch((error: unknown) => {
+            if (playPromiseRef.current === pending) {
+              playPromiseRef.current = null;
+            }
+            const kind = classifyPlayError(error);
+            emitVideoState("reel-play-reject", {
+              reason,
+              errorKind: kind,
+              errorName:
+                typeof error === "object" && error && "name" in error
+                  ? String((error as { name?: string }).name)
+                  : null,
+              errorMessage:
+                typeof error === "object" && error && "message" in error
+                  ? String((error as { message?: string }).message)
+                  : null,
+            });
+            if (kind === "abort") {
+              // Expected on navigation/teardown. Keep gate closed.
+              onPlaybackGateChange?.(false);
+              return;
+            }
+            schedulePosterVisible(0);
+            onPlaybackGateChange?.(true);
+          });
+      } catch (error: unknown) {
+        playPromiseRef.current = null;
+        const kind = classifyPlayError(error);
+        emitVideoState("reel-play-throw", {
+          reason,
+          errorKind: kind,
+          errorName:
+            typeof error === "object" && error && "name" in error
+              ? String((error as { name?: string }).name)
+              : null,
         });
-    }, [onPlaybackGateChange]);
+        if (kind === "abort") {
+          onPlaybackGateChange?.(false);
+          return;
+        }
+        schedulePosterVisible(0);
+        onPlaybackGateChange?.(true);
+      }
+    }, [classifyPlayError, emitVideoState, onPlaybackGateChange, schedulePosterVisible]);
 
-    const tryPlayRef = useRef(tryPlay);
-    tryPlayRef.current = tryPlay;
-
-    useImperativeHandle(ref, () => ({ retryPlay: tryPlay }), [tryPlay]);
+    useImperativeHandle(
+      ref,
+      () => ({ retryPlay: () => requestPlay("manual") }),
+      [requestPlay],
+    );
 
     useEffect(() => {
       if (!warm && !playVideo) return;
       if (posterUrl) markMediaWarm(posterUrl);
-      markMediaWarm(slide.video);
-    }, [warm, playVideo, posterUrl, slide.video]);
+      if (videoEnabled) markMediaWarm(slide.video);
+    }, [videoEnabled, warm, playVideo, posterUrl, slide.video]);
 
     useEffect(() => {
+      if (!videoEnabled) return;
       if (!playVideo || !slide.video) return;
       releaseVideoPrimersExcept(slide.video);
-    }, [playVideo, slide.video]);
+    }, [videoEnabled, playVideo, slide.video]);
 
     useEffect(() => {
       if (!playVideo) {
-        setVideoPlaying(false);
+        schedulePosterVisible(0);
         onPlaybackGateChange?.(false);
       }
-    }, [onPlaybackGateChange, playVideo]);
+    }, [onPlaybackGateChange, playVideo, schedulePosterVisible]);
 
     useEffect(() => {
       if (!mountVideo) {
+        clearPosterRestoreTimer();
+        playPromiseRef.current = null;
+        isPlayingRef.current = false;
         setVideoPlaying(false);
         return;
       }
@@ -319,36 +432,111 @@ const ProductMedia = memo(
       if (!video || !slide.video) return;
 
       configureInlineVideo(video);
+      emitVideoState("reel-video-mounted");
 
-      const onReady = () => tryPlayRef.current();
-      const onError = () => onPlaybackGateChange?.(true);
+      const onPlaying = () => {
+        clearPosterRestoreTimer();
+        isPlayingRef.current = true;
+        setVideoPlaying(true);
+        onPlaybackGateChange?.(false);
+        emitVideoState("reel-video-event", { event: "playing" });
+      };
 
-      if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
-        onReady();
-      } else {
-        setVideoPlaying(false);
-        video.addEventListener("loadeddata", onReady, { once: true });
-        video.addEventListener("canplay", onReady, { once: true });
+      const onPause = () => {
+        isPlayingRef.current = false;
+        schedulePosterVisible(140);
+        emitVideoState("reel-video-event", { event: "pause" });
+      };
+
+      const onWaiting = () => {
+        schedulePosterVisible(140);
+        emitVideoState("reel-video-event", { event: "waiting" });
+      };
+
+      const onStalled = () => {
+        schedulePosterVisible(180);
+        emitVideoState("reel-video-event", { event: "stalled" });
+      };
+
+      const onEmptied = () => {
+        isPlayingRef.current = false;
+        playPromiseRef.current = null;
+        schedulePosterVisible(0);
+        emitVideoState("reel-video-event", { event: "emptied" });
+      };
+
+      const onError = () => {
+        isPlayingRef.current = false;
+        playPromiseRef.current = null;
+        schedulePosterVisible(0);
+        onPlaybackGateChange?.(true);
+        emitVideoState("reel-video-event", { event: "error" });
+      };
+
+      const onCanPlay = () => {
+        emitVideoState("reel-video-event", { event: "canplay" });
+        if (!playVideo) return;
+        requestPlay("canplay");
+      };
+
+      const onLoadedMetadata = () => {
+        emitVideoState("reel-video-event", { event: "loadedmetadata" });
+      };
+
+      const onLoadedData = () => {
+        emitVideoState("reel-video-event", { event: "loadeddata" });
+      };
+
+      const onAbort = () => {
+        playPromiseRef.current = null;
+        emitVideoState("reel-video-event", { event: "abort" });
+      };
+
+      if (video.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) {
+        schedulePosterVisible(0);
       }
+      // iOS Safari buffers past metadata only after play(); waiting for canplay deadlocks.
+      if (playVideo) requestPlay("auto");
+      video.addEventListener("canplay", onCanPlay);
+      video.addEventListener("loadedmetadata", onLoadedMetadata);
+      video.addEventListener("loadeddata", onLoadedData);
+      video.addEventListener("playing", onPlaying);
+      video.addEventListener("pause", onPause);
+      video.addEventListener("waiting", onWaiting);
+      video.addEventListener("stalled", onStalled);
+      video.addEventListener("emptied", onEmptied);
       video.addEventListener("error", onError);
+      video.addEventListener("abort", onAbort);
 
       return () => {
-        video.removeEventListener("loadeddata", onReady);
-        video.removeEventListener("canplay", onReady);
+        video.removeEventListener("canplay", onCanPlay);
+        video.removeEventListener("loadedmetadata", onLoadedMetadata);
+        video.removeEventListener("loadeddata", onLoadedData);
+        video.removeEventListener("playing", onPlaying);
+        video.removeEventListener("pause", onPause);
+        video.removeEventListener("waiting", onWaiting);
+        video.removeEventListener("stalled", onStalled);
+        video.removeEventListener("emptied", onEmptied);
         video.removeEventListener("error", onError);
+        video.removeEventListener("abort", onAbort);
+        clearPosterRestoreTimer();
+        playPromiseRef.current = null;
+        isPlayingRef.current = false;
+        emitVideoState("reel-video-teardown", { reason: "effect-cleanup" });
+        emitVideoState("reel-video-unmounted", { reason: "effect-cleanup" });
         teardownVideoElement(video);
         setVideoPlaying(false);
       };
-    }, [mountVideo, slide.video, onPlaybackGateChange]);
-
-    useEffect(() => {
-      if (!mountVideo || !playVideo) return;
-      const video = videoRef.current;
-      if (!video) return;
-      if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
-        tryPlayRef.current();
-      }
-    }, [mountVideo, playVideo]);
+    }, [
+      clearPosterRestoreTimer,
+      emitVideoState,
+      mountVideo,
+      onPlaybackGateChange,
+      playVideo,
+      requestPlay,
+      schedulePosterVisible,
+      slide.video,
+    ]);
 
     if (!showPoster && !slide.video) {
       return <ProductMediaPlaceholder className={className} />;
@@ -385,7 +573,7 @@ const ProductMedia = memo(
             src={slide.video!}
             poster={posterUrl ?? undefined}
             loop
-            preload={playVideo ? "metadata" : "none"}
+            preload={playVideo ? "auto" : "none"}
             aria-hidden
             {...INLINE_VIDEO_PROPS}
           />
@@ -407,6 +595,8 @@ function ProductReel({
   playbackActive = false,
   cacheMedia = false,
   reelFocused = false,
+  playbackFocused = false,
+  disableVideo = false,
 }: {
   slide: ProductSlide;
   reelIndex: number;
@@ -416,6 +606,8 @@ function ProductReel({
   /** Poster prefetch hints after the first reels visit. */
   cacheMedia?: boolean;
   reelFocused?: boolean;
+  playbackFocused?: boolean;
+  disableVideo?: boolean;
 }) {
   const { isFavorite, toggleFavorite } = useFavorites();
   const interested = isFavorite(slide.id);
@@ -464,14 +656,14 @@ function ProductReel({
   }, []);
 
   useEffect(() => {
-    const wantPlay = playbackActive && reelFocused;
+    const wantPlay = playbackActive && playbackFocused;
     if (wantPlay) {
       setPlayIntent(true);
       return;
     }
     const timer = window.setTimeout(() => setPlayIntent(false), 120);
     return () => window.clearTimeout(timer);
-  }, [playbackActive, reelFocused]);
+  }, [playbackActive, playbackFocused]);
 
   useEffect(() => {
     if (!inView) {
@@ -499,15 +691,20 @@ function ProductReel({
 
   useEffect(() => {
     if (!inView || !playbackActive) return;
-    warmProductMedia(slide);
+    if (disableVideo) {
+      const cover = productReelPoster(slide);
+      if (cover) prefetchImage(cover);
+      if (slide.image) prefetchImage(slide.image);
+    } else {
+      warmProductMedia(slide);
+    }
     const prev = allSlides[reelIndex - 1];
     const next = allSlides[reelIndex + 1];
-    if (prev?.image) prefetchImage(prev.image);
-    if (next?.image) prefetchImage(next.image);
-  }, [allSlides, inView, playbackActive, reelIndex, slide]);
+    prefetchReelNeighborMedia(prev, next);
+  }, [allSlides, disableVideo, inView, playbackActive, reelIndex, slide]);
 
-  /** Scroll focus owns playback; IO is only for prefetch / copy UI. */
-  const shouldPlay = playbackActive && reelFocused && playIntent;
+  /** Playback focus (settled) owns mount/play; visual focus is independent. */
+  const shouldPlay = !disableVideo && playbackActive && playbackFocused && playIntent;
   const posterWarm =
     cacheMedia && (reelIndex === 0 || playIntent || inView || reelFocused);
   const description = slide.description?.trim() ?? "";
@@ -530,6 +727,7 @@ function ProductReel({
           slide={slide}
           className="discover__media discover__media--product"
           playVideo={shouldPlay}
+          videoEnabled={!disableVideo}
           warm={posterWarm}
           onPlaybackGateChange={setNeedsVideoTap}
         />
@@ -840,6 +1038,7 @@ export default function DiscoverPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const viewParam = normalizeViewParam(searchParams.get("view"));
+  const disableReelVideo = searchParams.get("disableReelVideo") === "1";
 
   useEffect(() => {
     document.title = ptBR.meta.title;
@@ -860,6 +1059,23 @@ export default function DiscoverPage() {
   const reelsChromeDimmedRef = useRef(false);
   const reelsPrevScrollTopRef = useRef(0);
   const [focusedReelIndex, setFocusedReelIndex] = useState(0);
+  const [playbackFocusedReelIndex, setPlaybackFocusedReelIndex] = useState(0);
+  const focusedReelIndexRef = useRef(0);
+  focusedReelIndexRef.current = focusedReelIndex;
+  const playbackFocusedReelIndexRef = useRef(0);
+  playbackFocusedReelIndexRef.current = playbackFocusedReelIndex;
+  const settledPlaybackFocusEnabled = !isLegacyReelsPlaybackEnabled();
+  const supportsScrollEnd =
+    typeof window !== "undefined" && "onscrollend" in window;
+  const playbackSettleTimerRef = useRef<number | null>(null);
+  const lastScrollSampleRef = useRef<{ at: number; top: number } | null>(null);
+  const reelsGestureSeqRef = useRef(0);
+  const reelsScrollGestureRef = useRef<{
+    id: number;
+    startedAt: number;
+    visualChanges: number;
+    playbackChanges: number;
+  } | null>(null);
   const [reelsPlaybackSettled, setReelsPlaybackSettled] = useState(
     () => mainPanelFromViewParam(viewParam) === 1,
   );
@@ -1283,6 +1499,72 @@ export default function DiscoverPage() {
     pagerWidth,
   ]);
 
+  const clearPlaybackSettleTimer = useCallback(() => {
+    if (playbackSettleTimerRef.current == null) return;
+    window.clearTimeout(playbackSettleTimerRef.current);
+    playbackSettleTimerRef.current = null;
+  }, []);
+
+  const closeReelsScrollGesture = useCallback(
+    (reason: string, changedPlaybackFocus: boolean) => {
+      const gesture = reelsScrollGestureRef.current;
+      if (!gesture) return;
+      videoDiagEvent("reels-gesture-end", {
+        gestureId: gesture.id,
+        reason,
+        visualChanges: gesture.visualChanges,
+        playbackChanges: gesture.playbackChanges,
+        durationMs: Math.round(performance.now() - gesture.startedAt),
+        changedPlaybackFocus,
+      });
+      reelsScrollGestureRef.current = null;
+    },
+    [],
+  );
+
+  const commitPlaybackFocus = useCallback(
+    (reason: "scrollend" | "fallback" | "legacy-sync") => {
+      clearPlaybackSettleTimer();
+      if (!settledPlaybackFocusEnabled) return;
+      const next = focusedReelIndexRef.current;
+      const prev = playbackFocusedReelIndexRef.current;
+      const changed = next !== prev;
+      if (changed) {
+        setPlaybackFocusedReelIndex(next);
+        const gesture = reelsScrollGestureRef.current;
+        if (gesture) gesture.playbackChanges += 1;
+        videoDiagEvent("reels-playback-focus-change", {
+          from: prev,
+          to: next,
+          reason,
+          gestureId: gesture?.id ?? null,
+        });
+      }
+      closeReelsScrollGesture(reason, changed);
+    },
+    [clearPlaybackSettleTimer, closeReelsScrollGesture, settledPlaybackFocusEnabled],
+  );
+
+  const schedulePlaybackFocusSettle = useCallback(() => {
+    if (!settledPlaybackFocusEnabled) return;
+    const scroller = reelsRef.current;
+    if (!scroller) return;
+    const now = performance.now();
+    const scrollTop = scroller.scrollTop;
+    const prev = lastScrollSampleRef.current;
+    let quietMs = 110;
+    if (prev) {
+      const dt = Math.max(16, now - prev.at);
+      const velocity = Math.abs(scrollTop - prev.top) / dt;
+      quietMs = velocity > 2 ? 190 : velocity > 1 ? 150 : 110;
+    }
+    lastScrollSampleRef.current = { at: now, top: scrollTop };
+    clearPlaybackSettleTimer();
+    playbackSettleTimerRef.current = window.setTimeout(() => {
+      commitPlaybackFocus("fallback");
+    }, quietMs);
+  }, [clearPlaybackSettleTimer, commitPlaybackFocus, settledPlaybackFocusEnabled]);
+
   const syncReelsFromVertical = useCallback(() => {
     const el = reelsRef.current;
     if (!el) return;
@@ -1310,18 +1592,65 @@ export default function DiscoverPage() {
     const slides = el.querySelectorAll<HTMLElement>(
       ".discover__slide[data-category]",
     );
+    let nextFocus = focusedReelIndexRef.current;
+    let nextCategory: string | null = null;
     for (let index = 0; index < slides.length; index++) {
       const node = slides[index]!;
       const top = node.offsetTop;
       const bottom = top + node.offsetHeight;
       if (mid >= top && mid < bottom) {
-        setFocusedReelIndex(index);
-        const found = node.dataset.category;
-        if (found) setActiveCat(found);
+        nextFocus = index;
+        nextCategory = node.dataset.category ?? null;
         break;
       }
     }
-  }, []);
+    const visualChanged = nextFocus !== focusedReelIndexRef.current;
+    if (visualChanged) {
+      if (settledPlaybackFocusEnabled) {
+        if (!reelsScrollGestureRef.current) {
+          const id = ++reelsGestureSeqRef.current;
+          reelsScrollGestureRef.current = {
+            id,
+            startedAt: performance.now(),
+            visualChanges: 0,
+            playbackChanges: 0,
+          };
+          videoDiagEvent("reels-gesture-start", {
+            gestureId: id,
+            fromFocus: focusedReelIndexRef.current,
+          });
+        }
+        reelsScrollGestureRef.current.visualChanges += 1;
+        videoDiagEvent("reels-visual-focus-change", {
+          gestureId: reelsScrollGestureRef.current.id,
+          from: focusedReelIndexRef.current,
+          to: nextFocus,
+        });
+      } else {
+        setPlaybackFocusedReelIndex(nextFocus);
+      }
+      setFocusedReelIndex(nextFocus);
+    }
+    if (nextCategory) {
+      setActiveCat((current) => (current === nextCategory ? current : nextCategory));
+    }
+    if (settledPlaybackFocusEnabled && Math.abs(delta) > 0.5) {
+      if (!reelsScrollGestureRef.current) {
+        const id = ++reelsGestureSeqRef.current;
+        reelsScrollGestureRef.current = {
+          id,
+          startedAt: performance.now(),
+          visualChanges: 0,
+          playbackChanges: 0,
+        };
+        videoDiagEvent("reels-gesture-start", {
+          gestureId: id,
+          fromFocus: focusedReelIndexRef.current,
+        });
+      }
+      schedulePlaybackFocusSettle();
+    }
+  }, [schedulePlaybackFocusSettle, settledPlaybackFocusEnabled]);
 
   const onCategoryDropdownOpen = useCallback(
     (open: boolean) => {
@@ -1582,23 +1911,224 @@ export default function DiscoverPage() {
   }, [menuIndex, discoverModeIndex, menuPager.containerRef]);
 
   useEffect(() => {
+    if (!settledPlaybackFocusEnabled) {
+      setPlaybackFocusedReelIndex(focusedReelIndexRef.current);
+      return;
+    }
+    videoDiagEvent("reels-playback-focus-mode", { settledPlaybackFocusEnabled });
+  }, [settledPlaybackFocusEnabled]);
+
+  useEffect(() => {
     if (menuIndex !== 1 || discoverModeIndex !== 0) {
       reelsPrevScrollTopRef.current = 0;
       reelsChromeDimmedRef.current = false;
       setReelsChromeDimmed(false);
+      clearPlaybackSettleTimer();
+      closeReelsScrollGesture("reels-inactive", false);
+      lastScrollSampleRef.current = null;
       return;
     }
     const el = reelsRef.current;
     if (!el) return;
     reelsPrevScrollTopRef.current = el.scrollTop;
     const onScroll = createScrollRafHandler(() => syncReelsFromVertical());
+    const onScrollEnd = () => commitPlaybackFocus("scrollend");
     el.addEventListener("scroll", onScroll, { passive: true });
+    if (settledPlaybackFocusEnabled && supportsScrollEnd) {
+      el.addEventListener("scrollend", onScrollEnd);
+    }
     onScroll();
     return () => {
       el.removeEventListener("scroll", onScroll);
+      if (settledPlaybackFocusEnabled && supportsScrollEnd) {
+        el.removeEventListener("scrollend", onScrollEnd);
+      }
       onScroll.cancel();
+      clearPlaybackSettleTimer();
     };
-  }, [syncReelsFromVertical, menuIndex, discoverModeIndex]);
+  }, [
+    clearPlaybackSettleTimer,
+    closeReelsScrollGesture,
+    commitPlaybackFocus,
+    discoverModeIndex,
+    menuIndex,
+    settledPlaybackFocusEnabled,
+    supportsScrollEnd,
+    syncReelsFromVertical,
+  ]);
+
+  useEffect(() => {
+    if (!isVideoDiagEnabled()) return;
+    if (menuIndex !== 1 || discoverModeIndex !== 0) return;
+    const root = reelsRef.current;
+    if (!root) return;
+    let maxVideos = 0;
+    let lastCount = -1;
+    const sample = (reason: string) => {
+      const count = root.querySelectorAll("video").length;
+      if (count === lastCount) return;
+      lastCount = count;
+      if (count > maxVideos) maxVideos = count;
+      videoDiagEvent("reels-video-count", { reason, count, maxVideos });
+    };
+    sample("start");
+    const observer = new MutationObserver(() => sample("mutation"));
+    observer.observe(root, { childList: true, subtree: true });
+    return () => {
+      observer.disconnect();
+      videoDiagEvent("reels-video-count-end", { maxVideos });
+    };
+  }, [discoverModeIndex, menuIndex]);
+
+  useEffect(() => {
+    if (!disableReelVideo) return;
+    if (!isVideoDiagEnabled()) return;
+    if (menuIndex !== 1 || discoverModeIndex !== 0) return;
+    const root = reelsRef.current;
+    if (!root) return;
+
+    const startedAt = performance.now();
+    let createdVideoElements = 0;
+    let playCalls = 0;
+    let mp4Requests = 0;
+    let reelMp4Requests = 0;
+    let scrollEvents = 0;
+    let maxVideoElements = root.querySelectorAll("video").length;
+    let seenResourceCount = 0;
+
+    videoDiagEvent("reels-video-disabled-mode", {
+      phase: "start",
+      disableReelVideo: true,
+      initialVideoElements: maxVideoElements,
+      settledPlaybackFocusEnabled,
+    });
+
+    const sampleVideoCount = (reason: string) => {
+      const count = root.querySelectorAll("video").length;
+      if (count > maxVideoElements) maxVideoElements = count;
+      videoDiagEvent("reels-disabled-video-count", {
+        reason,
+        count,
+        maxVideoElements,
+      });
+    };
+
+    const onScroll = createScrollRafHandler(() => {
+      scrollEvents += 1;
+      if (scrollEvents === 1 || scrollEvents % 12 === 0) {
+        videoDiagEvent("reels-disabled-scroll", {
+          scrollEvents,
+          scrollTop: Math.round(root.scrollTop),
+        });
+      }
+    });
+
+    const originalPlay = HTMLMediaElement.prototype.play;
+    HTMLMediaElement.prototype.play = function patchedPlay(
+      this: HTMLMediaElement,
+      ...args: Parameters<HTMLMediaElement["play"]>
+    ) {
+      if (root.contains(this)) {
+        playCalls += 1;
+        videoDiagEvent("reels-disabled-play-call", {
+          playCalls,
+          src: sanitizeMediaUrl(
+            (this as HTMLVideoElement).currentSrc ||
+              (this as HTMLVideoElement).src ||
+              null,
+          ),
+        });
+      }
+      return originalPlay.apply(this, args);
+    };
+
+    const mutationObserver = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        for (const node of mutation.addedNodes) {
+          if (!(node instanceof HTMLVideoElement)) continue;
+          if (!root.contains(node)) continue;
+          createdVideoElements += 1;
+          videoDiagEvent("reels-disabled-video-created", {
+            createdVideoElements,
+            src: sanitizeMediaUrl(node.currentSrc || node.src || null),
+          });
+        }
+      }
+      sampleVideoCount("mutation");
+    });
+
+    let performanceObserver: PerformanceObserver | null = null;
+    const processResourceEntries = (
+      entries: PerformanceEntryList | PerformanceEntry[],
+    ) => {
+      for (const entry of entries) {
+        if (entry.entryType !== "resource") continue;
+        if (entry.startTime < startedAt) continue;
+        const name = (entry as PerformanceResourceTiming).name;
+        if (!/\.mp4(\?|#|$)/i.test(name)) continue;
+        mp4Requests += 1;
+        if (/\/menu\/.+\.mp4(\?|#|$)/i.test(name)) {
+          reelMp4Requests += 1;
+        }
+        videoDiagEvent("reels-disabled-mp4-resource", {
+          mp4Requests,
+          reelMp4Requests,
+          url: sanitizeMediaUrl(name),
+        });
+      }
+    };
+
+    root.addEventListener("scroll", onScroll, { passive: true });
+    mutationObserver.observe(root, { childList: true, subtree: true });
+    sampleVideoCount("start");
+
+    try {
+      const existing = performance.getEntriesByType("resource");
+      seenResourceCount = existing.length;
+      processResourceEntries(existing.slice(seenResourceCount));
+    } catch {
+      /* ignore */
+    }
+
+    if (typeof PerformanceObserver !== "undefined") {
+      performanceObserver = new PerformanceObserver((list) => {
+        processResourceEntries(list.getEntries());
+      });
+      try {
+        performanceObserver.observe({
+          type: "resource",
+          buffered: true,
+        });
+      } catch {
+        /* unsupported in this browser */
+      }
+    }
+
+    return () => {
+      HTMLMediaElement.prototype.play = originalPlay;
+      root.removeEventListener("scroll", onScroll);
+      onScroll.cancel();
+      mutationObserver.disconnect();
+      performanceObserver?.disconnect();
+      sampleVideoCount("end");
+      videoDiagEvent("reels-video-disabled-mode", {
+        phase: "end",
+        disableReelVideo: true,
+        createdVideoElements,
+        playCalls,
+        mp4Requests,
+        reelMp4Requests,
+        scrollEvents,
+        maxVideoElements,
+        finalVideoElements: root.querySelectorAll("video").length,
+      });
+    };
+  }, [
+    disableReelVideo,
+    discoverModeIndex,
+    menuIndex,
+    settledPlaybackFocusEnabled,
+  ]);
 
   useEffect(() => {
     if (
@@ -2012,6 +2542,8 @@ export default function DiscoverPage() {
                   playbackActive={reelsPlaybackActive}
                   cacheMedia={reelsCacheMedia}
                   reelFocused={focusedReelIndex === index}
+                  playbackFocused={playbackFocusedReelIndex === index}
+                  disableVideo={disableReelVideo}
                 />
               ))}
 

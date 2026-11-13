@@ -2846,6 +2846,18 @@ button {
   cursor: default;
   aspect-ratio: 3 / 4;
   overflow: hidden;
+  position: relative;
+}
+
+.feed-post__media .feed-post__video {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+
+.feed-post__media .feed-post__video--playing {
+  opacity: 1;
 }
 
 .feed-post__media--closable {
@@ -3402,6 +3414,9 @@ button {
   overflow: hidden;
   background: #000;
   isolation: isolate;
+  /* iOS WebKit crashes the tab when every slide keeps its 3D/backdrop layers. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 100svh;
 }
 
 .discover__media-wrap {

@@ -84,14 +84,26 @@ export default function FeedPost({
 
   const playVideo = Boolean(mediaActive && inView && slide.video);
   const reelCover = productReelPoster(slide);
+  const [videoPlaying, setVideoPlaying] = useState(false);
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !playVideo) return;
     configureInlineVideo(video);
     markMediaWarm(slide.video);
+    const onPlaying = () => setVideoPlaying(true);
+    const onStopped = () => setVideoPlaying(false);
+    video.addEventListener("playing", onPlaying);
+    video.addEventListener("emptied", onStopped);
+    video.addEventListener("error", onStopped);
     void video.play().catch(() => {});
-    return () => teardownVideoElement(video);
+    return () => {
+      video.removeEventListener("playing", onPlaying);
+      video.removeEventListener("emptied", onStopped);
+      video.removeEventListener("error", onStopped);
+      setVideoPlaying(false);
+      teardownVideoElement(video);
+    };
   }, [playVideo, slide.video]);
 
   useEffect(() => {
@@ -99,25 +111,35 @@ export default function FeedPost({
     warmProductMedia(slide);
   }, [mediaActive, inView, slide]);
 
-  const feedMediaContent = playVideo ? (
+  const feedVideo = playVideo ? (
     <video
       ref={videoRef}
-      className="discover__media--video"
+      className={[
+        "discover__media--video",
+        "feed-post__video",
+        videoPlaying ? "feed-post__video--playing" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
       src={slide.video!}
-      poster={reelCover ?? undefined}
       loop
-      preload="metadata"
+      preload="auto"
       {...INLINE_VIDEO_PROPS}
     />
-  ) : reelCover ? (
-    <img
-      src={reelCover}
-      alt=""
-      loading={imageLoadingForUrl(reelCover, mediaActive && inView)}
-      decoding="async"
-    />
+  ) : null;
+
+  const feedMediaContent = reelCover ? (
+    <>
+      <img
+        src={reelCover}
+        alt=""
+        loading={imageLoadingForUrl(reelCover, mediaActive && inView)}
+        decoding="async"
+      />
+      {feedVideo}
+    </>
   ) : (
-    <ProductMediaPlaceholder />
+    feedVideo ?? <ProductMediaPlaceholder />
   );
 
   const feedMediaClass = [

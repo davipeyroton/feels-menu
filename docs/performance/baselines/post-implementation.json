@@ -1,0 +1,206 @@
+{
+  "label": "post",
+  "auditedAt": "2026-11-12T23:08:33.548Z",
+  "baseUrl": "http://127.0.0.1:4173/?view=reels",
+  "profiles": [
+    {
+      "profile": "iphone-webkit",
+      "baseUrl": "http://127.0.0.1:4173/?view=reels",
+      "mp4": {
+        "requestCount": 4,
+        "uniqueUrls": [
+          {
+            "url": "https://pub-be112af91ac14243a02460c769b4037c.r2.dev/menu/espresso-duplo.mp4",
+            "count": 2,
+            "statuses": [
+              206,
+              206
+            ]
+          },
+          {
+            "url": "https://pub-be112af91ac14243a02460c769b4037c.r2.dev/menu/cappuccino.mp4",
+            "count": 2,
+            "statuses": [
+              206,
+              206
+            ]
+          }
+        ]
+      },
+      "maxVideoElements": 1,
+      "reelEvents": [
+        {
+          "productId": "espresso-duplo",
+          "videoCount": 1,
+          "hasVideoEl": true,
+          "videoPaused": true,
+          "videoReadyState": 1,
+          "videoError": null,
+          "focusToPlayingMs": 8002,
+          "playing": false,
+          "playingDetail": {
+            "played": false,
+            "ms": 8002,
+            "readyState": 1,
+            "timedOut": true
+          }
+        },
+        {
+          "productId": "cappuccino",
+          "videoCount": 1,
+          "hasVideoEl": true,
+          "videoPaused": true,
+          "videoReadyState": 1,
+          "videoError": null,
+          "focusToPlayingMs": 8001,
+          "playing": false,
+          "playingDetail": {
+            "played": false,
+            "ms": 8001,
+            "readyState": 1,
+            "timedOut": true
+          }
+        },
+        {
+          "productId": "espresso",
+          "videoCount": 0,
+          "hasVideoEl": false,
+          "videoPaused": null,
+          "videoReadyState": null,
+          "videoError": null,
+          "focusToPlayingMs": null,
+          "playing": false,
+          "playingDetail": {
+            "played": false,
+            "reason": "no-video-element",
+            "ms": null
+          }
+        }
+      ],
+      "videoErrors": [],
+      "performanceResourcesMp4": [
+        {
+          "name": "https://pub-be112af91ac14243a02460c769b4037c.r2.dev/menu/espresso-duplo.mp4",
+          "transferSize": 0,
+          "encodedBodySize": 0,
+          "duration": 285
+        },
+        {
+          "name": "https://pub-be112af91ac14243a02460c769b4037c.r2.dev/menu/cappuccino.mp4",
+          "transferSize": 0,
+          "encodedBodySize": 0,
+          "duration": 456
+        }
+      ],
+      "totalMp4TransferSize": 0,
+      "note": "transferSize may be 0 cross-origin; confirm on Safari device HAR"
+    },
+    {
+      "profile": "android-chromium",
+      "baseUrl": "http://127.0.0.1:4173/?view=reels",
+      "mp4": {
+        "requestCount": 2,
+        "uniqueUrls": [
+          {
+            "url": "https://pub-be112af91ac14243a02460c769b4037c.r2.dev/menu/espresso-duplo.mp4",
+            "count": 1,
+            "statuses": [
+              206
+            ]
+          },
+          {
+            "url": "https://pub-be112af91ac14243a02460c769b4037c.r2.dev/menu/cappuccino.mp4",
+            "count": 1,
+            "statuses": [
+              206
+            ]
+          }
+        ]
+      },
+      "maxVideoElements": 1,
+      "reelEvents": [
+        {
+          "productId": "espresso-duplo",
+          "videoCount": 1,
+          "hasVideoEl": true,
+          "videoPaused": true,
+          "videoReadyState": 0,
+          "videoError": {
+            "code": 4,
+            "message": ""
+          },
+          "focusToPlayingMs": 8002,
+          "playing": false,
+          "playingDetail": {
+            "played": false,
+            "ms": 8002,
+            "readyState": 0,
+            "timedOut": true
+          }
+        },
+        {
+          "productId": "cappuccino",
+          "videoCount": 1,
+          "hasVideoEl": true,
+          "videoPaused": true,
+          "videoReadyState": 0,
+          "videoError": {
+            "code": 4,
+            "message": ""
+          },
+          "focusToPlayingMs": 8001,
+          "playing": false,
+          "playingDetail": {
+            "played": false,
+            "ms": 8001,
+            "readyState": 0,
+            "timedOut": true
+          }
+        },
+        {
+          "productId": "espresso",
+          "videoCount": 0,
+          "hasVideoEl": false,
+          "videoPaused": null,
+          "videoReadyState": null,
+          "videoError": null,
+          "focusToPlayingMs": null,
+          "playing": false,
+          "playingDetail": {
+            "played": false,
+            "reason": "no-video-element",
+            "ms": null
+          }
+        }
+      ],
+      "videoErrors": [
+        {
+          "productId": "espresso-duplo",
+          "code": 4,
+          "message": ""
+        },
+        {
+          "productId": "cappuccino",
+          "code": 4,
+          "message": ""
+        }
+      ],
+      "performanceResourcesMp4": [
+        {
+          "name": "https://pub-be112af91ac14243a02460c769b4037c.r2.dev/menu/espresso-duplo.mp4",
+          "transferSize": 0,
+          "encodedBodySize": 0,
+          "duration": 581
+        },
+        {
+          "name": "https://pub-be112af91ac14243a02460c769b4037c.r2.dev/menu/cappuccino.mp4",
+          "transferSize": 0,
+          "encodedBodySize": 0,
+          "duration": 430
+        }
+      ],
+      "totalMp4TransferSize": 0,
+      "note": "transferSize may be 0 cross-origin; confirm on Safari device HAR"
+    }
+  ]
+}

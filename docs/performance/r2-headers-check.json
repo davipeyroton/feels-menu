@@ -1,0 +1,410 @@
+{
+  "checkedAt": "2026-11-12T23:12:37.301Z",
+  "origin": "https://pub-be112af91ac14243a02460c769b4037c.r2.dev",
+  "testOrigins": [
+    "https://feels-menu.vercel.app",
+    "http://localhost:5173"
+  ],
+  "assets": [
+    {
+      "path": "brand/intro-menu.mp4",
+      "url": "https://pub-be112af91ac14243a02460c769b4037c.r2.dev/brand/intro-menu.mp4",
+      "head": {
+        "status": 200,
+        "headers": {
+          "accept-ranges": "bytes",
+          "cf-ray": "a59938fb8a205cf3-GRU",
+          "connection": "close",
+          "content-length": "3166960",
+          "content-type": "video/mp4",
+          "date": "Thu, 12 Nov 2026 23:12:37 GMT",
+          "etag": "\"23e6a0d422b5c433dffb5077e1ef25c2\"",
+          "last-modified": "Thu, 12 Nov 2026 21:54:41 GMT",
+          "server": "cloudflare"
+        }
+      },
+      "range": {
+        "status": 206,
+        "headers": {
+          "accept-ranges": "bytes",
+          "cf-ray": "a59938ff0d7ef1ed-GRU",
+          "connection": "keep-alive",
+          "content-length": "2",
+          "content-range": "bytes 0-1/3166960",
+          "content-type": "video/mp4",
+          "date": "Thu, 12 Nov 2026 23:12:38 GMT",
+          "etag": "\"23e6a0d422b5c433dffb5077e1ef25c2\"",
+          "last-modified": "Thu, 12 Nov 2026 21:54:41 GMT",
+          "server": "cloudflare"
+        },
+        "bodyBytes": 2
+      },
+      "corsByOrigin": {
+        "https://feels-menu.vercel.app": {
+          "head": {
+            "status": 200,
+            "headers": {
+              "accept-ranges": "bytes",
+              "cf-ray": "a59939071e060292-GRU",
+              "connection": "close",
+              "content-length": "3166960",
+              "content-type": "video/mp4",
+              "date": "Thu, 12 Nov 2026 23:12:39 GMT",
+              "etag": "\"23e6a0d422b5c433dffb5077e1ef25c2\"",
+              "last-modified": "Thu, 12 Nov 2026 21:54:41 GMT",
+              "server": "cloudflare"
+            }
+          },
+          "range": {
+            "status": 206,
+            "headers": {
+              "accept-ranges": "bytes",
+              "cf-ray": "a599390af8e8240e-GRU",
+              "connection": "keep-alive",
+              "content-length": "2",
+              "content-range": "bytes 0-1/3166960",
+              "content-type": "video/mp4",
+              "date": "Thu, 12 Nov 2026 23:12:40 GMT",
+              "etag": "\"23e6a0d422b5c433dffb5077e1ef25c2\"",
+              "last-modified": "Thu, 12 Nov 2026 21:54:41 GMT",
+              "server": "cloudflare"
+            },
+            "bodyBytes": 2
+          }
+        },
+        "http://localhost:5173": {
+          "head": {
+            "status": 200,
+            "headers": {
+              "accept-ranges": "bytes",
+              "cf-ray": "a599390e88b601a8-GRU",
+              "connection": "close",
+              "content-length": "3166960",
+              "content-type": "video/mp4",
+              "date": "Thu, 12 Nov 2026 23:12:40 GMT",
+              "etag": "\"23e6a0d422b5c433dffb5077e1ef25c2\"",
+              "last-modified": "Thu, 12 Nov 2026 21:54:41 GMT",
+              "server": "cloudflare"
+            }
+          },
+          "range": {
+            "status": 206,
+            "headers": {
+              "accept-ranges": "bytes",
+              "cf-ray": "a5993912199ea17e-GRU",
+              "connection": "keep-alive",
+              "content-length": "2",
+              "content-range": "bytes 0-1/3166960",
+              "content-type": "video/mp4",
+              "date": "Thu, 12 Nov 2026 23:12:41 GMT",
+              "etag": "\"23e6a0d422b5c433dffb5077e1ef25c2\"",
+              "last-modified": "Thu, 12 Nov 2026 21:54:41 GMT",
+              "server": "cloudflare"
+            },
+            "bodyBytes": 2
+          }
+        }
+      }
+    },
+    {
+      "path": "menu/espresso-duplo.mp4",
+      "url": "https://pub-be112af91ac14243a02460c769b4037c.r2.dev/menu/espresso-duplo.mp4",
+      "head": {
+        "status": 200,
+        "headers": {
+          "accept-ranges": "bytes",
+          "cf-ray": "a59939158bb1f1f3-GRU",
+          "connection": "close",
+          "content-length": "3890745",
+          "content-type": "video/mp4",
+          "date": "Thu, 12 Nov 2026 23:12:42 GMT",
+          "etag": "\"ca4e21835889ed25467089a1d1a9decd\"",
+          "last-modified": "Thu, 12 Nov 2026 21:54:41 GMT",
+          "server": "cloudflare"
+        }
+      },
+      "range": {
+        "status": 206,
+        "headers": {
+          "accept-ranges": "bytes",
+          "cf-ray": "a599391938870cf0-GRU",
+          "connection": "keep-alive",
+          "content-length": "2",
+          "content-range": "bytes 0-1/3890745",
+          "content-type": "video/mp4",
+          "date": "Thu, 12 Nov 2026 23:12:42 GMT",
+          "etag": "\"ca4e21835889ed25467089a1d1a9decd\"",
+          "last-modified": "Thu, 12 Nov 2026 21:54:41 GMT",
+          "server": "cloudflare"
+        },
+        "bodyBytes": 2
+      },
+      "corsByOrigin": {
+        "https://feels-menu.vercel.app": {
+          "head": {
+            "status": 200,
+            "headers": {
+              "accept-ranges": "bytes",
+              "cf-ray": "a599391d3d02a6ba-GRU",
+              "connection": "close",
+              "content-length": "3890745",
+              "content-type": "video/mp4",
+              "date": "Thu, 12 Nov 2026 23:12:43 GMT",
+              "etag": "\"ca4e21835889ed25467089a1d1a9decd\"",
+              "last-modified": "Thu, 12 Nov 2026 21:54:41 GMT",
+              "server": "cloudflare"
+            }
+          },
+          "range": {
+            "status": 206,
+            "headers": {
+              "accept-ranges": "bytes",
+              "cf-ray": "a5993921496e23b4-GRU",
+              "connection": "keep-alive",
+              "content-length": "2",
+              "content-range": "bytes 0-1/3890745",
+              "content-type": "video/mp4",
+              "date": "Thu, 12 Nov 2026 23:12:43 GMT",
+              "etag": "\"ca4e21835889ed25467089a1d1a9decd\"",
+              "last-modified": "Thu, 12 Nov 2026 21:54:41 GMT",
+              "server": "cloudflare"
+            },
+            "bodyBytes": 2
+          }
+        },
+        "http://localhost:5173": {
+          "head": {
+            "status": 200,
+            "headers": {
+              "accept-ranges": "bytes",
+              "cf-ray": "a5993925487b44e0-GRU",
+              "connection": "close",
+              "content-length": "3890745",
+              "content-type": "video/mp4",
+              "date": "Thu, 12 Nov 2026 23:12:44 GMT",
+              "etag": "\"ca4e21835889ed25467089a1d1a9decd\"",
+              "last-modified": "Thu, 12 Nov 2026 21:54:41 GMT",
+              "server": "cloudflare"
+            }
+          },
+          "range": {
+            "status": 206,
+            "headers": {
+              "accept-ranges": "bytes",
+              "cf-ray": "a5993928cfd91aa0-GRU",
+              "connection": "keep-alive",
+              "content-length": "2",
+              "content-range": "bytes 0-1/3890745",
+              "content-type": "video/mp4",
+              "date": "Thu, 12 Nov 2026 23:12:45 GMT",
+              "etag": "\"ca4e21835889ed25467089a1d1a9decd\"",
+              "last-modified": "Thu, 12 Nov 2026 21:54:41 GMT",
+              "server": "cloudflare"
+            },
+            "bodyBytes": 2
+          }
+        }
+      }
+    },
+    {
+      "path": "menu/cappuccino.mp4",
+      "url": "https://pub-be112af91ac14243a02460c769b4037c.r2.dev/menu/cappuccino.mp4",
+      "head": {
+        "status": 200,
+        "headers": {
+          "accept-ranges": "bytes",
+          "cf-ray": "a599392c5bc21b10-GRU",
+          "connection": "close",
+          "content-length": "2513563",
+          "content-type": "video/mp4",
+          "date": "Thu, 12 Nov 2026 23:12:45 GMT",
+          "etag": "\"a7d1257baccfd4707b4f587773b738fb\"",
+          "last-modified": "Thu, 12 Nov 2026 21:54:42 GMT",
+          "server": "cloudflare"
+        }
+      },
+      "range": {
+        "status": 206,
+        "headers": {
+          "accept-ranges": "bytes",
+          "cf-ray": "a599392fdd3e012a-GRU",
+          "connection": "keep-alive",
+          "content-length": "2",
+          "content-range": "bytes 0-1/2513563",
+          "content-type": "video/mp4",
+          "date": "Thu, 12 Nov 2026 23:12:46 GMT",
+          "etag": "\"a7d1257baccfd4707b4f587773b738fb\"",
+          "last-modified": "Thu, 12 Nov 2026 21:54:42 GMT",
+          "server": "cloudflare"
+        },
+        "bodyBytes": 2
+      },
+      "corsByOrigin": {
+        "https://feels-menu.vercel.app": {
+          "head": {
+            "status": 200,
+            "headers": {
+              "accept-ranges": "bytes",
+              "cf-ray": "a59939336e2b623c-GRU",
+              "connection": "close",
+              "content-length": "2513563",
+              "content-type": "video/mp4",
+              "date": "Thu, 12 Nov 2026 23:12:46 GMT",
+              "etag": "\"a7d1257baccfd4707b4f587773b738fb\"",
+              "last-modified": "Thu, 12 Nov 2026 21:54:42 GMT",
+              "server": "cloudflare"
+            }
+          },
+          "range": {
+            "status": 206,
+            "headers": {
+              "accept-ranges": "bytes",
+              "cf-ray": "a59939377d5100e3-GRU",
+              "connection": "keep-alive",
+              "content-length": "2",
+              "content-range": "bytes 0-1/2513563",
+              "content-type": "video/mp4",
+              "date": "Thu, 12 Nov 2026 23:12:47 GMT",
+              "etag": "\"a7d1257baccfd4707b4f587773b738fb\"",
+              "last-modified": "Thu, 12 Nov 2026 21:54:42 GMT",
+              "server": "cloudflare"
+            },
+            "bodyBytes": 2
+          }
+        },
+        "http://localhost:5173": {
+          "head": {
+            "status": 200,
+            "headers": {
+              "accept-ranges": "bytes",
+              "cf-ray": "a599393b6e3cb2c2-GRU",
+              "connection": "close",
+              "content-length": "2513563",
+              "content-type": "video/mp4",
+              "date": "Thu, 12 Nov 2026 23:12:48 GMT",
+              "etag": "\"a7d1257baccfd4707b4f587773b738fb\"",
+              "last-modified": "Thu, 12 Nov 2026 21:54:42 GMT",
+              "server": "cloudflare"
+            }
+          },
+          "range": {
+            "status": 206,
+            "headers": {
+              "accept-ranges": "bytes",
+              "cf-ray": "a599393ecbf94bbe-GRU",
+              "connection": "keep-alive",
+              "content-length": "2",
+              "content-range": "bytes 0-1/2513563",
+              "content-type": "video/mp4",
+              "date": "Thu, 12 Nov 2026 23:12:48 GMT",
+              "etag": "\"a7d1257baccfd4707b4f587773b738fb\"",
+              "last-modified": "Thu, 12 Nov 2026 21:54:42 GMT",
+              "server": "cloudflare"
+            },
+            "bodyBytes": 2
+          }
+        }
+      }
+    },
+    {
+      "path": "menu/espresso-duplo-video-poster.jpg",
+      "url": "https://pub-be112af91ac14243a02460c769b4037c.r2.dev/menu/espresso-duplo-video-poster.jpg",
+      "head": {
+        "status": 200,
+        "headers": {
+          "accept-ranges": "bytes",
+          "cf-ray": "a5993942cc53e5a7-GRU",
+          "connection": "close",
+          "content-length": "184848",
+          "content-type": "image/jpeg",
+          "date": "Thu, 12 Nov 2026 23:12:49 GMT",
+          "etag": "\"b7777f8f516f6d7e815420d55fa28356\"",
+          "last-modified": "Thu, 12 Nov 2026 22:36:36 GMT",
+          "server": "cloudflare"
+        }
+      },
+      "range": {
+        "status": 206,
+        "headers": {
+          "accept-ranges": "bytes",
+          "cf-ray": "a59939467f7f1aa7-GRU",
+          "connection": "keep-alive",
+          "content-length": "2",
+          "content-range": "bytes 0-1/184848",
+          "content-type": "image/jpeg",
+          "date": "Thu, 12 Nov 2026 23:12:49 GMT",
+          "etag": "\"b7777f8f516f6d7e815420d55fa28356\"",
+          "last-modified": "Thu, 12 Nov 2026 22:36:36 GMT",
+          "server": "cloudflare"
+        },
+        "bodyBytes": 2
+      },
+      "corsByOrigin": {
+        "https://feels-menu.vercel.app": {
+          "head": {
+            "status": 200,
+            "headers": {
+              "accept-ranges": "bytes",
+              "cf-ray": "a5993949ed12f250-GRU",
+              "connection": "close",
+              "content-length": "184848",
+              "content-type": "image/jpeg",
+              "date": "Thu, 12 Nov 2026 23:12:50 GMT",
+              "etag": "\"b7777f8f516f6d7e815420d55fa28356\"",
+              "last-modified": "Thu, 12 Nov 2026 22:36:36 GMT",
+              "server": "cloudflare"
+            }
+          },
+          "range": {
+            "status": 206,
+            "headers": {
+              "accept-ranges": "bytes",
+              "cf-ray": "a599394d6adda402-GRU",
+              "connection": "keep-alive",
+              "content-length": "2",
+              "content-range": "bytes 0-1/184848",
+              "content-type": "image/jpeg",
+              "date": "Thu, 12 Nov 2026 23:12:50 GMT",
+              "etag": "\"b7777f8f516f6d7e815420d55fa28356\"",
+              "last-modified": "Thu, 12 Nov 2026 22:36:36 GMT",
+              "server": "cloudflare"
+            },
+            "bodyBytes": 2
+          }
+        },
+        "http://localhost:5173": {
+          "head": {
+            "status": 200,
+            "headers": {
+              "accept-ranges": "bytes",
+              "cf-ray": "a5993950f9579315-GRU",
+              "connection": "close",
+              "content-length": "184848",
+              "content-type": "image/jpeg",
+              "date": "Thu, 12 Nov 2026 23:12:51 GMT",
+              "etag": "\"b7777f8f516f6d7e815420d55fa28356\"",
+              "last-modified": "Thu, 12 Nov 2026 22:36:36 GMT",
+              "server": "cloudflare"
+            }
+          },
+          "range": {
+            "status": 206,
+            "headers": {
+              "accept-ranges": "bytes",
+              "cf-ray": "a5993954ee0901a4-GRU",
+              "connection": "keep-alive",
+              "content-length": "2",
+              "content-range": "bytes 0-1/184848",
+              "content-type": "image/jpeg",
+              "date": "Thu, 12 Nov 2026 23:12:52 GMT",
+              "etag": "\"b7777f8f516f6d7e815420d55fa28356\"",
+              "last-modified": "Thu, 12 Nov 2026 22:36:36 GMT",
+              "server": "cloudflare"
+            },
+            "bodyBytes": 2
+          }
+        }
+      }
+    }
+  ]
+}

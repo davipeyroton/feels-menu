@@ -9,6 +9,8 @@
     "preview": "vite preview",
     "snapshot": "node scripts/parse-discover.mjs",
     "audit:mobile": "node scripts/mobile-audit.mjs",
+    "audit:reels-baseline": "node scripts/reels-video-baseline.mjs",
+    "audit:r2-headers": "node scripts/r2-media-headers-check.mjs",
     "media:posters": "node scripts/extract-video-posters.mjs"
   },
   "dependencies": {
