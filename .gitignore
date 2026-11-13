@@ -9,3 +9,6 @@ product-images-for-r2.zip
 .rea-cache/
 .DS_Store
 *.local
+tmp/
+.tmp/
+tsconfig.tsbuildinfo
