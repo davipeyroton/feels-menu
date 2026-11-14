@@ -25,7 +25,7 @@ Recomendação de uso, ainda não aprovada como topologia fechada:
 - Migration.
 - Merge na branch principal.
 
-Rollback de deploy e da versão de experiência seguem a publicação híbrida aceita no [ADR 0006](../architecture/decisions/0006-publicacao-versionada.md). A política de dado operacional desatualizado não está aceita. O script atual `scripts/publish-r2-videos.py` já tem `--rollback` para os três vídeos que ele publica. Esse script não é o pipeline da biblioteca futura e não deve ser executado sem aprovação.
+Rollback de deploy e da versão de experiência seguem a publicação híbrida aceita no [ADR 0006](../architecture/decisions/0006-publicacao-versionada.md). A versão pública chega por CDN, no [ADR 0014](../architecture/decisions/0014-entrega-cdn.md). O bucket exclusivo e a retenção estão no [ADR 0015](../architecture/decisions/0015-armazenamento-distribuicao.md). Nada disso está configurado. O ponteiro só muda depois da versão conferida. A idade do snapshot operacional segue o [ADR 0009](../architecture/decisions/0009-operational-freshness.md). O script atual `scripts/publish-r2-videos.py` já tem `--rollback` para os três vídeos que ele publica. Esse script não é o pipeline da biblioteca futura, não grava os documentos públicos e não deve ser executado sem aprovação.
 
 ## Quality gates
 

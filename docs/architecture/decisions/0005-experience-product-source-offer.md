@@ -30,4 +30,4 @@ Exemplo aceito: Cappuccino Delivery a R$ 15 e Cappuccino Takeout a R$ 13 coexist
 
 ## Fora desta decisão
 
-Como o admin apresenta as ofertas distintas ao restaurante continua pendente. Ver [open-decisions.md](../../product/open-decisions.md).
+A administração das ofertas no painel está aceita no [ADR 0011](0011-administracao-ofertas.md). Esta decisão não a redefine.

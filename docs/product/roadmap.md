@@ -32,15 +32,15 @@ Adaptador OpenDelivery V1, importação de todos os menus e serviços, categoria
 
 A validação com o fornecedor do Studios Coffee é pré-requisito da integração real. O adaptador pode ser especificado contra a especificação pública antes disso. A conexão real não começa sem resposta formal. O fornecedor não está validado.
 
-Aceite: reexecução não duplica; item sumido é arquivado; TTL da origem é respeitado; histórico fica registrado.
+Aceite: reexecução não duplica; menu, serviço, categoria, produto ou oferta ausente de um snapshot completo e válido é arquivado; TTL da origem é respeitado; histórico fica registrado. A janela de horário não comanda a experiência pública. Ver [ADR 0012](../architecture/decisions/0012-menu-servico-disponibilidade.md).
 
 ## Fase 4 — Gestão de experiências
 
-Vários cardápios, seleção de ofertas, categorias próprias e vínculo opcional com a origem, apresentação global e sobrescrita, ordenação independente e regra de disponibilidade (ocultar indisponível na experiência pública).
+Vários cardápios, seleção de ofertas, categorias próprias com origem derivada pelos produtos, apresentação global e sobrescrita, ordenação independente e regra de disponibilidade (ocultar indisponível na experiência pública).
 
 Depende das Fases 2 e 3 para dados reais. A especificação pode começar com o modelo de domínio.
 
-Aceite: um produto aparece em uma única categoria por cardápio; a ordem de um cardápio não altera o outro; categorias próprias e sincronizadas coexistem.
+Aceite: um produto aparece em uma única categoria por cardápio; a ordem de um cardápio não altera o outro; a sincronização não reescreve a categoria de experiência. Ver [ADR 0011](../architecture/decisions/0011-administracao-ofertas.md) e [ADR 0013](../architecture/decisions/0013-categorias-independentes.md).
 
 ## Fase 5 — Mídia
 
@@ -52,9 +52,9 @@ Aceite: sync não substitui mídia `restaurant_upload` nem `feels_content`.
 
 ## Fase 6 — Experiência pública
 
-`restaurantSlug`, `menuSlug`, link principal em `/` abrindo o cardápio padrão, hub em `/hub`, migração da experiência atual, responsividade e performance mobile.
+`restaurantSlug` no host, `menuSlug` no caminho, link principal em `{restaurantSlug}.{domínio}/` abrindo o cardápio padrão, hub em `/hub`, migração da experiência atual, responsividade e performance mobile. O nome do domínio continua pendente.
 
-A publicação híbrida está aceita. Esta fase a implementa. Ver [ADR 0006](../architecture/decisions/0006-publicacao-versionada.md). A política de dado operacional desatualizado só entra se for aprovada depois.
+A publicação híbrida está aceita. Esta fase a implementa. Ver [ADR 0006](../architecture/decisions/0006-publicacao-versionada.md). A entrega por CDN está aceita. Ver [ADR 0014](../architecture/decisions/0014-entrega-cdn.md). O bucket exclusivo, a CDN da Cloudflare, o host por restaurante e a retenção estão no [ADR 0015](../architecture/decisions/0015-armazenamento-distribuicao.md). A freshness operacional também está aceita. Ver [ADR 0009](../architecture/decisions/0009-operational-freshness.md). A tela pública de EXPIRED está aceita. Ver [ADR 0010](../architecture/decisions/0010-experiencia-expired.md). A frequência de releitura do aplicativo fica para a especificação técnica. Ela é distinta do cache de 60 segundos da CDN. Essa spec usa referência de tempo do servidor e o tempo decorrido no aparelho.
 
 A migração inclui a remoção da fidelidade simulada. O código atual permanece até essa fase. As rotas conceituais também só mudam nessa spec. Hoje `/` ainda abre o hub.
 

@@ -39,6 +39,6 @@ A experiência pública combina a versão publicada com os dados operacionais ma
 
 ## Fora desta decisão
 
-O comportamento quando a sincronização falhar ou os dados operacionais estiverem desatualizados não está decidido. Alternativas e uma recomendação não aprovada estão em [operational-freshness.md](../../operations/operational-freshness.md).
+O prazo em que o último snapshot operacional válido pode ser mostrado está aceito no [ADR 0009](0009-operational-freshness.md). Esta decisão não define essa idade.
 
-Como a versão chega ao cliente (CDN ou leitura do banco) também continua pendente.
+A entrega da versão publicada ao consumidor está aceita no [ADR 0014](0014-entrega-cdn.md). Esta decisão não altera a publicação híbrida.

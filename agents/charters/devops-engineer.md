@@ -36,4 +36,4 @@ O pipeline não usa segredo no repositório. Preview não aponta para dado de pr
 
 ## Aprovação humana
 
-Deploy de produção, domínio, bucket, variável, proteção de branch e qualquer mudança de infraestrutura.
+Deploy de produção, domínio, bucket, variável, proteção de branch e qualquer mudança de infraestrutura. O bucket dos documentos públicos está aceito no [ADR 0015](../../docs/architecture/decisions/0015-armazenamento-distribuicao.md) e ainda não é criado por este charter.

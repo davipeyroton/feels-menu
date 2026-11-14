@@ -50,14 +50,16 @@ Experiência pública
   -> versão publicada da experiência
   -> dados operacionais mais recentes (preço, disponibilidade, status, arquivamento)
   -> oculta indisponível
-  -> link principal em / abre o cardápio padrão
-  -> /hub é o hub
-  -> /:restaurantSlug/:menuSlug abre um cardápio específico
+  -> link principal em {restaurantSlug}.{domínio}/ abre o cardápio padrão
+  -> /hub nesse host é o hub
+  -> /{menuSlug} nesse host abre um cardápio específico
 ```
 
 A publicação híbrida está aceita ([ADR 0006](decisions/0006-publicacao-versionada.md)). Preço e disponibilidade não exigem republicação. O código atual ainda não segue essas rotas.
 
-Como a versão chega ao navegador (documento em CDN ou leitura do banco) está [PENDENTE](../product/open-decisions.md). A recomendação de CDN não foi promovida a decisão. O que fazer com dado operacional velho também está pendente: [operational-freshness.md](../operations/operational-freshness.md).
+A versão publicada chega por CDN, sem consulta ao banco a cada navegação. Quatro documentos: identidade, versão imutável, ponteiro ativo e projeção operacional. A CDN não decide freshness nem altera preço. Detalhe no [ADR 0014](decisions/0014-entrega-cdn.md). O bucket exclusivo no R2, a CDN da Cloudflare, o host por restaurante e a retenção estão no [ADR 0015](decisions/0015-armazenamento-distribuicao.md). O nome do domínio continua pendente. O [ADR 0007](decisions/0007-midia-r2-cdn.md) continua proposta.
+
+O snapshot operacional segue a freshness aceita: idade desde a última sincronização bem-sucedida e válida, até `2 × effective_sync_interval`. TTL acima de uma hora não cria outro teto. Ver [operational-freshness.md](../operations/operational-freshness.md). A tela pública de EXPIRED está no [ADR 0010](decisions/0010-experiencia-expired.md). A escolha de oferta no painel está no [ADR 0011](decisions/0011-administracao-ofertas.md): o preço público é o `value` da oferta escolhida, e a sincronização não troca essa escolha. Menu, serviço e janela de horário da origem estão no [ADR 0012](decisions/0012-menu-servico-disponibilidade.md). O horário não comanda a experiência pública da V1. A origem da categoria de experiência é derivada pelos produtos, no [ADR 0013](decisions/0013-categorias-independentes.md).
 
 ## Mídia
 

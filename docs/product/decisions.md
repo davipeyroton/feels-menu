@@ -14,22 +14,30 @@ Estas decisões são requisitos. Recomendação que não está nesta página nã
 | Categorias | Modelo híbrido: categorias sincronizadas e categorias próprias | Blueprint v0.4, seção 4 |
 | Produto em múltiplas categorias | Não. Um produto aparece em apenas uma categoria por cardápio | Blueprint v0.4, seção 4 |
 | Produtos indisponíveis | Importar, mas ocultar na experiência pública | Blueprint v0.4, seção 4 |
-| Menus e serviços OpenDelivery | Importar todos | Blueprint v0.4, seção 4 |
+| Menus e serviços OpenDelivery | Importar todos. `SourceMenu`, `SourceService` e `SourceAvailability` representam a origem | Fundador, 13 de novembro de 2026; C5 |
 | Restaurante piloto | Studios Coffee | Blueprint v0.4, seção 4 |
 | Backend | Supabase | Blueprint v0.4, seção 4 |
-| Rotas públicas (C2) | `/` é o cardápio padrão; `/hub` é o hub; `/:restaurantSlug/:menuSlug` abre um cardápio específico | Fundador, 13 de novembro de 2026 |
+| Rotas públicas (C2) | No host `{restaurantSlug}.{domínio}`, `/` é o cardápio padrão, `/hub` é o hub e `/{menuSlug}` abre um cardápio específico. O nome do domínio continua pendente | Fundador, 13 e 14 de novembro de 2026 |
 | Publicação (C3) | Híbrida: experiência versionada e operação atualizada pela sincronização | Fundador, 13 de novembro de 2026 |
 | Oferta no cardápio (C4) | Uma oferta por produto em cada cardápio; unicidade por `experience_menu_id` e `source_product_id` | Fundador, 13 de novembro de 2026 |
+| Ofertas no painel | Escolha explícita por cardápio; a sincronização não troca a oferta escolhida | Fundador, 13 de novembro de 2026 |
+| Freshness operacional | Último snapshot válido até `2 × effective_sync_interval` | Fundador, 13 de novembro de 2026 |
+| Experiência EXPIRED | Nas rotas de cardápio, indisponibilidade temporária com nome, logotipo e "Tentar de novo" | Fundador, 13 de novembro de 2026 |
+| Categorias independentes | Origem da categoria de experiência derivada pelos produtos, sem `source_category_id` | Fundador, 13 de novembro de 2026 |
+| Entrega por CDN | Quatro documentos públicos. A navegação não consulta o banco. A CDN não altera preço nem freshness | Fundador, 14 de novembro de 2026 |
+| Documentos públicos | Bucket R2 exclusivo, CDN Cloudflare, subdomínio por restaurante e retenção de 90 dias ou 10 versões | Fundador, 14 de novembro de 2026 |
 
 ## Link público (C2)
 
 Cada restaurante tem um link principal. Esse link abre diretamente o cardápio padrão.
 
-Rotas conceituais:
+Rotas conceituais da C2:
 
 - `/` — cardápio padrão do restaurante.
 - `/hub` — hub institucional e de descoberta.
-- `/:restaurantSlug/:menuSlug` — acesso direto a um cardápio específico.
+- `/:restaurantSlug/:menuSlug` — acesso direto a um cardápio específico, na forma anterior à escolha do host.
+
+O endereço aceito em 14 de novembro de 2026 coloca o restaurante no host. `{restaurantSlug}.{domínio}/` abre o cardápio padrão. `{restaurantSlug}.{domínio}/{menuSlug}` abre um cardápio específico. `{restaurantSlug}.{domínio}/hub` abre o hub. O nome do domínio continua pendente. Registro no [ADR 0015](../architecture/decisions/0015-armazenamento-distribuicao.md).
 
 O hub continua no produto. Não é a página inicial obrigatória do link principal.
 
@@ -47,7 +55,27 @@ A origem continua sendo a fonte da verdade operacional. A sincronização não a
 
 Registro: [ADR 0006](../architecture/decisions/0006-publicacao-versionada.md).
 
-O que fazer se a sincronização falhar ou o dado operacional estiver velho **não** está decidido. Ver [operational-freshness.md](../operations/operational-freshness.md).
+## Freshness operacional
+
+Aprovada pelo fundador em 13 de novembro de 2026. Não altera a publicação híbrida.
+
+`effective_sync_interval = max(15 minutos, TTL informado pelo fornecedor)`
+
+`max_staleness = 2 × effective_sync_interval`
+
+TTL acima de uma hora não cria outro teto. A idade é o tempo desde a última sincronização bem-sucedida e válida. Falha, carga parcial ou carga inválida não substituem esse snapshot. Estados: FRESH, STALE e EXPIRED. A experiência pública mostra o cardápio em FRESH e STALE. Em EXPIRED mostra indisponibilidade temporária, sem preço nem disponibilidade antigos como se fossem atuais.
+
+Registro: [ADR 0009](../architecture/decisions/0009-operational-freshness.md) e [operational-freshness.md](../operations/operational-freshness.md).
+
+## Experiência pública em EXPIRED
+
+Aprovada pelo fundador em 13 de novembro de 2026. Não altera a fórmula do ADR 0009 nem a publicação híbrida.
+
+No host do restaurante, em `/` e `/{menuSlug}`, EXPIRED substitui reels, feed, categorias, produtos, preços e disponibilidade. A tela mostra nome, logotipo, o título "Cardápio temporariamente indisponível", o texto "Não conseguimos confirmar os preços e a disponibilidade agora. Volte daqui a pouco." e o botão "Tentar de novo".
+
+O botão relê o estado. Se continuar EXPIRED, a mesma tela permanece. Não há telefone, WhatsApp, link externo nem link para `/hub`. Desktop e mobile compartilham estado, mensagem e ação. A substituição é imediata, inclusive durante um reel. Com a página visível, FRESH ou STALE restauram o cardápio. Não há notificação nem recuperação em segundo plano.
+
+Registro: [ADR 0010](../architecture/decisions/0010-experiencia-expired.md).
 
 ## Um produto por cardápio (C4)
 
@@ -63,7 +91,35 @@ O mesmo produto pode estar em outro cardápio, em outra categoria, com outra ofe
 
 Registro: [ADR 0005](../architecture/decisions/0005-experience-product-source-offer.md).
 
-Como o admin mostra as várias ofertas continua pendente.
+## Administração de ofertas
+
+Aprovada pelo fundador em 13 de novembro de 2026. Não altera a C4 nem a publicação híbrida.
+
+Com uma oferta, o sistema pode selecioná-la e persiste `source_offer_id`. Com várias, o administrador escolhe antes de incluir o produto naquele cardápio. A escolha não afeta outro cardápio.
+
+A sincronização atualiza preço, disponibilidade, status e arquivamento. Ela não muda o `source_offer_id`. Oferta nova fica no catálogo e não entra sozinha num cardápio. Preço do mesmo identificador externo muda sem republicação.
+
+Oferta escolhida indisponível ou arquivada oculta o produto naquele cardápio, mesmo que outra oferta do mesmo produto continue disponível. O painel diferencia os dois estados. No arquivamento, o administrador pode escolher outra oferta ou retirar o produto. O registro arquivado permanece.
+
+O preço público é o `value` da oferta selecionada. `originalValue` fica armazenado e não implica preço riscado. FRESH e STALE usam o último snapshot válido. EXPIRED segue o [ADR 0010](../architecture/decisions/0010-experiencia-expired.md).
+
+O painel identifica a oferta por serviço de origem, menu de origem, preço atual e status, quando esses dados existirem. Não inventa nome para a oferta. Menu, serviço e janela de horário estão no [ADR 0012](../architecture/decisions/0012-menu-servico-disponibilidade.md).
+
+## Menu, serviço e disponibilidade de origem (C5)
+
+Aprovada pelo fundador em 13 de novembro de 2026. Não altera a escolha de oferta nem a publicação híbrida.
+
+`SourceMenu` é o menu da origem e não é o cardápio do Feels. Guarda `id`, `name` e `externalCode`. Cada categoria de origem pertence a um menu.
+
+`SourceService` aponta um menu por `menuId`. Os tipos documentados incluem `DELIVERY` e `TAKEOUT`. Mais de um serviço pode apontar o mesmo menu. Sem id próprio na especificação consultada, o Feels não inventa um. Chave composta fica para o fornecedor.
+
+`SourceAvailability` guarda janelas de datas e horários da categoria ou da oferta. O status fica no dono. As janelas não comandam a experiência pública da V1. A reconciliação dessas janelas depende dos campos reais.
+
+Ausência num snapshot completo e válido arquiva menu, serviço, categoria e oferta, sem apagar o histórico e sem trocar `source_offer_id`. Carga parcial ou inválida não arquiva. `AuditEvent` não faz parte desta decisão.
+
+Registro: [ADR 0012](../architecture/decisions/0012-menu-servico-disponibilidade.md).
+
+Registro: [ADR 0011](../architecture/decisions/0011-administracao-ofertas.md).
 
 ## Permissões
 
@@ -81,11 +137,41 @@ A confirmação não substitui autenticação nem autorização. Registrar essas
 
 ## Categorias
 
-O modelo aceita categorias importadas, categorias criadas no Feels e categorias de experiência com vínculo opcional à categoria de origem.
+O modelo aceita categorias de origem e categorias de experiência, independentes. Categorias próprias continuam permitidas. Um produto pertence a apenas uma categoria dentro de cada cardápio.
 
-Categorias de origem permanecem para sincronização e rastreabilidade. Categorias próprias existem para organização comercial.
+`ExperienceCategory` não possui `source_category_id`. A origem é derivada por `ExperienceCategory → ExperienceProduct → SourceOffer → SourceCategory`. Uma categoria sem produtos, ou sem ofertas de origem, tem origem vazia.
 
-Um produto pertence a apenas uma categoria dentro de cada cardápio de experiência. A regra C4 torna isso uma consequência de aparecer uma vez no cardápio.
+O nome copiado na criação é o nome comercial. A sincronização atualiza só `SourceCategory` e não altera nome, ordem nem composição da categoria de experiência. Origem arquivada permanece no histórico. O painel calcula o aviso quando algum produto ainda aponta para ela. A categoria e os produtos permanecem. O público segue a oferta escolhida.
+
+Registro: [ADR 0004](../architecture/decisions/0004-categorias-hibridas.md) e [ADR 0013](../architecture/decisions/0013-categorias-independentes.md).
+
+## Entrega por CDN
+
+Aprovada pelo fundador em 14 de novembro de 2026. Não altera a publicação híbrida nem o relógio da freshness.
+
+A navegação pública lê quatro documentos: `identity.json`, `versions/{versionId}.json`, `active.json` e `operational.json`. O Supabase continua fonte da verdade. A CDN distribui. O ponteiro ativo muda por último, depois da versão conferida. Falha de publicação mantém a versão anterior.
+
+O aplicativo lê o documento operacional antes da versão. Em EXPIRED, não baixa o cardápio. A passagem a EXPIRED ocorre no instante em que o prazo acaba. A recuperação depende de nova leitura operacional. Cache da versão é imutável. Ponteiro e documento operacional ficam em 60 segundos. Esses 60 segundos não são a frequência de releitura do aplicativo.
+
+Se a sincronização válida no Supabase não atualizar o documento operacional, o documento anterior permanece, o painel registra a falha e a publicação é tentada de novo. A hora dessa tentativa não substitui o relógio da freshness.
+
+Registro: [ADR 0014](../architecture/decisions/0014-entrega-cdn.md).
+
+## Armazenamento e distribuição
+
+Aprovado pelo fundador em 14 de novembro de 2026. Não altera a publicação híbrida, os quatro documentos nem a fórmula da freshness.
+
+Os documentos públicos ficam num bucket exclusivo do Cloudflare R2. A Cloudflare os distribui num subdomínio separado da navegação. JSON tem regra de cache própria. A versão imutável tem cache longo. `active.json` e `operational.json` ficam em 60 segundos. `identity.json` tem cache curto. Identidade, ponteiro e documento operacional podem ser purgados de forma seletiva.
+
+O restaurante é o host `{restaurantSlug}.{domínio}`. O nome do domínio continua pendente.
+
+A retenção conserva o conjunto maior entre os últimos 90 dias e as últimas 10 versões. A versão ativa, a versão referenciada e a versão anterior para rollback permanecem mesmo fora dessa janela. Versão incompleta e sem referência só sai depois de uma limpeza que confirme a ausência de referência.
+
+A especificação técnica não calcula EXPIRED só com o relógio do aparelho. Usa uma referência de tempo da resposta do servidor e o tempo decorrido no aparelho. Os ADRs 0009, 0010 e 0014 permanecem.
+
+Esta decisão não aprova o R2 como biblioteca de mídia. O [ADR 0007](../architecture/decisions/0007-midia-r2-cdn.md) continua proposta.
+
+Registro: [ADR 0015](../architecture/decisions/0015-armazenamento-distribuicao.md).
 
 ## Disponibilidade
 
@@ -103,12 +189,10 @@ Todos os produtos são importados, inclusive os indisponíveis na origem. Indisp
 
 ## O que não está confirmado
 
-- Cloudflare R2 e CDN com domínio próprio.
+- Cloudflare R2 como armazenamento permanente de imagens e vídeos. O bucket dos documentos públicos está aceito e não cobre a biblioteca de mídia.
+- O nome do domínio. A forma `{restaurantSlug}.{domínio}` está aceita.
 - React, TypeScript, Vite e React Router como recomendação inicial de frontend. O app atual já usa essa stack.
 - Quality gates, GitHub Actions, preview na Vercel e separação dev, homologação e produção.
-- Política `intervalo efetivo = max(15 minutos, TTL informado)`.
 - Baixar imagem da origem e usar CRC-32.
-- Política de dado operacional desatualizado.
-- Apresentação das várias ofertas no admin.
 
 A lista completa do que ainda falta decidir está em [open-decisions.md](open-decisions.md).

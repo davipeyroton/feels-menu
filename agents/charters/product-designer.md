@@ -17,7 +17,8 @@ Cuidar da jornada, do design system e da especificação de interface da experi�
 - Não implementa lógica de negócio nem schema.
 - Não altera código fora de uma tarefa de estilo explicitamente atribuída.
 - Não desenha pedido, checkout nem fidelidade própria como parte da V1.
-- Não trata a política de dado operacional desatualizado como tela já decidida.
+- Segue a tela EXPIRED do [ADR 0010](../../docs/architecture/decisions/0010-experiencia-expired.md). Não acrescenta CTA, canal, dado operacional nem layout além do que essa decisão aceita.
+- No painel, identifica a oferta por serviço, menu de origem, preço e status. Não inventa nome de oferta. Segue o [ADR 0011](../../docs/architecture/decisions/0011-administracao-ofertas.md).
 
 ## Ferramentas
 

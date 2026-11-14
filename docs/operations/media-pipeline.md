@@ -1,6 +1,6 @@
 # Pipeline de mídia
 
-Fonte: [Blueprint v0.4](../product/blueprint-v0.4.md), seções 6.5, 7.5 e 8.4. O armazenamento em R2 com CDN própria é recomendação ([ADR 0007](../architecture/decisions/0007-midia-r2-cdn.md)), não decisão confirmada.
+Fonte: [Blueprint v0.4](../product/blueprint-v0.4.md), seções 6.5, 7.5 e 8.4. O armazenamento em R2 com CDN própria é recomendação ([ADR 0007](../architecture/decisions/0007-midia-r2-cdn.md)), não decisão confirmada. O [ADR 0015](../architecture/decisions/0015-armazenamento-distribuicao.md) aceita um bucket R2 só para os documentos públicos e não aprova esta biblioteca.
 
 ## O que já está em operação
 

@@ -66,13 +66,13 @@ Não há, no GET completo, um evento separado de remoção. Sumir do documento �
 |---|---|---|
 | URL do merchant, apiKey se houver, `id` | `IntegrationConnection` | Segredo no cofre |
 | `basicInfo` | Referência do restaurante | Não substitui a marca configurada no Feels |
-| Menu | `SourceMenu` recomendado | Não vira `ExperienceMenu` |
-| Service | `SourceService` recomendado | Importar todos, decisão confirmada |
-| Category | `SourceCategory` | Preservar mesmo sem uso no cardápio |
+| Menu | `SourceMenu` | Aceito na C5. Distinto de `ExperienceMenu` |
+| Service | `SourceService` | Aceito na C5. Ligado por `menuId`. Id próprio não documentado |
+| Category | `SourceCategory` | Pertence a `SourceMenu` |
 | Item | `SourceProduct` | Identidade do produto |
 | ItemOffer | `SourceOffer` | Preço e disponibilidade da oferta |
 | OptionGroup / Option | `SourceOptionGroup` / `SourceOption` | Suporte visual na V1 ainda pendente |
-| Availability | `SourceAvailability` recomendado | Uso por horário é Evolução 2 |
+| Availability | `SourceAvailability` | Aceito na C5. Janela de horário da categoria ou da oferta. A V1 pública não usa o horário |
 | Image | `MediaAsset` com origem `source` | Download é recomendação técnica |
 
 `ExperienceMenu` é cardápio criado no Feels. Não é o Menu do protocolo.

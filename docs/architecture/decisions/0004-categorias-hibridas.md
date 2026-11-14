@@ -12,6 +12,6 @@ Um produto aparece em apenas uma categoria dentro de cada cardápio de experiên
 
 ## Em aberto
 
-O que fazer quando a origem renomeia ou remove uma categoria. Continua pendente em [open-decisions.md](../../product/open-decisions.md).
+O efeito de renomear ou remover a categoria de origem está aceito no [ADR 0013](0013-categorias-independentes.md). A origem da categoria de experiência é derivada pelos produtos. Não há `source_category_id`. Esta decisão não altera a regra de um produto por categoria.
 
 A conciliação com várias ofertas do mesmo item foi aceita na C4: uma oferta por produto em cada cardápio. Ver [ADR 0005](0005-experience-product-source-offer.md).

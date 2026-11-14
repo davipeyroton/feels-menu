@@ -12,7 +12,7 @@ A V1 não mede conversão. Analytics, recompra e testes A/B ficam nas evoluçõe
 
 Conectar restaurantes ao OpenDelivery e transformar os dados importados em experiências digitais personalizáveis.
 
-O resultado para o cliente final é um showcase visual, mobile-first, sem pedido e sem checkout. O link principal abre o cardápio padrão em `/`. O hub fica em `/hub`. Um cardápio específico abre em `/:restaurantSlug/:menuSlug`. O código atual ainda não usa essas rotas.
+O resultado para o cliente final é um showcase visual, mobile-first, sem pedido e sem checkout. O restaurante é o host `{restaurantSlug}.{domínio}`. O link principal abre o cardápio padrão em `/`. O hub fica em `/hub`. Um cardápio específico abre em `/{menuSlug}`. O nome do domínio continua pendente. O código atual ainda não usa essas rotas. Ver [ADR 0015](../architecture/decisions/0015-armazenamento-distribuicao.md).
 
 O piloto é o Studios Coffee. A integração real depende de validação com o fornecedor. Essa validação não está feita.
 

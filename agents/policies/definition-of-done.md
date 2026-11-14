@@ -11,6 +11,6 @@ Uma tarefa está pronta quando todos os itens abaixo são verdadeiros.
 7. Se a mudança toca vídeo, feed ou reels, a comparação com `docs/performance/` foi feita ou declarada como não executada.
 8. O pull request permanece em rascunho até o Davi declarar prontidão. O agente não marca revisão humana no lugar dele.
 
-Nesta etapa de documentação, pronto significa: só arquivos `.md`, links internos válidos, C2, C3 e C4 registradas como aceitas, a política de dado operacional desatualizado ainda pendente, e `git status` sem código de aplicação.
+Nesta etapa de documentação, pronto significa: só arquivos `.md`, links internos válidos, e a freshness operacional, a experiência pública de EXPIRED e a infraestrutura dos documentos públicos registradas como aceitas. Layout pixel a pixel, a frequência de releitura e o nome do domínio continuam fora.
 
 Ausência de CI não autoriza declarar quality gate verde. O gate ainda não existe.

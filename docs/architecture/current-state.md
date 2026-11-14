@@ -76,5 +76,5 @@ Não há CI, lint, typecheck no build nem teste de componente.
 - `DiscoverPage.tsx` e `App.css` concentram a experiência. Quase toda mudança visual passa por eles.
 - Marca, título e textos estão fixos em `index.html` e `pt-BR.ts`.
 - Favoritos usam uma chave única de `localStorage`.
-- O domínio `r2.dev` em `.env.production` é o endereço público atual do bucket. Domínio próprio de CDN é recomendação, não decisão.
+- O domínio `r2.dev` em `.env.production` é o endereço público atual do bucket de mídia. O bucket exclusivo dos documentos públicos está aceito no [ADR 0015](decisions/0015-armazenamento-distribuicao.md) e ainda não existe. O [ADR 0007](decisions/0007-midia-r2-cdn.md) continua proposta.
 - Não há observabilidade de produção além do diagnóstico local de vídeo, ligado por query string.

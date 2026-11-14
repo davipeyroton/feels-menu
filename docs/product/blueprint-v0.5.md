@@ -15,10 +15,17 @@
 Aprovado pelo fundador em 13 de novembro de 2026:
 
 - **C2.** O link principal abre o cardápio padrão. Rotas conceituais: `/` cardápio padrão, `/hub` hub, `/:restaurantSlug/:menuSlug` cardápio específico. O código atual ainda não faz isso.
-- **C3.** Publicação híbrida: camada de experiência versionada e camada operacional atualizada pela sincronização. A política para sync com falha ou dado operacional desatualizado continua pendente.
+- **C3.** Publicação híbrida: camada de experiência versionada e camada operacional atualizada pela sincronização.
+- **Freshness.** Aprovada pelo fundador em 13 de novembro de 2026, depois de C2, C3 e C4. O último snapshot operacional válido vale até `2 × effective_sync_interval`, com `effective_sync_interval = max(15 minutos, TTL informado)`. TTL acima de uma hora não cria outro teto. Detalhe no [ADR 0009](../architecture/decisions/0009-operational-freshness.md).
+- **Experiência EXPIRED.** Aprovada pelo fundador em 13 de novembro de 2026. Nas rotas de cardápio, o estado EXPIRED substitui o cardápio por nome, logotipo e a mensagem de indisponibilidade temporária, com o botão "Tentar de novo". Detalhe no [ADR 0010](../architecture/decisions/0010-experiencia-expired.md).
 - **C4.** Um produto aparece uma vez por cardápio. Várias ofertas podem existir na origem; o cardápio escolhe uma. Unicidade: `UNIQUE (experience_menu_id, source_product_id)`. `ExperienceProduct` referencia `source_offer_id`.
+- **Ofertas no painel.** Aprovada pelo fundador em 13 de novembro de 2026. Uma oferta por aparição, escolha explícita quando há várias, sincronização sem trocar a oferta escolhida. Detalhe no [ADR 0011](../architecture/decisions/0011-administracao-ofertas.md).
+- **C5.** Aprovada pelo fundador em 13 de novembro de 2026. `SourceMenu`, `SourceService` e `SourceAvailability` representam menu, serviço e janelas de horário da origem. O horário não comanda a experiência pública da V1. Detalhe no [ADR 0012](../architecture/decisions/0012-menu-servico-disponibilidade.md).
+- **Categorias independentes.** Aprovada pelo fundador em 13 de novembro de 2026. A origem da categoria de experiência é derivada pelos produtos. Não há `source_category_id`. Detalhe no [ADR 0013](../architecture/decisions/0013-categorias-independentes.md).
+- **Entrega por CDN.** Aprovada pelo fundador em 14 de novembro de 2026. A navegação pública lê quatro documentos na CDN e não consulta o banco. Detalhe no [ADR 0014](../architecture/decisions/0014-entrega-cdn.md).
+- **Armazenamento e distribuição.** Aprovada pelo fundador em 14 de novembro de 2026. Bucket R2 exclusivo, CDN Cloudflare, subdomínio por restaurante e retenção de 90 dias ou 10 versões. O nome do domínio continua pendente. O ADR 0007 continua proposta. Detalhe no [ADR 0015](../architecture/decisions/0015-armazenamento-distribuicao.md).
 
-O restante deste documento reproduz a v0.4, com essas três decisões no lugar das recomendações que elas substituíram.
+O restante deste documento reproduz a v0.4, com as decisões desta lista no lugar das recomendações que elas substituíram.
 
 ---
 
@@ -156,11 +163,11 @@ Cada restaurante terá um link principal.
 
 Esse link abrirá diretamente o cardápio definido como padrão pelo restaurante.
 
-Rotas conceituais aprovadas:
+Rotas no host `{restaurantSlug}.{domínio}`, aceitas no [ADR 0015](../architecture/decisions/0015-armazenamento-distribuicao.md). O nome do domínio continua pendente.
 
 - `/` — cardápio padrão do restaurante.
 - `/hub` — hub institucional e de descoberta.
-- `/:restaurantSlug/:menuSlug` — acesso direto a um cardápio específico.
+- `/{menuSlug}` — acesso direto a um cardápio específico.
 
 O hub continua no produto. Ele não é a página inicial obrigatória do link principal.
 
@@ -186,13 +193,15 @@ O modelo deverá aceitar:
 
 - Categorias importadas do sistema de origem.
 - Categorias criadas diretamente no Feels.
-- Categorias de experiência vinculadas opcionalmente às categorias de origem.
+- Categorias de experiência independentes da origem. A origem mostrada no painel é derivada pelos produtos.
 
 As categorias de origem devem permanecer preservadas para fins de sincronização e rastreabilidade.
 
 As categorias próprias devem permitir liberdade de organização comercial.
 
 Um produto poderá pertencer a apenas uma categoria dentro de cada cardápio de experiência.
+
+**Decisão aceita (categorias independentes, fundador, 13 de novembro de 2026):** `ExperienceCategory` não guarda `source_category_id`. A origem é derivada por `ExperienceCategory → ExperienceProduct → SourceOffer → SourceCategory`. O nome comercial não acompanha a renomeação da origem. A sincronização não altera nome, ordem nem composição. Origem arquivada gera aviso calculado no painel e não remove a categoria nem os produtos. Detalhe no [ADR 0013](../architecture/decisions/0013-categorias-independentes.md).
 
 ## 4.4 Disponibilidade
 
@@ -251,6 +260,11 @@ Entidades principais:
 - SourceOffer
 - SourceOptionGroup
 - SourceOption
+- SourceMenu
+- SourceService
+- SourceAvailability
+
+`SourceMenu`, `SourceService` e `SourceAvailability` estão aceitos na C5. Ver [ADR 0012](../architecture/decisions/0012-menu-servico-disponibilidade.md). `AuditEvent` continua recomendação.
 
 A integração deve utilizar uma camada de adaptação para evitar que o restante do sistema dependa diretamente do formato do OpenDelivery.
 
@@ -369,7 +383,19 @@ Campos sugeridos:
 
 ### SourceCategory
 
-Representa uma categoria recebida do sistema externo.
+Representa uma categoria recebida do sistema externo. Pertence a um `SourceMenu`.
+
+### SourceMenu
+
+Menu recebido da origem, distinto do cardápio criado no Feels. Campos documentados: `id`, `name` e `externalCode`.
+
+### SourceService
+
+Serviço recebido da origem. Tipos documentados: `DELIVERY` e `TAKEOUT`. Aponta um menu por `menuId`. Mais de um serviço pode apontar o mesmo menu. A especificação consultada não documenta id próprio de serviço.
+
+### SourceAvailability
+
+Janelas de datas e horários da categoria ou da oferta. O status `AVAILABLE` ou `UNAVAILABLE` permanece no registro dono. As janelas não comandam a experiência pública da V1.
 
 ### SourceProduct
 
@@ -384,6 +410,8 @@ Representa uma oferta comercial do produto, incluindo informações que podem va
 O Feels importa várias ofertas do mesmo produto. Cada cardápio de experiência escolhe uma única oferta para representá-lo. As demais permanecem no catálogo de origem.
 
 Exemplo: Cappuccino na oferta Delivery a R$ 15 e na oferta Takeout a R$ 13. As duas ficam na origem. Um cardápio só seleciona uma delas para esse produto.
+
+**Decisão aceita (administração de ofertas, fundador, 13 de novembro de 2026):** com uma oferta, o sistema pode selecioná-la e persiste `source_offer_id`. Com várias, o administrador escolhe antes de incluir o produto naquele cardápio. A sincronização não troca essa escolha e não acrescenta oferta nova a cardápio nenhum. Oferta escolhida indisponível ou arquivada oculta o produto naquele cardápio, sem cair para outra oferta. O preço público é o `value` da oferta selecionada. `originalValue` fica armazenado e não implica preço riscado. O painel identifica a oferta por serviço, menu de origem, preço e status, quando a origem os enviar, e não inventa um nome. Detalhe no [ADR 0011](../architecture/decisions/0011-administracao-ofertas.md). Essa decisão não aprova os nomes sozinha. A C5 os aceita no [ADR 0012](../architecture/decisions/0012-menu-servico-disponibilidade.md).
 
 ### SourceOptionGroup e SourceOption
 
@@ -421,18 +449,16 @@ Campos sugeridos:
 
 ### ExperienceCategory
 
-Representa uma categoria dentro de um cardápio.
+Categoria comercial dentro de um cardápio. Independente da categoria de origem.
 
-Pode ser criada no Feels ou vinculada a uma categoria de origem.
-
-Campos sugeridos:
+Campos:
 
 - id
 - experience_menu_id
-- source_category_id (nullable)
 - name
 - position
-- origin_type
+
+Não há `source_category_id` nem relação N:N. A origem é derivada pelos produtos colocados. Ver [ADR 0013](../architecture/decisions/0013-categorias-independentes.md).
 
 ### ExperienceProduct
 
@@ -553,6 +579,8 @@ A implementação final deverá considerar também os limites de requisição de
 Quando um produto ou oferta deixar de existir em um snapshot completo da origem, o Feels deverá arquivá-lo.
 
 Não deve excluir definitivamente o registro.
+
+**Decisão aceita (oferta escolhida, fundador, 13 de novembro de 2026):** a oferta arquivada ou indisponível oculta o produto na experiência pública daquele cardápio. A sincronização não aponta outra oferta. O painel diferencia os dois estados. No arquivamento, o administrador pode escolher outra oferta ou retirar o produto daquele cardápio. O registro da oferta original permanece. Detalhe no [ADR 0011](../architecture/decisions/0011-administracao-ofertas.md).
 
 Isso preserva:
 
@@ -684,7 +712,13 @@ Uma atualização de preço ou disponibilidade não exige republicação manual.
 - Produtos removidos da origem são arquivados.
 - A disponibilidade programada por horário continua fora da V1.
 
-A política para sincronização com falha ou dado operacional desatualizado não está decidida. Alternativas e uma recomendação para aprovação futura estão em [operational-freshness.md](../operations/operational-freshness.md).
+**Decisão aceita (freshness, fundador, 13 de novembro de 2026):** o último snapshot operacional completo e válido pode ser usado até `max_staleness = 2 × effective_sync_interval`, com `effective_sync_interval = max(15 minutos, TTL informado pelo fornecedor)`. TTL acima de uma hora não cria outro teto. A idade conta da última sincronização bem-sucedida e válida, não da última tentativa e não do `lastUpdate` da origem. Dentro do prazo, a experiência pública mostra o cardápio nos estados FRESH e STALE. Fora do prazo, o estado é EXPIRED e o cardápio não é apresentado como atual. Detalhe em [operational-freshness.md](../operations/operational-freshness.md) e no [ADR 0009](../architecture/decisions/0009-operational-freshness.md).
+
+**Decisão aceita (experiência EXPIRED, fundador, 13 de novembro de 2026):** no host do restaurante, em `/` e `/{menuSlug}`, EXPIRED substitui o cardápio. A tela mostra nome, logotipo, o título "Cardápio temporariamente indisponível", o texto "Não conseguimos confirmar os preços e a disponibilidade agora. Volte daqui a pouco." e o botão "Tentar de novo". A mensagem não sugere restaurante fechado. Desktop e mobile compartilham estado, mensagem e ação. A troca é imediata, inclusive durante um reel. Com a página visível, FRESH ou STALE restauram o cardápio. `/hub` não é oferecido como alternativa. Detalhe no [ADR 0010](../architecture/decisions/0010-experiencia-expired.md). O host está no [ADR 0015](../architecture/decisions/0015-armazenamento-distribuicao.md).
+
+**Decisão aceita (entrega por CDN, fundador, 14 de novembro de 2026):** a navegação pública não consulta o banco. A CDN distribui identidade, versão imutável, ponteiro ativo e documento operacional. O ponteiro muda por último. Em EXPIRED, o aplicativo não baixa a versão do cardápio. Cache da versão é imutável. Ponteiro e documento operacional ficam em 60 segundos. Detalhe no [ADR 0014](../architecture/decisions/0014-entrega-cdn.md).
+
+**Decisão aceita (armazenamento e distribuição, fundador, 14 de novembro de 2026):** os quatro documentos ficam num bucket exclusivo do Cloudflare R2 e saem pela CDN da Cloudflare, num subdomínio separado da navegação. A versão tem cache longo. Ponteiro e documento operacional ficam em 60 segundos. A identidade tem cache curto. Identidade, ponteiro e documento operacional podem ser purgados de forma seletiva. O host do restaurante é `{restaurantSlug}.{domínio}`: `/` abre o cardápio padrão, `/{menuSlug}` abre um cardápio específico e `/hub` abre o hub. O nome do domínio continua pendente. A retenção conserva o conjunto maior entre 90 dias e 10 versões, e também a versão ativa, a referenciada e a anterior. EXPIRED não usa só o relógio do aparelho. Esta decisão não aprova a biblioteca de mídia. Detalhe no [ADR 0015](../architecture/decisions/0015-armazenamento-distribuicao.md).
 
 ---
 
@@ -704,9 +738,10 @@ A experiência deverá:
 - Exibir imagens e vídeos otimizados.
 - Ocultar produtos indisponíveis.
 - Respeitar a organização e a ordenação configuradas no cardápio.
-- Abrir diretamente o cardápio padrão pelo link principal, na rota conceitual `/`.
-- Manter o hub em `/hub`, sem obrigar o link principal a passar por ele.
-- Permitir acesso direto por `/:restaurantSlug/:menuSlug`.
+- Abrir diretamente o cardápio padrão pelo link principal, em `{restaurantSlug}.{domínio}/`. O nome do domínio continua pendente.
+- Manter o hub em `{restaurantSlug}.{domínio}/hub`, sem obrigar o link principal a passar por ele.
+- Permitir acesso direto por `{restaurantSlug}.{domínio}/{menuSlug}`.
+- Em EXPIRED, substituir o cardápio em `/` e `/{menuSlug}` do host do restaurante pela indisponibilidade temporária aceita no [ADR 0010](../architecture/decisions/0010-experiencia-expired.md).
 
 O Feels deverá preservar os componentes e funcionalidades da experiência atual sempre que forem compatíveis com a nova arquitetura multi-restaurante.
 
@@ -921,13 +956,12 @@ As decisões finais de produto foram consolidadas. Os itens abaixo ainda precisa
 | Limites e TTL | Confirmar limites reais, TTL e comportamento de atualização do fornecedor | Alta |
 | Sandbox | Confirmar disponibilidade de ambiente de testes e dados de exemplo | Alta |
 | Identificadores | Validar estabilidade dos IDs de produtos, ofertas e categorias | Alta |
+| Identidade do serviço | Definir a chave persistente quando a origem não enviar um id próprio de serviço. Chave composta depende dessa validação | Alta |
+| Janelas de disponibilidade | Confirmar os campos reais e a forma de reconciliar e arquivar as janelas | Alta |
 | Webhook | Confirmar disponibilidade e necessidade de merchantUpdate | Média |
-| Múltiplas ofertas | Definir como apresentar ofertas distintas do mesmo item ao usuário administrativo. A regra de seleção no cardápio já está aceita (C4) | Alta |
 | Opções de produtos | Definir o nível de suporte visual a grupos e opções na V1 | Média |
-| Categorias híbridas | Definir regras de sincronização quando uma categoria de origem for renomeada ou removida | Média |
-| Produto em cardápios | Definir o comportamento quando uma oferta for arquivada na origem | Média |
-| Dado operacional desatualizado | Definir o comportamento quando a sincronização falhar ou os dados operacionais estiverem desatualizados. A publicação híbrida já está aceita (C3) | Média |
-| CTA público | Definir quais ações estarão disponíveis no showcase além da navegação pelo cardápio | Média |
+| CTA público | Definir quais ações estarão disponíveis no showcase além da navegação pelo cardápio. O botão "Tentar de novo" da tela EXPIRED não fecha esta decisão | Média |
+| Nome do domínio | Escolher o domínio. A forma `{restaurantSlug}.{domínio}` e o subdomínio separado dos documentos estão aceitos no [ADR 0015](../architecture/decisions/0015-armazenamento-distribuicao.md) | Média |
 | Migração | Definir como o conteúdo atual será migrado para o modelo multi-restaurante | Alta |
 
 ## 15.1 Questões que dependem do fornecedor
@@ -941,6 +975,8 @@ Antes de iniciar a integração real, obter respostas formais para:
 - Qual é o TTL aplicado?
 - Existem limites de requisição?
 - Os identificadores externos são estáveis?
+- O serviço traz identificador próprio ou a identidade depende de outra chave?
+- Quais campos identificam uma janela de disponibilidade?
 - As imagens possuem URLs permanentes ou temporárias?
 - Existe ambiente sandbox?
 - O fornecedor suporta notificações de atualização?
