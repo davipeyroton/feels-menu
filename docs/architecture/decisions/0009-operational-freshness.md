@@ -28,4 +28,4 @@ O [ADR 0006](0006-publicacao-versionada.md) separa a versão da experiência dos
 
 ## Fora desta decisão
 
-A experiência pública da indisponibilidade temporária está aceita no [ADR 0010](0010-experiencia-expired.md). Esta decisão não a redefine. A entrega por CDN está no [ADR 0014](0014-entrega-cdn.md). A referência de tempo do servidor, no [ADR 0015](0015-armazenamento-distribuicao.md), não altera esta fórmula. O TTL praticado pelo fornecedor do Studios Coffee continua fora.
+A experiência pública da indisponibilidade temporária está aceita no [ADR 0010](0010-experiencia-expired.md). Esta decisão não a redefine. A entrega por CDN está no [ADR 0014](0014-entrega-cdn.md). A referência de tempo do servidor está no [ADR 0015](0015-armazenamento-distribuicao.md). O cálculo com `Date` e `Age` está no [ADR 0016](0016-consumo-documentos-publicos.md). Nenhum dos dois altera esta fórmula. O TTL praticado pelo fornecedor do Studios Coffee continua fora.

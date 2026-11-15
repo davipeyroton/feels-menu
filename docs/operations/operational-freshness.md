@@ -73,11 +73,11 @@ Nas rotas `/` e `/{menuSlug}` do host do restaurante, o cardápio sai por inteir
 
 Não há código de erro, detalhe de sincronização, endereço, horário, Wi-Fi, avaliação, telefone, WhatsApp ou link externo. `/hub` não é oferecido como alternativa. Desktop e mobile compartilham estado, mensagem e ação.
 
-A troca para EXPIRED substitui na hora o cardápio aberto, inclusive um reel. Com a página visível, FRESH ou STALE restauram o cardápio. Não há notificação nem recuperação em segundo plano. A frequência da releitura fica para a especificação técnica e respeita os limites do fornecedor.
+A troca para EXPIRED substitui na hora o cardápio aberto, inclusive um reel. Com a página visível, FRESH ou STALE restauram o cardápio. Não há notificação nem recuperação em segundo plano. A releitura está no [ADR 0016](../architecture/decisions/0016-consumo-documentos-publicos.md).
 
 ## O que esta decisão não fecha
 
-O transporte da versão publicada está aceito no [ADR 0014](../architecture/decisions/0014-entrega-cdn.md). O armazenamento e a CDN estão no [ADR 0015](../architecture/decisions/0015-armazenamento-distribuicao.md). O cálculo de EXPIRED usa uma referência de tempo da resposta do servidor e o tempo decorrido no aparelho. Não usa só o relógio local. A fórmula desta página permanece. O TTL real do fornecedor do Studios Coffee continua desconhecido. A frequência de releitura do aplicativo e o conteúdo de `/hub` durante EXPIRED também ficam fora. Os 60 segundos do documento operacional são cache da CDN, não essa frequência.
+O transporte da versão publicada está aceito no [ADR 0014](../architecture/decisions/0014-entrega-cdn.md). O armazenamento e a CDN estão no [ADR 0015](../architecture/decisions/0015-armazenamento-distribuicao.md). A releitura, o cálculo com `Date` e `Age` e o hub durante EXPIRED estão no [ADR 0016](../architecture/decisions/0016-consumo-documentos-publicos.md). A fórmula desta página permanece. O TTL real do fornecedor do Studios Coffee continua desconhecido. Os 60 segundos do documento operacional são cache da CDN, não o ciclo de consulta do aplicativo.
 
 ## Contexto anterior
 

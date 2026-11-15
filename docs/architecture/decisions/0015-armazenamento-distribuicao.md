@@ -63,4 +63,4 @@ A fórmula `max_staleness = 2 × effective_sync_interval`, a tela do ADR 0010 e 
 
 ## Fora desta decisão
 
-O nome do domínio e o nome do subdomínio dos documentos. O plano da zona Cloudflare. A frequência de releitura do aplicativo. O campo ou cabeçalho concreto da referência de tempo, dentro da direção desta decisão. O conteúdo de `/hub` durante EXPIRED. A biblioteca de mídia. O [ADR 0007](0007-midia-r2-cdn.md).
+O nome do domínio e o nome do subdomínio dos documentos. O plano da zona Cloudflare. A frequência de releitura, os cabeçalhos `Date` e `Age` e o conteúdo de `/hub` durante EXPIRED estão no [ADR 0016](0016-consumo-documentos-publicos.md). A biblioteca de mídia. O [ADR 0007](0007-midia-r2-cdn.md).

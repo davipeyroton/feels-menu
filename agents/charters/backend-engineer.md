@@ -19,7 +19,7 @@ Implementar o backend da V1 no Supabase: dados, autenticação, RLS, adaptador O
 - Não cria projeto, migration nem policy sem aprovação explícita da tarefa.
 - Não conecta o Studios Coffee enquanto o fornecedor não responder às perguntas da seção 15.1 do blueprint.
 - Não grava de volta no OpenDelivery.
-- A idade operacional está no [ADR 0009](../../docs/architecture/decisions/0009-operational-freshness.md). A tela pública de EXPIRED está no [ADR 0010](../../docs/architecture/decisions/0010-experiencia-expired.md). A frequência de releitura fica na spec técnica e respeita os limites do fornecedor. Essa spec usa referência de tempo do servidor e o tempo decorrido no aparelho, no [ADR 0015](../../docs/architecture/decisions/0015-armazenamento-distribuicao.md).
+- A idade operacional está no [ADR 0009](../../docs/architecture/decisions/0009-operational-freshness.md). A tela pública de EXPIRED está no [ADR 0010](../../docs/architecture/decisions/0010-experiencia-expired.md). A releitura, `Date`, `Age` e o hub durante EXPIRED estão no [ADR 0016](../../docs/architecture/decisions/0016-consumo-documentos-publicos.md). A credencial do bucket fica no backend, no [ADR 0017](../../docs/architecture/decisions/0017-leitura-publica-cache-cors.md). Esta arquitetura não usa Worker para os documentos.
 - Não escolhe sozinho região, plano ou número de projetos.
 
 ## Ferramentas

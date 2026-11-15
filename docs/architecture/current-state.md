@@ -18,7 +18,7 @@ Não há `.nvmrc` nem `engines`.
 ## Estrutura
 
 - `src/App.tsx`: `/` renderiza `DiscoverPage`; `/discover` redireciona; o restante volta para `/`.
-- `src/pages/DiscoverPage.tsx`: hub, reels, feed, perfil, pager e mídia no mesmo módulo.
+- `src/pages/DiscoverPage.tsx`: hub, reels e perfil no mesmo módulo. O topo dos reels mostra a categoria em destaque e a seguinte; o filtro real continua separado e é o que limita a sequência. O destino exclusivo de feed foi removido; `?view=feed` abre os reels em Todos.
 - `src/App.css`: estilos da experiência, num único arquivo.
 - `src/components/`, `src/hooks/`, `src/media/`, `src/lib/`, `src/motion/`, `src/panels/`, `src/i18n/pt-BR.ts`, `src/theme.tsx`, `src/favorites/`, `src/loyalty/`.
 - `data/menu-snapshot.json`: dados do cardápio embutidos no build por `src/data/menu.ts`.
@@ -35,7 +35,7 @@ Hub (vídeo, poster, logo, Wi-Fi, link de avaliação no Google), categorias e p
 
 ## Funcionalidades presentes
 
-- Hub, reels, feed, perfil, favoritos locais, tema e selo vegano por lista fixa. **EXISTE** para um restaurante.
+- Hub, reels com filtro de categoria, perfil, favoritos locais, tema e selo vegano por lista fixa. **EXISTE** para um restaurante. A grade e a timeline exclusivas de `view=feed` não são mais um destino.
 - Fidelidade e cashback. **PARCIAL.** `src/loyalty/guestEnrollment.ts` devolve o próprio cadastro, aceita qualquer código de cinco dígitos e não gera passe. A interface aparece no hub e no perfil. A remoção fica para a migração da experiência pública. O código não muda agora.
 - Multi-tenant, usuários, OpenDelivery, vários cardápios, biblioteca e painel. **A CONSTRUIR.**
 - Analytics, A/B, fidelidade de terceiros e cardápio por horário. **PROPOSTA FUTURA.**

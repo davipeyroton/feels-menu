@@ -22,6 +22,8 @@ Nada nesta página é requisito confirmado.
 | Categorias independentes | Origem derivada pelos produtos. Sem `source_category_id` e sem relação N:N | Fundador, 13 de novembro de 2026 | [ADR 0013](../architecture/decisions/0013-categorias-independentes.md) |
 | Entrega por CDN | Quatro documentos. Navegação sem consulta ao banco. Ponteiro por último. Cache de 60 segundos no ponteiro e no documento operacional | Fundador, 14 de novembro de 2026 | [ADR 0014](../architecture/decisions/0014-entrega-cdn.md) |
 | Documentos públicos | Bucket R2 exclusivo, CDN Cloudflare, host por restaurante e retenção de 90 dias ou 10 versões. O nome do domínio continua pendente | Fundador, 14 de novembro de 2026 | [ADR 0015](../architecture/decisions/0015-armazenamento-distribuicao.md) |
+| Consumo dos documentos | Releitura visível a cada 60 segundos, idade por `Date` e `Age`, hub em EXPIRED só com nome e logotipo | Fundador, 14 de novembro de 2026 | [ADR 0016](../architecture/decisions/0016-consumo-documentos-publicos.md) |
+| Leitura, cache e CORS | Custom Domain, token só no backend, cache de 60 segundos na identidade, GET normal no botão e CORS sem `PUT` nem `DELETE` | Fundador, 14 de novembro de 2026 | [ADR 0017](../architecture/decisions/0017-leitura-publica-cache-cors.md) |
 
 ## Pendências do blueprint
 
@@ -44,7 +46,7 @@ Nada nesta página é requisito confirmado.
 
 Aceita. O histórico das alternativas 1 a 4 permanece em [operational-freshness.md](../operations/operational-freshness.md) apenas como contexto anterior à aprovação. A regra vigente é a alternativa 3, com `max_staleness = 2 × effective_sync_interval`.
 
-A experiência pública de EXPIRED está aceita no [ADR 0010](../architecture/decisions/0010-experiencia-expired.md). Isso não reabre a fórmula. A frequência de releitura e o conteúdo de `/hub` durante EXPIRED continuam fora dessa decisão. O cálculo de EXPIRED não usa só o relógio do aparelho. A referência de tempo do servidor está no [ADR 0015](../architecture/decisions/0015-armazenamento-distribuicao.md).
+A experiência pública de EXPIRED está aceita no [ADR 0010](../architecture/decisions/0010-experiencia-expired.md). Isso não reabre a fórmula. A releitura, a referência `Date` e `Age` e o hub durante EXPIRED estão no [ADR 0016](../architecture/decisions/0016-consumo-documentos-publicos.md).
 
 ## Perguntas formais ao fornecedor
 
@@ -81,8 +83,8 @@ Antes da integração real:
 
 | Tema | Recomendação atual | Status |
 |---|---|---|
-| Releitura da tela EXPIRED | Frequência com que o aplicativo relê o documento operacional. É distinta do cache de 60 segundos da CDN. A passagem usa referência de tempo do servidor e tempo decorrido no aparelho, no [ADR 0015](../architecture/decisions/0015-armazenamento-distribuicao.md). O campo ou cabeçalho concreto continua nesta spec | PENDENTE |
-| Hub durante EXPIRED | Conteúdo de `/hub` enquanto o cardápio está EXPIRED. A rota continua independente e não é alternativa automática | PENDENTE |
+| Prova de Date, Age e CORS | Os nove testes do [ADR 0017](../architecture/decisions/0017-leitura-publica-cache-cors.md) antes de implementar o cálculo de freshness. A fórmula do ADR 0016 não muda se a prova falhar | PENDENTE de execução |
+| Conteúdo do hub saudável | O que `/hub` mostra quando o cardápio está FRESH ou STALE. Durante EXPIRED, a rota mostra só nome e logotipo, no [ADR 0016](../architecture/decisions/0016-consumo-documentos-publicos.md) | PENDENTE |
 | Runtime do worker de sync e mídia | Validar limite de Edge Functions antes de escolher worker externo | PENDENTE |
 | Armazenamento de mídia | Manter R2 | PENDENTE; recomendado |
 | Estrutura do repositório | Monorepo com apps e pacotes | PENDENTE |

@@ -26,6 +26,8 @@ Estas decisões são requisitos. Recomendação que não está nesta página nã
 | Categorias independentes | Origem da categoria de experiência derivada pelos produtos, sem `source_category_id` | Fundador, 13 de novembro de 2026 |
 | Entrega por CDN | Quatro documentos públicos. A navegação não consulta o banco. A CDN não altera preço nem freshness | Fundador, 14 de novembro de 2026 |
 | Documentos públicos | Bucket R2 exclusivo, CDN Cloudflare, subdomínio por restaurante e retenção de 90 dias ou 10 versões | Fundador, 14 de novembro de 2026 |
+| Consumo dos documentos | Releitura com a página visível, idade por `Date` e `Age`, hub só com nome e logotipo em EXPIRED | Fundador, 14 de novembro de 2026 |
+| Leitura, cache e CORS | Custom Domain sem `r2.dev`, token só no backend, cache de 60 segundos na identidade e GET normal no botão | Fundador, 14 de novembro de 2026 |
 
 ## Link público (C2)
 
@@ -151,7 +153,7 @@ Aprovada pelo fundador em 14 de novembro de 2026. Não altera a publicação hí
 
 A navegação pública lê quatro documentos: `identity.json`, `versions/{versionId}.json`, `active.json` e `operational.json`. O Supabase continua fonte da verdade. A CDN distribui. O ponteiro ativo muda por último, depois da versão conferida. Falha de publicação mantém a versão anterior.
 
-O aplicativo lê o documento operacional antes da versão. Em EXPIRED, não baixa o cardápio. A passagem a EXPIRED ocorre no instante em que o prazo acaba. A recuperação depende de nova leitura operacional. Cache da versão é imutável. Ponteiro e documento operacional ficam em 60 segundos. Esses 60 segundos não são a frequência de releitura do aplicativo.
+O aplicativo lê o documento operacional antes da versão. Em EXPIRED, não baixa o cardápio. A passagem a EXPIRED ocorre no instante em que o prazo acaba. A recuperação depende de nova leitura operacional. Cache da versão é imutável. Ponteiro e documento operacional ficam em 60 segundos na CDN. A consulta do aplicativo está no [ADR 0016](../architecture/decisions/0016-consumo-documentos-publicos.md).
 
 Se a sincronização válida no Supabase não atualizar o documento operacional, o documento anterior permanece, o painel registra a falha e a publicação é tentada de novo. A hora dessa tentativa não substitui o relógio da freshness.
 
@@ -172,6 +174,32 @@ A especificação técnica não calcula EXPIRED só com o relógio do aparelho. 
 Esta decisão não aprova o R2 como biblioteca de mídia. O [ADR 0007](../architecture/decisions/0007-midia-r2-cdn.md) continua proposta.
 
 Registro: [ADR 0015](../architecture/decisions/0015-armazenamento-distribuicao.md).
+
+## Consumo dos documentos públicos
+
+Aprovado pelo fundador em 14 de novembro de 2026. Não altera a fórmula da freshness, a tela do ADR 0010 nem o cache da CDN.
+
+`operational.json` e `active.json` são lidos na entrada, na troca de cardápio, no retorno à aba, no botão "Tentar de novo" e a cada 60 segundos com a página visível. A versão só é lida quando o ponteiro traz um `versionId` ainda não carregado. `identity.json` entra na abertura do restaurante e no retorno à aba. Não há leitura em segundo plano. A passagem local a EXPIRED não espera o próximo ciclo.
+
+A idade usa `Date + Age` e `performance.now()` desde o recebimento. O relógio de parede do aparelho não entra. Sem `Date` legível, preço e disponibilidade não aparecem. A CDN precisa expor `Date` e `Age` ao JavaScript. Essa exposição ainda não está configurada.
+
+Durante EXPIRED, `/hub` mostra nome e logotipo. Não mostra cardápio, preço, disponibilidade, reels nem feed. Não há redirecionamento para a tela de EXPIRED, e essa tela não oferece o hub.
+
+O botão consulta o endereço normal do operacional, sem parâmetro de cache. A resposta pode continuar EXPIRED por até 60 segundos. A tentativa não promete recuperação imediata.
+
+Registro: [ADR 0016](../architecture/decisions/0016-consumo-documentos-publicos.md).
+
+## Leitura pública, cache e CORS
+
+Aprovado pelo fundador em 14 de novembro de 2026. Não altera a fórmula do ADR 0016.
+
+A leitura pública dos quatro documentos usa Custom Domain. `r2.dev` fica desligado. Objeto gravado pode ser lido por quem conhece a URL, inclusive versão ainda não apontada. Escrita e exclusão ficam na API S3, com token Object Read & Write limitado a esse bucket. A credencial fica no backend. Não há Worker nesta arquitetura.
+
+`identity.json`, `active.json` e `operational.json` usam cache de 60 segundos. A identidade é purgada depois da gravação bem-sucedida. A versão permanece com cache longo. O botão "Tentar de novo" é um GET da mesma URL, com o cache padrão do navegador, sem parâmetro e sem revalidação forçada.
+
+O CORS permite `GET` e `HEAD`, expõe `Date` e `Age` e limita a origem ao domínio da aplicação e aos subdomínios de restaurante. Localhost só entra com porta específica. `PUT` e `DELETE` não vão para o navegador. Mudança de CORS é seguida de purga. A prova de `Date`, `Age` e de várias origens precede a implementação do cálculo.
+
+Registro: [ADR 0017](../architecture/decisions/0017-leitura-publica-cache-cors.md).
 
 ## Disponibilidade
 

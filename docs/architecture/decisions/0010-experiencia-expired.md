@@ -41,4 +41,4 @@ O botão "Tentar de novo" não fecha o CTA geral do showcase.
 
 ## Fora desta decisão
 
-Layout pixel a pixel. Frequência de releitura do aplicativo, distinta do cache da CDN. Conteúdo de `/hub` enquanto o cardápio está EXPIRED. A entrega por CDN está no [ADR 0014](0014-entrega-cdn.md). O host do restaurante está no [ADR 0015](0015-armazenamento-distribuicao.md) e não altera esta tela. A fórmula de idade do ADR 0009.
+Layout pixel a pixel. A frequência de releitura, a referência `Date` e `Age` e o conteúdo de `/hub` durante EXPIRED estão no [ADR 0016](0016-consumo-documentos-publicos.md). Esta decisão não os redefine. A entrega por CDN está no [ADR 0014](0014-entrega-cdn.md). O host do restaurante está no [ADR 0015](0015-armazenamento-distribuicao.md) e não altera esta tela. A fórmula de idade do ADR 0009.

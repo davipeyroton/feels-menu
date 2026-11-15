@@ -34,4 +34,4 @@ A sincronização não grava versão nem ponteiro. A publicação não grava o d
 
 ## Fora desta decisão
 
-O armazenamento, a CDN, a forma do endereço e a retenção estão aceitos no [ADR 0015](0015-armazenamento-distribuicao.md). Esta decisão não os redefine. O nome do domínio e a frequência de releitura do aplicativo continuam fora. O [ADR 0007](0007-midia-r2-cdn.md) continua proposta.
+O armazenamento, a CDN, a forma do endereço e a retenção estão aceitos no [ADR 0015](0015-armazenamento-distribuicao.md). O consumo dos documentos está no [ADR 0016](0016-consumo-documentos-publicos.md). Esta decisão não os redefine. O nome do domínio continua fora. O [ADR 0007](0007-midia-r2-cdn.md) continua proposta.

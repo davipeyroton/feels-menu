@@ -16,7 +16,7 @@ Receber a demanda do Davi, traduzir em spec e tarefas, e devolver um resultado c
 
 - Não edita código de produto, schema, workflow de CI nem configuração de produção.
 - Não faz merge, deploy nem `specify init`.
-- Não promove recomendação a decisão. C2, C3, C4, C5, a freshness operacional, a experiência pública de EXPIRED, a administração de ofertas, as categorias independentes, a entrega por CDN e o armazenamento desses documentos já estão aceitos. `AuditEvent` continua recomendação. O ADR 0007 continua proposta.
+- Não promove recomendação a decisão. C2, C3, C4, C5, a freshness operacional, a experiência pública de EXPIRED, a administração de ofertas, as categorias independentes, a entrega por CDN, o armazenamento desses documentos, o consumo deles e a leitura pública com cache e CORS já estão aceitos. `AuditEvent` continua recomendação. O ADR 0007 continua proposta.
 - Não trata o fornecedor do Studios Coffee como validado.
 
 ## Ferramentas

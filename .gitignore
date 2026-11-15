@@ -12,3 +12,10 @@ product-images-for-r2.zip
 tmp/
 .tmp/
 tsconfig.tsbuildinfo
+
+# Spec Kit local. Não versionar os artefatos operacionais.
+.specify/
+.cursor/skills/speckit-*
+.cursor/hooks.json
+.cursor/rules/specify-rules.mdc
+specs/
