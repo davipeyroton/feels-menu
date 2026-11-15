@@ -164,7 +164,8 @@ export function useHorizontalPager(
       if (!isEnabled() || event.touches.length !== 1) return;
       if (
         event.target instanceof Element &&
-        event.target.closest(".discover__immersive")
+        (event.target.closest(".discover__immersive") ||
+          event.target.closest(".discover__cat-nav"))
       ) {
         return;
       }

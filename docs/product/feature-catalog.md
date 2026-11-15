@@ -24,7 +24,7 @@ Fonte de escopo: [Blueprint v0.5](blueprint-v0.5.md). A [v0.4](blueprint-v0.4.md
 | 14 | Publicação de cardápios | PARCIAL | O deploy publica o app inteiro; não há publicação de cardápio por restaurante |
 | 15 | Link público principal | A CONSTRUIR | A URL atual não tem `restaurantSlug` |
 | 16 | Cardápio padrão | A CONSTRUIR | — |
-| 17 | Experiência pública mobile | PARCIAL | Hub, reels, feed e perfil existem para um restaurante |
+| 17 | Experiência pública mobile | PARCIAL | Hub, reels e perfil existem para um restaurante |
 
 Confirmação de produto já registrada: indisponíveis entram na importação e ficam ocultos na experiência pública; o link principal abre o cardápio padrão; cada cardápio persiste uma oferta escolhida e a sincronização não a troca; a origem da categoria de experiência é derivada pelos produtos. Ver [decisions.md](decisions.md).
 
@@ -33,8 +33,8 @@ Confirmação de produto já registrada: indisponíveis entram na importação e
 | Funcionalidade | Estado | Nota |
 |---|---|---|
 | Hub com vídeo de capa | EXISTE | Primeiro painel de `/` quando não há `view` |
-| Reels por categoria | EXISTE | `?view=reels` |
-| Feed em grade e timeline | EXISTE | `?view=feed` |
+| Reels por categoria | EXISTE | `?view=reels`. O topo mostra a categoria em destaque e a seguinte. O filtro real continua separado: Todos mostra a sequência inteira e uma categoria nomeada mostra só os produtos dela |
+| Feed em grade e timeline | REMOVIDO | `?view=feed` abre os reels em Todos. O perfil continua usando os componentes de grade para os favoritos |
 | Perfil | EXISTE | `?view=profile` |
 | Tema claro e escuro | EXISTE | Preferência local |
 | Favoritos | EXISTE | `localStorage`, sem conta |

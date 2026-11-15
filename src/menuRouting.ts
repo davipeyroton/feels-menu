@@ -1,36 +1,37 @@
-/** Main pager: 0 = hub, 1 = discover (reels + feed). */
+/** Main pager: 0 = hub, 1 = discover (reels + profile). */
 export type MainPanelIndex = 0 | 1;
 
-/** Inner discover track: 0 = reels, 1 = feed, 2 = profile. */
-export type DiscoverModeIndex = 0 | 1 | 2;
+/** Inner discover track: 0 = reels, 1 = profile. */
+export type DiscoverModeIndex = 0 | 1;
 
-export const DISCOVER_MODE_COUNT = 3;
+export const DISCOVER_MODE_COUNT = 2;
 
-export type ViewParam = "reels" | "feed" | "profile";
+export type ViewParam = "reels" | "profile";
 
 export function normalizeViewParam(view: string | null): ViewParam | null {
-  if (view === "feed" || view === "reels" || view === "profile") return view;
+  if (view === "reels" || view === "profile") return view;
+  if (view === "feed") return "reels";
   return null;
 }
 
 export function mainPanelFromViewParam(view: string | null): MainPanelIndex {
-  if (view === "feed" || view === "reels") return 1;
+  const normalized = view === "feed" ? "reels" : view;
+  if (normalized === "reels" || normalized === "profile") return 1;
   return 0;
 }
 
 export function discoverModeFromViewParam(view: string | null): DiscoverModeIndex {
-  if (view === "feed") return 1;
-  if (view === "profile") return 2;
+  const normalized = view === "feed" ? "reels" : view;
+  if (normalized === "profile") return 1;
   return 0;
 }
 
 export function viewParamFromDiscoverMode(mode: DiscoverModeIndex): ViewParam {
-  if (mode === 1) return "feed";
-  if (mode === 2) return "profile";
+  if (mode === 1) return "profile";
   return "reels";
 }
 
-export function readViewParamFromLocation(): "reels" | "feed" | null {
+export function readViewParamFromLocation(): ViewParam | null {
   return normalizeViewParam(new URLSearchParams(window.location.search).get("view"));
 }
 

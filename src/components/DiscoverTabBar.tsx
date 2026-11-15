@@ -1,7 +1,6 @@
 import {
   FileText,
   Home,
-  LayoutGrid,
   User,
   type LucideIcon,
 } from "lucide-react";
@@ -25,13 +24,12 @@ const TABS: {
   iconId: TabBarIconId;
 }[] = [
   { id: 0, label: ptBR.discover.tabMenu, Icon: FileText, iconId: "file-text" },
-  { id: 1, label: ptBR.discover.tabFeed, Icon: LayoutGrid, iconId: "layout-grid" },
-  { id: 2, label: ptBR.discover.tabProfile, Icon: User, iconId: "user" },
+  { id: 1, label: ptBR.discover.tabProfile, Icon: User, iconId: "user" },
 ];
 
 type ThumbRect = { x: number; y: number; w: number; h: number };
 
-type TabBarIconId = "home" | "file-text" | "layout-grid" | "user";
+type TabBarIconId = "home" | "file-text" | "user";
 
 /** Layout-space thumb box (stable when an ancestor uses transform: scale). */
 function thumbBoundsInPill(item: HTMLElement, pill: HTMLElement): ThumbRect {
@@ -68,45 +66,21 @@ function TabBarIcon({
   active: boolean;
   iconId: TabBarIconId;
 }) {
-  const solidWhenActive = iconId === "layout-grid";
-  const size = active && solidWhenActive ? 25 : 24;
-  const outline = !active || !solidWhenActive;
-
-  if (outline) {
-    return (
-      <span
-        className="discover-tab-bar__icon-stack"
-        data-active={active ? "true" : "false"}
-        data-icon={iconId}
-        data-variant="outline"
-      >
-        <Icon
-          className="discover-tab-bar__icon"
-          size={24}
-          strokeWidth={active ? 2.05 : 1.75}
-          fill="none"
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden
-        />
-      </span>
-    );
-  }
-
   return (
     <span
       className="discover-tab-bar__icon-stack"
-      data-active="true"
+      data-active={active ? "true" : "false"}
       data-icon={iconId}
-      data-variant="solid"
+      data-variant="outline"
     >
       <Icon
-        className="discover-tab-bar__icon discover-tab-bar__icon--solid-fill"
-        size={size}
-        strokeWidth={0}
-        fill="currentColor"
-        stroke="none"
+        className="discover-tab-bar__icon"
+        size={24}
+        strokeWidth={active ? 2.05 : 1.75}
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         aria-hidden
       />
     </span>

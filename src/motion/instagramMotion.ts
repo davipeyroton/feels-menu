@@ -35,10 +35,23 @@ export function panelDepthStyle(
 export function discoverModeTrackTransform(
   modeIndex: number,
   dragPx: number,
-  panelCount = 3,
+  panelCount = 2,
 ): string {
   const step = 100 / panelCount;
   return `translate3d(calc(${-modeIndex * step}% + ${dragPx}px), 0, 0)`;
+}
+
+export const CATEGORY_PAGE_GAP_PX = 12;
+
+/** Two category pages. `hasPrev` keeps the current page on screen beside a left neighbor. */
+export function categoryPageTrackTransform(
+  hasPrev: boolean,
+  dragPx: number,
+): string {
+  if (hasPrev) {
+    return `translate3d(calc(-100% - ${CATEGORY_PAGE_GAP_PX}px + ${dragPx}px), 0, 0)`;
+  }
+  return `translate3d(${dragPx}px, 0, 0)`;
 }
 
 export function discoverModeFractionalIndex(
@@ -46,7 +59,7 @@ export function discoverModeFractionalIndex(
   dragPx: number,
   trackWidth: number,
   dragging: boolean,
-  panelCount = 3,
+  panelCount = 2,
 ): number {
   if (trackWidth > 0 && dragging) {
     const max = panelCount - 1;

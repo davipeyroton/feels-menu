@@ -125,6 +125,58 @@ export const allProducts = slides
   .filter((s): s is ProductSlide => s.kind === "product")
   .sort((a, b) => a.index - b.index);
 
+/** `all` is the unfiltered reel. Any other value is a category id. */
+export type ReelFilterId = "all" | (string & {});
+
+export type VisibleReelSequence =
+  | { status: "all"; products: ProductSlide[] }
+  | { status: "category"; products: ProductSlide[] }
+  | { status: "absent" };
+
+export function visibleReelSequence(filter: ReelFilterId): VisibleReelSequence {
+  if (filter === "all") {
+    return { status: "all", products: allProducts };
+  }
+  const known = categories.some((category) => category.id === filter);
+  if (!known) return { status: "absent" };
+  return {
+    status: "category",
+    products: allProducts.filter((product) => product.category === filter),
+  };
+}
+
 export function categoryLabel(catId: string): string {
   return categories.find((c) => c.id === catId)?.label ?? catId;
+}
+
+/** `Todos` first, then loaded categories. No invented id. */
+export function reelNavigationOrder(): ReelFilterId[] {
+  return ["all", ...categories.map((category) => category.id)];
+}
+
+export function reelPairForHighlight(highlight: ReelFilterId): {
+  previous: ReelFilterId | null;
+  center: ReelFilterId;
+  next: ReelFilterId | null;
+} {
+  const order = reelNavigationOrder();
+  const found = order.indexOf(highlight);
+  const index = found === -1 ? 0 : found;
+  return {
+    previous: index > 0 ? (order[index - 1] ?? null) : null,
+    center: order[index] ?? "all",
+    next: order[index + 1] ?? null,
+  };
+}
+
+export function adjacentReelTarget(
+  highlight: ReelFilterId,
+  direction: "next" | "prev",
+): ReelFilterId | null {
+  const order = reelNavigationOrder();
+  const found = order.indexOf(highlight);
+  const index = found === -1 ? 0 : found;
+  if (direction === "next") return order[index + 1] ?? null;
+  if (index === 0) return null;
+  return order[index - 1] ?? null;
 }
