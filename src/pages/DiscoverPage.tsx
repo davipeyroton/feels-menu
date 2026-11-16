@@ -70,6 +70,7 @@ import {
   allProducts,
   categories,
   categoryLabel,
+  headerPlaceLabel,
   hub,
   reelNavigationOrder,
   reelPairForHighlight,
@@ -1104,7 +1105,7 @@ function ReelsChrome({
             </button>
           </div>
           <div className="discover__header-end">
-            <span className="discover__header-place">{hub.location}</span>
+            <span className="discover__header-place">{headerPlaceLabel(hub.location)}</span>
             {profileChrome && <ThemeToggle />}
           </div>
         </div>

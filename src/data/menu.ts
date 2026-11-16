@@ -105,6 +105,21 @@ export type Slide = ProductSlide | WelcomeSlide;
 
 export const menu = snapshot;
 export const hub = snapshot.hub;
+
+const CITY_ABBREVIATIONS: Record<string, string> = {
+  "são paulo": "SP",
+};
+
+/** Header line: neighborhood, then the city abbreviation. */
+export function headerPlaceLabel(location: string): string {
+  const parts = location.split("·").map((part) => part.trim()).filter(Boolean);
+  const neighborhood = parts[0];
+  const city = parts[1];
+  if (!neighborhood || !city) return location;
+  const abbreviation = CITY_ABBREVIATIONS[city.toLocaleLowerCase("pt-BR")];
+  if (!abbreviation) return location;
+  return `${neighborhood}, ${abbreviation}`;
+}
 export const categories = snapshot.categories;
 export const slides = snapshot.slides as Slide[];
 
